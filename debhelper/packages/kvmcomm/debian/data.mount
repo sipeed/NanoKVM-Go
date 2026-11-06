@@ -1,0 +1,14 @@
+[Unit]
+Description=Mount exfat.img to /data
+DefaultDependencies=no
+After=local-fs-pre.target
+Before=local-fs.target
+
+[Mount]
+What=/exfat.img
+Where=/data
+Type=exfat
+Options=ro,relatime,fmask=0022,dmask=0022,iocharset=utf8
+
+[Install]
+WantedBy=multi-user.target

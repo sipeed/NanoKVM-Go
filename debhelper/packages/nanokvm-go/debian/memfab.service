@@ -1,0 +1,21 @@
+[Unit]
+Description=memfab OCR daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+UMask=0077
+RuntimeDirectory=memfab
+RuntimeDirectoryMode=0700
+Environment=MEMFAB_ROOT=/var/lib/memfab
+Environment=GOMEMLIMIT=64MiB
+Environment=GOGC=50
+ExecStart=/usr/bin/memfab start --foreground
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

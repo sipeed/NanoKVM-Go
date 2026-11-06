@@ -1,0 +1,357 @@
+name: Build and Test
+
+# Mirrors the validate/test/build stages of the internal GitLab pipeline.
+# Nothing here signs or publishes a release: the ARMv7 bundle is uploaded as an
+# UNSIGNED workflow artifact only.
+#
+# Runner selection: jobs run on GitHub-hosted ubuntu-latest unless the
+# repository variable CI_RUNS_ON holds a JSON label list, e.g.
+#   ["self-hosted","linux","x64","sipeed-ct"]
+# Only set it on private repositories. A self-hosted runner on a public
+# repository would execute pull requests from forks on internal hardware.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # release.yml reuses the whole pipeline to build the bundle it signs.
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit to build instead of the triggering one.
+        required: false
+        type: string
+        default: ''
+    outputs:
+      version:
+        description: Package version from debian/changelog.
+        value: ${{ jobs.validate.outputs.version }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || inputs.ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  validate:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '["ubuntu-latest"]') }}
+    timeout-minutes: 15
+    container:
+      image: python:3.13.5-bookworm
+      # Reap orphans: tests probe that killed children are gone, and an
+      # unreaped zombie still answers kill(pid, 0).
+      options: --init
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 2
+          persist-credentials: false
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: ci/scripts/run_with_retry.sh --label apt-update -- apt-get update
+      - run: ci/scripts/run_with_retry.sh --label apt-install-xxd -- apt-get install --yes --no-install-recommends xxd
+      - name: Whitespace errors in HEAD
+        run: git diff-tree --check --root -r -m --no-commit-id HEAD
+      - name: Python syntax
+        run: |
+          python3 -m py_compile build.py
+          python3 -m py_compile support/scripts/getconfig.py
+          python3 -m py_compile support/scripts/package_update.py
+          python3 -m py_compile ci/scripts/*.py
+      - name: Shell syntax
+        shell: bash
+        run: |
+          shell_syntax_result=0
+          while IFS= read -r shell_script; do
+            if grep -Eq '^#!.*(/|env[[:space:]]+)sh([[:space:]]|$)' "$shell_script"; then
+              sh -n "$shell_script" || shell_syntax_result=1
+            else
+              bash -n "$shell_script" || shell_syntax_result=1
+            fi
+          done < <(git grep -IlE '^#!.*(/|env[[:space:]]+)(ba)?sh([[:space:]]|$)')
+          test "$shell_syntax_result" -eq 0
+      - run: bash ci/scripts/tests/run_with_retry_test.sh
+      - run: bash debhelper/packages/kvmcomm/tests/wifi_band_policy_test.sh
+      - name: Package version
+        id: version
+        run: |
+          python3 ci/scripts/validate_version.py --output version.env
+          . ./version.env
+          echo "version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+      # Job containers run as root; hand the workspace and temp dir back to the
+      # runner user so a persistent self-hosted runner can clean them up.
+      - if: always()
+        run: chown -R "$(stat -c %u:%g "$GITHUB_WORKSPACE/..")" "$GITHUB_WORKSPACE" "$RUNNER_TEMP"
+
+  test-web:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '["ubuntu-latest"]') }}
+    timeout-minutes: 30
+    container:
+      image: node:22.17.0-bookworm
+      # Reap orphans: tests probe that killed children are gone, and an
+      # unreaped zombie still answers kill(pid, 0).
+      options: --init
+    env:
+      PNPM_VERSION: "11.3.0"
+      PNPM_STORE_DIR: ${{ github.workspace }}/.cache/pnpm/web/store
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/cache@v6
+        with:
+          path: .cache/pnpm/web/store
+          key: web-pnpm-11.3.0-${{ hashFiles('web/pnpm-lock.yaml') }}
+      - run: ci/scripts/run_with_retry.sh --label apt-update -- apt-get update
+      - run: ci/scripts/run_with_retry.sh --label apt-install-python3 -- apt-get install --yes --no-install-recommends python3
+      - run: ci/scripts/run_with_retry.sh --label npm-install-pnpm -- npm install --global "pnpm@${PNPM_VERSION}"
+      - run: pnpm config set store-dir "${PNPM_STORE_DIR}"
+      - working-directory: web
+        run: |
+          ../ci/scripts/run_with_retry.sh --label pnpm-install -- pnpm install --frozen-lockfile
+          # Serialized: some suites start short-lived Vite/MSW instances.
+          node --experimental-strip-types --test --test-concurrency=1 scripts/*.test.mjs
+          pnpm i18n:audit
+          pnpm lint
+      # build.py is the canonical Web artifact entry point.
+      - run: python3 build.py web
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web
+          path: build/web/
+          retention-days: 7
+      - if: always()
+        run: chown -R "$(stat -c %u:%g "$GITHUB_WORKSPACE/..")" "$GITHUB_WORKSPACE" "$RUNNER_TEMP"
+
+  test-server:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '["ubuntu-latest"]') }}
+    timeout-minutes: 30
+    container:
+      image: golang:1.26.5-bookworm
+      # Reap orphans: tests probe that killed children are gone, and an
+      # unreaped zombie still answers kill(pid, 0).
+      options: --init
+    env:
+      CGO_ENABLED: "1"
+      GOMODCACHE: ${{ github.workspace }}/.cache/go/server/pkg/mod
+      # The module cache lives in the workspace; keep it writable so the next
+      # job's checkout on this runner can clean it.
+      GOFLAGS: -modcacherw
+      GOCACHE: ${{ github.workspace }}/.cache/go/server/build
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/cache@v6
+        with:
+          path: |
+            .cache/go/server/pkg/mod
+            .cache/go/server/build
+          key: server-go-1.26.5-race-${{ hashFiles('server/go.sum') }}
+      - working-directory: server
+        run: |
+          # KVMIMPL_ALLOW_INIT makes only kvmv_init() succeed in the host test
+          # double; every capture/encode entry point still aborts.
+          c++ -shared -fPIC -DKVMIMPL_ALLOW_INIT -Iinclude dl_lib/kvmimpl.cpp -o dl_lib/libkvm.so
+          ../ci/scripts/run_with_retry.sh --label go-mod-download -- go mod download
+          LD_LIBRARY_PATH="$PWD/dl_lib" go test -race ./...
+      - if: always()
+        run: chown -R "$(stat -c %u:%g "$GITHUB_WORKSPACE/..")" "$GITHUB_WORKSPACE" "$RUNNER_TEMP"
+
+  test-memfab:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '["ubuntu-latest"]') }}
+    timeout-minutes: 30
+    container:
+      image: golang:1.26.5-bookworm
+      # Reap orphans: tests probe that killed children are gone, and an
+      # unreaped zombie still answers kill(pid, 0).
+      options: --init
+    env:
+      CGO_ENABLED: "1"
+      GOMODCACHE: ${{ github.workspace }}/.cache/go/memfab/pkg/mod
+      # The module cache lives in the workspace; keep it writable so the next
+      # job's checkout on this runner can clean it.
+      GOFLAGS: -modcacherw
+      GOCACHE: ${{ github.workspace }}/.cache/go/memfab/build
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/cache@v6
+        with:
+          path: |
+            .cache/go/memfab/pkg/mod
+            .cache/go/memfab/build
+          key: memfab-go-1.26.5-race-sqlite-fts5-${{ hashFiles('memfab/go.sum') }}
+      - working-directory: memfab
+        run: |
+          ../ci/scripts/run_with_retry.sh --label go-mod-download -- go mod download
+          go test -race -tags sqlite_fts5 ./...
+      - if: always()
+        run: chown -R "$(stat -c %u:%g "$GITHUB_WORKSPACE/..")" "$GITHUB_WORKSPACE" "$RUNNER_TEMP"
+
+  test-kvm-ui-simulator:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '["ubuntu-latest"]') }}
+    timeout-minutes: 60
+    container:
+      image: gcc:14.3.0-bookworm
+      # Reap orphans: tests probe that killed children are gone, and an
+      # unreaped zombie still answers kill(pid, 0).
+      options: --init
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CONAN_VERSION: "2.30.0"
+      CMAKE_VERSION: "3.31.6"
+      SIMULATOR_HOME: ${{ github.workspace }}/.cache/kvm-ui-simulator/home
+      CONAN_HOME: ${{ github.workspace }}/.cache/kvm-ui-simulator/home/.conan2
+      PIP_CACHE_DIR: ${{ github.workspace }}/.cache/kvm-ui-simulator/pip
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/cache@v6
+        with:
+          path: |
+            .cache/kvm-ui-simulator/home/.conan2/p
+            .cache/kvm-ui-simulator/home/.conan2/profiles
+            .cache/kvm-ui-simulator/pip
+            kvm_ui/external/lvgl
+          key: kvm-ui-simulator-gcc-14.3.0-conan-2.30.0-cmake-3.31.6-${{ hashFiles('kvm_ui/conanfile.py', 'kvm_ui/builder.sh') }}
+      - run: ci/scripts/run_with_retry.sh --label apt-update -- apt-get update
+      - run: >-
+          ci/scripts/run_with_retry.sh --label apt-install-simulator --
+          apt-get install --yes --no-install-recommends
+          ca-certificates git libsdl2-dev libsystemd-dev pkg-config python3 python3-pip
+      - name: Simulator build and tests
+        run: |
+          # builder.sh and Conan agree on a project-local default profile via HOME.
+          export HOME="${SIMULATOR_HOME}"
+          mkdir -p "${HOME}" "${CONAN_HOME}" "${PIP_CACHE_DIR}"
+          ci/scripts/run_with_retry.sh --label pip-install-simulator -- \
+            python3 -m pip install --break-system-packages \
+            --cache-dir "${PIP_CACHE_DIR}" \
+            "conan==${CONAN_VERSION}" "cmake==${CMAKE_VERSION}"
+          cd kvm_ui
+          ../ci/scripts/run_with_retry.sh --label lvgl-fetch --cleanup-rm external/lvgl -- ./builder.sh simulator_fetch_lvgl
+          ../ci/scripts/run_with_retry.sh --label conan-fetch -- ./builder.sh simulator_fetch_conan
+          ./builder.sh simulator_minibuild
+          ./builder.sh simulator_test
+      - if: always()
+        run: chown -R "$(stat -c %u:%g "$GITHUB_WORKSPACE/..")" "$GITHUB_WORKSPACE" "$RUNNER_TEMP"
+
+  build-armv7:
+    needs: [validate, test-web, test-server, test-memfab, test-kvm-ui-simulator]
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '["ubuntu-latest"]') }}
+    timeout-minutes: 240
+    permissions:
+      contents: read
+      packages: write
+    env:
+      RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          # The kvmcomm package ships the apps submodule.
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: web
+          path: build/web
+      # Keep the ghcr login out of the runner user's shared ~/.docker;
+      # RUNNER_TEMP is wiped after every job.
+      - run: echo "DOCKER_CONFIG=${RUNNER_TEMP}/docker" >> "$GITHUB_ENV"
+      - name: Check inputs
+        run: |
+          test -n "${RELEASE_VERSION}"
+          test -s build/web/index.html
+      - name: Resolve build image
+        id: image
+        run: |
+          tag="$(python3 ci/scripts/armv7_image_tag.py)"
+          repo="$(echo "ghcr.io/${GITHUB_REPOSITORY}-armv7-ci" | tr '[:upper:]' '[:lower:]')"
+          echo "remote=${repo}:${tag}" >> "$GITHUB_OUTPUT"
+      - name: Pull or build image
+        id: build-image
+        env:
+          REMOTE: ${{ steps.image.outputs.remote }}
+          TRUSTED: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          # The tag is derived from every recipe the image bakes, so an existing
+          # remote tag already is the image this commit wants. Pulling it also
+          # replaces any same-named local image a branch build may have left.
+          if manifest_error="$(docker manifest inspect "$REMOTE" 2>&1 >/dev/null)"; then
+            docker pull "$REMOTE"
+            echo "run=${REMOTE}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Only an answer that actually says "absent" may lead to a build: a
+          # network error or rate limit would otherwise end in overwriting the tag.
+          case "$manifest_error" in
+            *"manifest unknown"*|*"not found"*|*"no such manifest"*) ;;
+            *)
+              echo "cannot tell whether $REMOTE exists: $manifest_error" >&2
+              exit 1
+              ;;
+          esac
+          if [ "$TRUSTED" = "true" ]; then
+            # No layer cache: a branch build on a persistent runner must not
+            # feed layers into an image that main publishes.
+            docker build --pull --no-cache --platform linux/amd64 \
+              --file ci/images/armv7/Dockerfile --tag "$REMOTE" .
+            docker push "$REMOTE"
+            echo "run=${REMOTE}" >> "$GITHUB_OUTPUT"
+          else
+            # Branch builds never take the remote name, so they cannot be
+            # mistaken for the published image by a later run on this host.
+            local_ref="local/nanokvm-go-armv7-ci:$(git rev-parse HEAD)"
+            docker build --pull --platform linux/amd64 \
+              --file ci/images/armv7/Dockerfile --tag "$local_ref" .
+            echo "run=${local_ref}" >> "$GITHUB_OUTPUT"
+          fi
+      - run: docker logout ghcr.io
+        if: always()
+      - name: Build ARMv7 packages (unsigned)
+        env:
+          IMAGE: ${{ steps.build-image.outputs.run }}
+        run: |
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/workspace" --workdir /workspace \
+            --env RELEASE_VERSION --env HOST_UID="$(id -u)" --env HOST_GID="$(id -g)" \
+            "$IMAGE" bash -euo pipefail -c '
+              trap "chown -R \"$HOST_UID:$HOST_GID\" /workspace" EXIT
+              git config --global --add safe.directory /workspace
+              bash -euo pipefail ci/scripts/build_armv7_release.sh "$RELEASE_VERSION"
+            '
+      - name: Drop branch build image
+        if: always() && startsWith(steps.build-image.outputs.run, 'local/')
+        env:
+          IMAGE: ${{ steps.build-image.outputs.run }}
+        run: docker rmi "$IMAGE" || true
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nanokvm-go-${{ env.RELEASE_VERSION }}-armv7-unsigned
+          path: |
+            build/kvmcomm_${{ env.RELEASE_VERSION }}_armhf.deb
+            build/nanokvm-go_${{ env.RELEASE_VERSION }}_armhf.deb
+            build/update/nanokvm-go_${{ env.RELEASE_VERSION }}.tar.gz
+            build/update/latest.json
+            build/update/UNSIGNED-DO-NOT-DISTRIBUTE
+            build/update-keys.json
+          if-no-files-found: error
+          retention-days: 30

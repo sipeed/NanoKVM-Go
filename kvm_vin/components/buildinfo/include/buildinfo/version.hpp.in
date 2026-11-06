@@ -1,0 +1,8 @@
+#ifndef __KVM_UI_BUILD_INFO_VERSION_HPP__
+#define __KVM_UI_BUILD_INFO_VERSION_HPP__
+
+constexpr char GIT_HASH[] = "@GIT_HASH@";
+constexpr char GIT_DIRTY[] = "@GIT_DIRTY@";
+constexpr char BUILD_TIMESTAMP[] = "@BUILD_TIMESTAMP@";
+
+#endif  // __KVM_UI_BUILD_INFO_VERSION_HPP__

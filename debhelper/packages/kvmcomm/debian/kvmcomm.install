@@ -1,0 +1,16 @@
+rootfs/kvmcomm/edid kvmcomm/
+rootfs/kvmcomm/ko kvmcomm/
+rootfs/kvmcomm/models kvmcomm/
+rootfs/kvmcomm/scripts kvmcomm/
+rootfs/kvmcomm/apps/README.md kvmcomm/apps/
+rootfs/kvmcomm/apps/README_zh.md kvmcomm/apps/
+rootfs/kvmcomm/apps/appbase.py kvmcomm/apps/
+rootfs/kvmcomm/apps/appbase.pyi kvmcomm/apps/
+rootfs/lib/firmware/Lontium/* lib/firmware/Lontium/
+rootfs/opt/* opt/
+rootfs/usr/bin/* usr/bin/
+../../../build/kvm_vin kvmcomm/vin/
+../../../build/kvm_ui kvmcomm/ui/
+../../../build/nano_ocr_app kvmcomm/ocr/
+../../../build/nanokvm-update-verify usr/bin/
+../../../build/update-keys.json usr/share/nanokvm/

@@ -1,0 +1,24 @@
+# Payload produced by fetch_fonts.py. The repository tracks the acquisition
+# kit and legal records, not the 137.9 MiB upstream font binaries.
+*.ttf
+*.otf
+*.ttc
+*.otc
+*.part
+/catalog-attestation.json
+# Default rootfs release payload produced by package_fonts.py.
+/kvm-ui-fonts.tar.gz
+# Legacy xz output remains ignored so an old generated artifact is not
+# accidentally staged. package_fonts.py now builds a gzip package instead.
+/kvm-ui-fonts.tar.xz
+# Legacy local output remains ignored so an old generated artifact is not
+# accidentally staged. package_fonts.py no longer creates or supports it.
+/kvm-ui-fonts-installer.run
+__pycache__/
+
+# Upstream notices are copied into the staging directory for the image build.
+# Keep the canonical tracked OFL text and its explanation visible to Git.
+/LICENSES/*
+!/LICENSES/README.md
+!/LICENSES/OFL-1.1.txt
+!/LICENSES/GNU-Unifont-NOTICE.txt

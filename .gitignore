@@ -1,0 +1,117 @@
+# Logs
+*.log
+pnpm-debug.log*
+
+# CI
+.ci-retry-report.txt
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Web Frontend
+web/node_modules
+web/dist
+web/web
+# tsc -b output for tsconfig.node.json (composite); Vite reads vite.config.ts
+web/vite.config.js
+web/vite.config.d.ts
+web/*.tsbuildinfo
+
+# Build & Release
+build/
+release/
+latest/
+NanoKVM-Server
+support/toolchains/
+*.deb
+*.changes
+*.buildinfo
+*.build
+*.dsc
+*.tar.*
+*.bak
+libkvm.so*
+
+# Component Build Output
+*/build/
+*/conan/
+
+# Debian Packaging Output
+debhelper/.debhelper/
+debhelper/packages/*.deb
+debhelper/packages/*.changes
+debhelper/packages/*.buildinfo
+debhelper/packages/*.build
+debhelper/packages/*.dsc
+debhelper/packages/*.tar.*
+debhelper/packages/*/.debhelper/
+debhelper/packages/*/debian/.debhelper/
+debhelper/packages/*/debian/debhelper-build-stamp
+debhelper/packages/*/debian/files
+debhelper/packages/*/debian/kvmcomm/
+debhelper/packages/*/debian/nanokvm-go/
+debhelper/packages/*/debian/*.substvars
+debhelper/packages/*/debian/*.debhelper
+
+# IDE/Editor
+.idea
+.vscode
+.zed
+.nvim.lua
+.codex
+
+# Temporary/Local
+.cache/
+*.local
+.docker-ci/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+# Icon? also matches icons/ on case-insensitive filesystems.
+!/web/src/components/icons/
+._*
+
+# macOS Volume Files
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# macOS AFP Share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+.codegraph/
+AGENTS.md
+SUMMARY.md
+CLAUDE.md
+plans/
+docs/ai-state-files.md
+build-package.sh
+dist/
+tmp/
+.claude/
+.pi/
+.opencode/
+.gemini/
+.codex/
+.agents/
+.superpowers/
+.trellis
+docs/superpowers/
+.mcp.json

@@ -1,0 +1,755 @@
+{
+  "schema_version": 1,
+  "type": "ocr_observation",
+  "captured_at": "2026-05-12T19:31:58+08:00",
+  "capture_id": "fixture:2026-05-12T19:31:58+08:00",
+  "source": {
+    "kind": "screen_ocr",
+    "device": "nanokvm-go",
+    "engine": "unknown",
+    "input_text_file": "tests/out.jpg.txt"
+  },
+  "screen": {
+    "width": null,
+    "height": null,
+    "image_sha256": null
+  },
+  "context": {
+    "app_name": "ScreenOCR",
+    "title": "OCR screen snapshot",
+    "url": ""
+  },
+  "event": {
+    "type": "ocr_capture",
+    "reason": "manual_test"
+  },
+  "ocr": {
+    "language": "zh-CN",
+    "text": "4月20日17:00\nSipeed资料站-Sipeedx\n简介-Sipeedwiki\naccounts.g\nCwkspedcomhadaezb//\nuction.htm\n验证身份\n完成更新\nMaixZero\nATX电源控制\n无，用户可自行连按\nUSB接口IO控制板\nRJ45接口IO控制板\naix-\nOLED显示\n无，用户可自行扩展\n128x640.96white\n128x320.91\"white\nMax-\n串口终端\n、简介\nMaix-\n二、使用场景\nMicroSD卡\n无，用户自备\n有，开机即用\nMaix-V\n缴\nMaixCAM\nPoE\n扩展配件\nWiFiLTE\n四、NanokVM软硬件资料\n五、购买入口\nLicheePi\n功耗\n0.2A@5V\n0.2A@5V\nPeak2.6A@5V\n六、产品反馈\nTangFPGA\nPCUSB即可供电\n电源输入\nPCUSB即可供电\n需要DC5V3A供电\nMaixSense\n也支持额外辅助供电\nSLogic\n静音无风扇\n静音无风扇\n需要风扇主动散热\nThermalCam\n23x37x15mm\n40x36x36mm\n寸\n120x68x44mm\n1/30PkVMV4体积\n1/7PiKVMV4体积\nNanoKVMCube\n快速上手\n用户指南\n这里找到：点击这里\n次开发\nFAO\nNanoKVMCube/PCle软件现",
+    "raw_text": "OCR Recognition Results\n======================\n\nBox 0: [865, 5, 965, 27]\n  Text: 4月20日17:00\n  Confidence: 0.9313\n\nBox 3: [169, 73, 400, 95]\n  Text: Sipeed资料站-Sipeedx\n  Confidence: 0.8626\n\nBox 4: [432, 73, 555, 93]\n  Text: 简介-Sipeedwiki\n  Confidence: 0.8837\n\nBox 5: [638, 76, 724, 92]\n  Text: accounts.g\n  Confidence: 0.9278\n\nBox 6: [219, 109, 505, 131]\n  Text: Cwkspedcomhadaezb//\n  Confidence: 0.7442\n\nBox 7: [603, 109, 671, 129]\n  Text: uction.htm\n  Confidence: 0.9291\n\nBox 9: [1339, 113, 1441, 133]\n  Text: 验证身份\n  Confidence: 0.9949\n\nBox 10: [1456, 113, 1535, 133]\n  Text: 完成更新\n  Confidence: 0.9783\n\nBox 11: [173, 161, 247, 183]\n  Text: MaixZero\n  Confidence: 0.9039\n\nBox 13: [443, 175, 545, 197]\n  Text: ATX电源控制\n  Confidence: 0.9933\n\nBox 14: [579, 175, 729, 197]\n  Text: 无，用户可自行连按\n  Confidence: 0.9025\n\nBox 15: [789, 175, 927, 197]\n  Text: USB接口IO控制板\n  Confidence: 0.9499\n\nBox 16: [999, 175, 1145, 197]\n  Text: RJ45接口IO控制板\n  Confidence: 0.9638\n\nBox 17: [175, 199, 221, 221]\n  Text: aix-\n  Confidence: 0.7059\n\nBox 18: [441, 223, 525, 245]\n  Text: OLED显示\n  Confidence: 0.9728\n\nBox 19: [579, 223, 733, 245]\n  Text: 无，用户可自行扩展\n  Confidence: 0.9779\n\nBox 20: [791, 223, 937, 245]\n  Text: 128x640.96white\n  Confidence: 0.9521\n\nBox 21: [999, 223, 1149, 243]\n  Text: 128x320.91\"white\n  Confidence: 0.9273\n\nBox 23: [173, 239, 227, 261]\n  Text: Max-\n  Confidence: 0.5945\n\nBox 24: [441, 269, 516, 291]\n  Text: 串口终端\n  Confidence: 0.9926\n\nBox 25: [1275, 274, 1334, 300]\n  Text: 、简介\n  Confidence: 0.9956\n\nBox 26: [173, 277, 233, 299]\n  Text: Maix-\n  Confidence: 0.5532\n\nBox 27: [1271, 303, 1363, 325]\n  Text: 二、使用场景\n  Confidence: 0.9353\n\nBox 28: [441, 315, 533, 337]\n  Text: MicroSD卡\n  Confidence: 0.9044\n\nBox 29: [577, 315, 681, 337]\n  Text: 无，用户自备\n  Confidence: 0.9691\n\nBox 30: [787, 315, 893, 337]\n  Text: 有，开机即用\n  Confidence: 0.9926\n\nBox 31: [173, 317, 233, 339]\n  Text: Maix-V\n  Confidence: 0.8088\n\nBox 32: [1264, 333, 1334, 355]\n  Text: 缴\n  Confidence: 0.9794\n\nBox 33: [175, 355, 245, 377]\n  Text: MaixCAM\n  Confidence: 0.9687\n\nBox 34: [783, 357, 827, 387]\n  Text: PoE\n  Confidence: 0.5971\n\nBox 35: [441, 361, 513, 383]\n  Text: 扩展配件\n  Confidence: 0.9838\n\nBox 36: [999, 361, 1073, 383]\n  Text: WiFiLTE\n  Confidence: 0.8401\n\nBox 37: [1267, 363, 1451, 383]\n  Text: 四、NanokVM软硬件资料\n  Confidence: 0.9671\n\nBox 38: [1267, 389, 1361, 411]\n  Text: 五、购买入口\n  Confidence: 0.9581\n\nBox 39: [173, 393, 239, 415]\n  Text: LicheePi\n  Confidence: 0.8421\n\nBox 40: [441, 403, 483, 433]\n  Text: 功耗\n  Confidence: 0.9772\n\nBox 41: [575, 407, 655, 429]\n  Text: 0.2A@5V\n  Confidence: 0.9693\n\nBox 42: [785, 407, 865, 429]\n  Text: 0.2A@5V\n  Confidence: 0.9700\n\nBox 43: [999, 407, 1121, 429]\n  Text: Peak2.6A@5V\n  Confidence: 0.9762\n\nBox 44: [1267, 417, 1361, 439]\n  Text: 六、产品反馈\n  Confidence: 0.9478\n\nBox 45: [177, 433, 257, 455]\n  Text: TangFPGA\n  Confidence: 0.8642\n\nBox 46: [789, 453, 921, 475]\n  Text: PCUSB即可供电\n  Confidence: 0.9848\n\nBox 47: [442, 468, 514, 494]\n  Text: 电源输入\n  Confidence: 0.9629\n\nBox 48: [576, 468, 710, 494]\n  Text: PCUSB即可供电\n  Confidence: 0.9789\n\nBox 49: [998, 468, 1146, 494]\n  Text: 需要DC5V3A供电\n  Confidence: 0.9847\n\nBox 50: [175, 471, 255, 493]\n  Text: MaixSense\n  Confidence: 0.9637\n\nBox 51: [791, 485, 941, 507]\n  Text: 也支持额外辅助供电\n  Confidence: 0.9789\n\nBox 52: [175, 511, 227, 533]\n  Text: SLogic\n  Confidence: 0.8566\n\nBox 53: [576, 530, 664, 556]\n  Text: 静音无风扇\n  Confidence: 0.9900\n\nBox 54: [788, 530, 874, 556]\n  Text: 静音无风扇\n  Confidence: 0.9918\n\nBox 55: [999, 533, 1137, 553]\n  Text: 需要风扇主动散热\n  Confidence: 0.9187\n\nBox 56: [177, 551, 267, 571]\n  Text: ThermalCam\n  Confidence: 0.9556\n\nBox 57: [579, 577, 683, 599]\n  Text: 23x37x15mm\n  Confidence: 0.9609\n\nBox 58: [789, 577, 895, 599]\n  Text: 40x36x36mm\n  Confidence: 0.9781\n\nBox 59: [441, 591, 483, 621]\n  Text: 寸\n  Confidence: 0.5294\n\nBox 60: [999, 595, 1113, 617]\n  Text: 120x68x44mm\n  Confidence: 0.9726\n\nBox 61: [585, 611, 751, 633]\n  Text: 1/30PkVMV4体积\n  Confidence: 0.9449\n\nBox 62: [793, 611, 953, 633]\n  Text: 1/7PiKVMV4体积\n  Confidence: 0.9324\n\nBox 63: [195, 627, 309, 647]\n  Text: NanoKVMCube\n  Confidence: 0.9156\n\nBox 64_1: [433, 679, 823, 709]\n  Text: 四、NanoKVM软硬伴\n  Confidence: 0.9305\n\nBox 64_2: [433, 679, 823, 709]\n  Text: 更件资料\n  Confidence: 0.9165\n\nBox 64 (merged): [433, 679, 823, 709]\n  Text: 四、NanoKVM软硬伴件资料\n  Confidence: 0.9305\n\nBox 65: [217, 713, 279, 735]\n  Text: 快速上手\n  Confidence: 0.9783\n\nBox 66_1: [429, 747, 1187, 769]\n  Text: NaoKVMSpedcheR/Nah\n  Confidence: 0.7833\n\nBox 66_2: [429, 747, 1187, 769]\n  Text: aho核心板搭建，这部分被件的规格、原\n  Confidence: 0.8745\n\nBox 66_3: [429, 747, 1187, 769]\n  Text: 书、原理图、只寸图等均可在\n  Confidence: 0.9743\n\nBox 66 (merged): [429, 747, 1187, 769]\n  Text: NaoKVMSpedcheR/Naho核心板搭建，这部分被件的规格、原书、原理图、只寸图等均可在\n  Confidence: 0.7833\n\nBox 67: [215, 757, 279, 779]\n  Text: 用户指南\n  Confidence: 0.9993\n\nBox 68: [431, 779, 583, 801]\n  Text: 这里找到：点击这里\n  Confidence: 0.9887\n\nBox 69: [219, 799, 279, 821]\n  Text: 次开发\n  Confidence: 1.0000\n\nBox 70_1: [429, 829, 1201, 850]\n  Text: NanoKVLte由LcheeRVNaoE和H\n  Confidence: 0.8060\n\nBox 70_2: [429, 829, 1201, 850]\n  Text: 和HDMtoc小构成NahUL\n  Confidence: 0.7956\n\nBox 70_3: [429, 829, 1201, 850]\n  Text: MFULL在NanoKVMLite基础\n  Confidence: 0.9111\n\nBox 70 (merged): [429, 829, 1201, 850]\n  Text: NanoKVLte由LcheeRVNaoE和HDMtoc小构成NahULL在NanoKVMLite基础\n  Confidence: 0.8060\n\nBox 71_1: [435, 861, 1193, 881]\n  Text: 增加NanoKVA板和。HDMroC\n  Confidence: 0.6971\n\nBox 71_2: [435, 861, 1193, 881]\n  Text: MrocSI板用于装锁HDM信号：Nanok\n  Confidence: 0.7634\n\nBox 71_3: [435, 861, 1193, 881]\n  Text: OKVM-A包含OLED、ATX控\n  Confidence: 0.9483\n\nBox 71 (merged): [435, 861, 1193, 881]\n  Text: 增加NanoKVA板和。HDMroCSI板用于装锁HDM信号：NanokVM-A包含OLED、ATX控\n  Confidence: 0.6971\n\nBox 72_1: [431, 893, 1199, 913]\n  Text: 输出（ypeC接形）、输坊钱电（TVD\n  Confidence: 0.6548\n\nBox 72_2: [431, 893, 1199, 913]\n  Text: （IyDeC接）以及ATX开关机、复位按键\n  Confidence: 0.7372\n\nBox 72_3: [431, 893, 1199, 913]\n  Text: 按键：NanokVM-B一端连接\n  Confidence: 0.8570\n\nBox 72 (merged): [431, 893, 1199, 913]\n  Text: 输出（ypeC接形）、输坊钱电（IyDeC接）以及ATX开关机、复位按键：NanokVM-B一端连接\n  Confidence: 0.6548\n\nBox 74_1: [426, 924, 828, 950]\n  Text: A板，一端连接电脑ATX针脚，用子电脑的\n  Confidence: 0.9483\n\nBox 74_2: [426, 924, 828, 950]\n  Text: 电脑的远程开关机。\n  Confidence: 0.8961\n\nBox 74 (merged): [426, 924, 828, 950]\n  Text: A板，一端连接电脑ATX针脚，用子电脑电脑的远程开关机。\n  Confidence: 0.9483\n\nBox 76: [210, 960, 256, 991]\n  Text: FAO\n  Confidence: 0.5985\n\nBox 77: [433, 975, 651, 991]\n  Text: NanoKVMCube/PCle软件现\n  Confidence: 0.9276\n\n",
+    "confidence": 0.91356,
+    "block_count": 65,
+    "blocks": [
+      {
+        "id": 0,
+        "text": "4月20日17:00",
+        "bbox": [
+          865,
+          5,
+          965,
+          27
+        ],
+        "confidence": 0.9313
+      },
+      {
+        "id": 3,
+        "text": "Sipeed资料站-Sipeedx",
+        "bbox": [
+          169,
+          73,
+          400,
+          95
+        ],
+        "confidence": 0.8626
+      },
+      {
+        "id": 4,
+        "text": "简介-Sipeedwiki",
+        "bbox": [
+          432,
+          73,
+          555,
+          93
+        ],
+        "confidence": 0.8837
+      },
+      {
+        "id": 5,
+        "text": "accounts.g",
+        "bbox": [
+          638,
+          76,
+          724,
+          92
+        ],
+        "confidence": 0.9278
+      },
+      {
+        "id": 6,
+        "text": "Cwkspedcomhadaezb//",
+        "bbox": [
+          219,
+          109,
+          505,
+          131
+        ],
+        "confidence": 0.7442
+      },
+      {
+        "id": 7,
+        "text": "uction.htm",
+        "bbox": [
+          603,
+          109,
+          671,
+          129
+        ],
+        "confidence": 0.9291
+      },
+      {
+        "id": 9,
+        "text": "验证身份",
+        "bbox": [
+          1339,
+          113,
+          1441,
+          133
+        ],
+        "confidence": 0.9949
+      },
+      {
+        "id": 10,
+        "text": "完成更新",
+        "bbox": [
+          1456,
+          113,
+          1535,
+          133
+        ],
+        "confidence": 0.9783
+      },
+      {
+        "id": 11,
+        "text": "MaixZero",
+        "bbox": [
+          173,
+          161,
+          247,
+          183
+        ],
+        "confidence": 0.9039
+      },
+      {
+        "id": 13,
+        "text": "ATX电源控制",
+        "bbox": [
+          443,
+          175,
+          545,
+          197
+        ],
+        "confidence": 0.9933
+      },
+      {
+        "id": 14,
+        "text": "无，用户可自行连按",
+        "bbox": [
+          579,
+          175,
+          729,
+          197
+        ],
+        "confidence": 0.9025
+      },
+      {
+        "id": 15,
+        "text": "USB接口IO控制板",
+        "bbox": [
+          789,
+          175,
+          927,
+          197
+        ],
+        "confidence": 0.9499
+      },
+      {
+        "id": 16,
+        "text": "RJ45接口IO控制板",
+        "bbox": [
+          999,
+          175,
+          1145,
+          197
+        ],
+        "confidence": 0.9638
+      },
+      {
+        "id": 17,
+        "text": "aix-",
+        "bbox": [
+          175,
+          199,
+          221,
+          221
+        ],
+        "confidence": 0.7059
+      },
+      {
+        "id": 18,
+        "text": "OLED显示",
+        "bbox": [
+          441,
+          223,
+          525,
+          245
+        ],
+        "confidence": 0.9728
+      },
+      {
+        "id": 19,
+        "text": "无，用户可自行扩展",
+        "bbox": [
+          579,
+          223,
+          733,
+          245
+        ],
+        "confidence": 0.9779
+      },
+      {
+        "id": 20,
+        "text": "128x640.96white",
+        "bbox": [
+          791,
+          223,
+          937,
+          245
+        ],
+        "confidence": 0.9521
+      },
+      {
+        "id": 21,
+        "text": "128x320.91\"white",
+        "bbox": [
+          999,
+          223,
+          1149,
+          243
+        ],
+        "confidence": 0.9273
+      },
+      {
+        "id": 23,
+        "text": "Max-",
+        "bbox": [
+          173,
+          239,
+          227,
+          261
+        ],
+        "confidence": 0.5945
+      },
+      {
+        "id": 24,
+        "text": "串口终端",
+        "bbox": [
+          441,
+          269,
+          516,
+          291
+        ],
+        "confidence": 0.9926
+      },
+      {
+        "id": 25,
+        "text": "、简介",
+        "bbox": [
+          1275,
+          274,
+          1334,
+          300
+        ],
+        "confidence": 0.9956
+      },
+      {
+        "id": 26,
+        "text": "Maix-",
+        "bbox": [
+          173,
+          277,
+          233,
+          299
+        ],
+        "confidence": 0.5532
+      },
+      {
+        "id": 27,
+        "text": "二、使用场景",
+        "bbox": [
+          1271,
+          303,
+          1363,
+          325
+        ],
+        "confidence": 0.9353
+      },
+      {
+        "id": 28,
+        "text": "MicroSD卡",
+        "bbox": [
+          441,
+          315,
+          533,
+          337
+        ],
+        "confidence": 0.9044
+      },
+      {
+        "id": 29,
+        "text": "无，用户自备",
+        "bbox": [
+          577,
+          315,
+          681,
+          337
+        ],
+        "confidence": 0.9691
+      },
+      {
+        "id": 30,
+        "text": "有，开机即用",
+        "bbox": [
+          787,
+          315,
+          893,
+          337
+        ],
+        "confidence": 0.9926
+      },
+      {
+        "id": 31,
+        "text": "Maix-V",
+        "bbox": [
+          173,
+          317,
+          233,
+          339
+        ],
+        "confidence": 0.8088
+      },
+      {
+        "id": 32,
+        "text": "缴",
+        "bbox": [
+          1264,
+          333,
+          1334,
+          355
+        ],
+        "confidence": 0.9794
+      },
+      {
+        "id": 33,
+        "text": "MaixCAM",
+        "bbox": [
+          175,
+          355,
+          245,
+          377
+        ],
+        "confidence": 0.9687
+      },
+      {
+        "id": 34,
+        "text": "PoE",
+        "bbox": [
+          783,
+          357,
+          827,
+          387
+        ],
+        "confidence": 0.5971
+      },
+      {
+        "id": 35,
+        "text": "扩展配件",
+        "bbox": [
+          441,
+          361,
+          513,
+          383
+        ],
+        "confidence": 0.9838
+      },
+      {
+        "id": 36,
+        "text": "WiFiLTE",
+        "bbox": [
+          999,
+          361,
+          1073,
+          383
+        ],
+        "confidence": 0.8401
+      },
+      {
+        "id": 37,
+        "text": "四、NanokVM软硬件资料",
+        "bbox": [
+          1267,
+          363,
+          1451,
+          383
+        ],
+        "confidence": 0.9671
+      },
+      {
+        "id": 38,
+        "text": "五、购买入口",
+        "bbox": [
+          1267,
+          389,
+          1361,
+          411
+        ],
+        "confidence": 0.9581
+      },
+      {
+        "id": 39,
+        "text": "LicheePi",
+        "bbox": [
+          173,
+          393,
+          239,
+          415
+        ],
+        "confidence": 0.8421
+      },
+      {
+        "id": 40,
+        "text": "功耗",
+        "bbox": [
+          441,
+          403,
+          483,
+          433
+        ],
+        "confidence": 0.9772
+      },
+      {
+        "id": 41,
+        "text": "0.2A@5V",
+        "bbox": [
+          575,
+          407,
+          655,
+          429
+        ],
+        "confidence": 0.9693
+      },
+      {
+        "id": 42,
+        "text": "0.2A@5V",
+        "bbox": [
+          785,
+          407,
+          865,
+          429
+        ],
+        "confidence": 0.97
+      },
+      {
+        "id": 43,
+        "text": "Peak2.6A@5V",
+        "bbox": [
+          999,
+          407,
+          1121,
+          429
+        ],
+        "confidence": 0.9762
+      },
+      {
+        "id": 44,
+        "text": "六、产品反馈",
+        "bbox": [
+          1267,
+          417,
+          1361,
+          439
+        ],
+        "confidence": 0.9478
+      },
+      {
+        "id": 45,
+        "text": "TangFPGA",
+        "bbox": [
+          177,
+          433,
+          257,
+          455
+        ],
+        "confidence": 0.8642
+      },
+      {
+        "id": 46,
+        "text": "PCUSB即可供电",
+        "bbox": [
+          789,
+          453,
+          921,
+          475
+        ],
+        "confidence": 0.9848
+      },
+      {
+        "id": 47,
+        "text": "电源输入",
+        "bbox": [
+          442,
+          468,
+          514,
+          494
+        ],
+        "confidence": 0.9629
+      },
+      {
+        "id": 48,
+        "text": "PCUSB即可供电",
+        "bbox": [
+          576,
+          468,
+          710,
+          494
+        ],
+        "confidence": 0.9789
+      },
+      {
+        "id": 49,
+        "text": "需要DC5V3A供电",
+        "bbox": [
+          998,
+          468,
+          1146,
+          494
+        ],
+        "confidence": 0.9847
+      },
+      {
+        "id": 50,
+        "text": "MaixSense",
+        "bbox": [
+          175,
+          471,
+          255,
+          493
+        ],
+        "confidence": 0.9637
+      },
+      {
+        "id": 51,
+        "text": "也支持额外辅助供电",
+        "bbox": [
+          791,
+          485,
+          941,
+          507
+        ],
+        "confidence": 0.9789
+      },
+      {
+        "id": 52,
+        "text": "SLogic",
+        "bbox": [
+          175,
+          511,
+          227,
+          533
+        ],
+        "confidence": 0.8566
+      },
+      {
+        "id": 53,
+        "text": "静音无风扇",
+        "bbox": [
+          576,
+          530,
+          664,
+          556
+        ],
+        "confidence": 0.99
+      },
+      {
+        "id": 54,
+        "text": "静音无风扇",
+        "bbox": [
+          788,
+          530,
+          874,
+          556
+        ],
+        "confidence": 0.9918
+      },
+      {
+        "id": 55,
+        "text": "需要风扇主动散热",
+        "bbox": [
+          999,
+          533,
+          1137,
+          553
+        ],
+        "confidence": 0.9187
+      },
+      {
+        "id": 56,
+        "text": "ThermalCam",
+        "bbox": [
+          177,
+          551,
+          267,
+          571
+        ],
+        "confidence": 0.9556
+      },
+      {
+        "id": 57,
+        "text": "23x37x15mm",
+        "bbox": [
+          579,
+          577,
+          683,
+          599
+        ],
+        "confidence": 0.9609
+      },
+      {
+        "id": 58,
+        "text": "40x36x36mm",
+        "bbox": [
+          789,
+          577,
+          895,
+          599
+        ],
+        "confidence": 0.9781
+      },
+      {
+        "id": 59,
+        "text": "寸",
+        "bbox": [
+          441,
+          591,
+          483,
+          621
+        ],
+        "confidence": 0.5294
+      },
+      {
+        "id": 60,
+        "text": "120x68x44mm",
+        "bbox": [
+          999,
+          595,
+          1113,
+          617
+        ],
+        "confidence": 0.9726
+      },
+      {
+        "id": 61,
+        "text": "1/30PkVMV4体积",
+        "bbox": [
+          585,
+          611,
+          751,
+          633
+        ],
+        "confidence": 0.9449
+      },
+      {
+        "id": 62,
+        "text": "1/7PiKVMV4体积",
+        "bbox": [
+          793,
+          611,
+          953,
+          633
+        ],
+        "confidence": 0.9324
+      },
+      {
+        "id": 63,
+        "text": "NanoKVMCube",
+        "bbox": [
+          195,
+          627,
+          309,
+          647
+        ],
+        "confidence": 0.9156
+      },
+      {
+        "id": 65,
+        "text": "快速上手",
+        "bbox": [
+          217,
+          713,
+          279,
+          735
+        ],
+        "confidence": 0.9783
+      },
+      {
+        "id": 67,
+        "text": "用户指南",
+        "bbox": [
+          215,
+          757,
+          279,
+          779
+        ],
+        "confidence": 0.9993
+      },
+      {
+        "id": 68,
+        "text": "这里找到：点击这里",
+        "bbox": [
+          431,
+          779,
+          583,
+          801
+        ],
+        "confidence": 0.9887
+      },
+      {
+        "id": 69,
+        "text": "次开发",
+        "bbox": [
+          219,
+          799,
+          279,
+          821
+        ],
+        "confidence": 1.0
+      },
+      {
+        "id": 76,
+        "text": "FAO",
+        "bbox": [
+          210,
+          960,
+          256,
+          991
+        ],
+        "confidence": 0.5985
+      },
+      {
+        "id": 77,
+        "text": "NanoKVMCube/PCle软件现",
+        "bbox": [
+          433,
+          975,
+          651,
+          991
+        ],
+        "confidence": 0.9276
+      }
+    ]
+  },
+  "tags": [
+    "ocr",
+    "screen",
+    "nanokvm-go"
+  ]
+}

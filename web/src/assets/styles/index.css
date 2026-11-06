@@ -1,0 +1,254 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .nanokvm-button-base {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: inherit;
+  }
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: #000;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+.spin {
+  animation: spin 1s linear;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ant-tabs .ant-tabs-content {
+  @apply relative h-[400px] w-full overflow-y-auto md:h-full;
+}
+
+.screen-timelapse-quality-slider:not(.ant-slider-disabled) .ant-slider-dot {
+  inset-block-start: -1px !important;
+  width: 2px !important;
+  height: 6px !important;
+  background-color: rgba(255, 255, 255, 0.38) !important;
+  border: 0 !important;
+  border-radius: 1px !important;
+}
+
+.screen-timelapse-quality-slider:not(.ant-slider-disabled) .ant-slider-dot-active {
+  background-color: rgba(22, 119, 255, 0.8) !important;
+}
+
+.nanokvm-mobile-menu-popover {
+  max-width: calc(100vw - 76px);
+}
+
+.nanokvm-mobile-menu-popover .ant-popover-inner-content {
+  max-height: calc(100dvh - 96px);
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+}
+
+.nanokvm-mobile-menu-panel {
+  display: grid;
+  width: min(18rem, calc(100vw - 100px));
+  max-height: calc(100dvh - 96px);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.nanokvm-mobile-menu-panel__body {
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.nanokvm-mobile-menu-panel__root,
+.nanokvm-mobile-menu-panel__layer {
+  grid-area: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+  max-height: calc(100dvh - 128px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.nanokvm-mobile-menu-popover .ant-popover-inner {
+  background: rgba(38, 38, 38, 0.96);
+  color: #e5e5e5;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+.nanokvm-mobile-menu-popover .ant-tooltip-inner {
+  background: rgba(38, 38, 38, 0.96);
+  color: #e5e5e5;
+}
+
+.nanokvm-mobile-menu-popover .ant-tooltip-arrow::before {
+  background: rgba(38, 38, 38, 0.96);
+}
+
+.nanokvm-time-wheel-popup.ant-picker-dropdown .ant-picker-time-panel-column {
+  position: relative;
+  z-index: 1;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none !important;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nanokvm-time-wheel-popup.ant-picker-dropdown .ant-picker-time-panel-column::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.nanokvm-time-wheel-popup.ant-picker-dropdown .ant-picker-time-panel-column::before,
+.nanokvm-time-wheel-popup.ant-picker-dropdown .ant-picker-time-panel-column::after {
+  display: block;
+  height: calc(50% - 14px) !important;
+  content: '';
+}
+
+.nanokvm-time-wheel-popup.ant-picker-dropdown .ant-picker-time-panel > .ant-picker-content {
+  position: relative;
+  isolation: isolate;
+}
+
+.nanokvm-time-wheel-popup.ant-picker-dropdown .ant-picker-time-panel > .ant-picker-content::before {
+  position: absolute;
+  z-index: 0;
+  inset-inline: 4px;
+  top: 50%;
+  height: 28px;
+  background: #15325b;
+  border-radius: 4px;
+  transform: translateY(-50%);
+  content: '';
+  pointer-events: none;
+}
+
+.nanokvm-time-wheel-popup.ant-picker-dropdown
+  .ant-picker-time-panel-cell-selected
+  .ant-picker-time-panel-cell-inner {
+  background: transparent !important;
+  transition: none;
+}
+
+/* Refresh-entry video loading (h264/h265 WebRTC nested Spin).
+   The desktop ScreenViewport root is `fixed`, so .ant-spin-nested-loading
+   collapses to 0 height and antd's overlay anchors to the document top.
+   Give the wrapper the viewport height, and lift antd's contentHeight
+   (max-height: 400px) clamp on the overlay. The extra
+   `.ant-spin-nested-loading` class keeps specificity (0,3,1) above antd's
+   (0,2,1) so the override does not depend on stylesheet injection order. */
+.nanokvm-screen-loading.ant-spin-nested-loading {
+  height: 100vh;
+}
+
+.nanokvm-screen-loading.ant-spin-nested-loading > div > .ant-spin {
+  max-height: none;
+}
+
+/* Mobile-portrait onboarding tour (option E). The rail is a small dark target,
+   so the spotlight hole gets a self-rendered ring; the popover width and nav
+   buttons meet portrait constraints (narrow viewports, 44px touch targets). */
+.nanokvm-mobile-tour-ring {
+  border-radius: 6px;
+  outline: 2px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 18px 2px rgba(64, 150, 255, 0.35);
+}
+
+/* rc-tour reuses rootClassName on the full-screen mask (ant-tour-mask) and
+   on the target placeholder, so scope the popover geometry to the popover
+   element (which carries both classes). A bare .nanokvm-mobile-tour max-width
+   clamps the mask to 300px and leaves most of the viewport undimmed. */
+.nanokvm-mobile-tour.ant-tour {
+  max-width: min(300px, calc(100vw - 32px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Footer rows: progress indicators on their own line, then the buttons on
+   one horizontal line. Full selector chains beat antd's cssinjs footer rules
+   (.ant-tour .ant-tour-inner .ant-tour-footer (0,3,0), its containers (0,4,0),
+   the per-button margin (0,5,0)) without depending on injection order. */
+.nanokvm-mobile-tour.ant-tour .ant-tour-inner .ant-tour-footer {
+  flex-direction: column;
+  row-gap: 8px;
+}
+
+/* the footer's text-align: end would right-align the dots once the column
+   container stretches the indicators full width */
+.nanokvm-mobile-tour.ant-tour .ant-tour-inner .ant-tour-footer .ant-tour-indicators {
+  text-align: start;
+}
+
+.nanokvm-mobile-tour.ant-tour .ant-tour-inner .ant-tour-footer .ant-tour-buttons {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  column-gap: 8px;
+  margin-inline-start: 0;
+}
+
+.nanokvm-mobile-tour.ant-tour .ant-tour-inner .ant-tour-footer .ant-tour-buttons .ant-btn {
+  margin-inline-start: 0;
+  /* the row must never wrap; refuse silent shrink-clipping as well — an
+     overflowing locale fails loudly instead of truncating a label */
+  flex-shrink: 0;
+}
+
+.nanokvm-mobile-tour .ant-tour-next-btn,
+.nanokvm-mobile-tour .ant-tour-prev-btn {
+  min-height: 44px;
+  /* 8px inline padding keeps the three-button row inside the 268px content
+     width for all 20 locales (probed: worst trio de ≈ 237px) */
+  padding-inline: 8px;
+}
+
+.nanokvm-mobile-tour .ant-tour-next-btn .ant-btn,
+.nanokvm-mobile-tour .ant-tour-prev-btn .ant-btn,
+.nanokvm-mobile-tour .ant-tour-footer .ant-btn {
+  min-height: 44px;
+  padding-inline: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nanokvm-mobile-tour,
+  .nanokvm-mobile-tour *,
+  .nanokvm-mobile-tour-ring {
+    transition: none !important;
+    animation: none !important;
+  }
+}

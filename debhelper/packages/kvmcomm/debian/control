@@ -1,0 +1,14 @@
+Source: kvmcomm
+Section: misc
+Priority: optional
+Maintainer: Sipeed <support@sipeed.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://github.com/sipeed
+
+Package: kvmcomm
+Architecture: armhf
+Depends: ${misc:Depends}
+Description: KVM communication service package
+ KVM communication runtime, scripts and systemd services.

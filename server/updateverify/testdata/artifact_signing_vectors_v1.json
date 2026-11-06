@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "testOnly": true,
+  "source": "RFC 8032 test vector 1 key; never use for release signing",
+  "publicKey": "11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=",
+  "keyId": "sha256:21fe31dfa154a261626bf854046fd2271b7bed4b6abe45aa58877ef47f9721b9",
+  "vectors": [
+    {
+      "kind": "deb",
+      "name": "kvmcomm_0.0.25_armhf.deb",
+      "artifact": "ITxhcmNoPgpOYW5vS1ZNLUdvIHRlc3Qtb25seSBkZWIgc2lnbmluZyB2ZWN0b3IAYXJtaGYK",
+      "signature": {
+        "schema": 1,
+        "algorithm": "ed25519",
+        "keyId": "sha256:21fe31dfa154a261626bf854046fd2271b7bed4b6abe45aa58877ef47f9721b9",
+        "value": "rbn+d0iDptLQdxMJX0nSghQ70fpwEIgXO2QwOg8eUdAWfT5EtelqcKaqzDCIoeuYIX8U7xme9pKoOEH7SDU6Dg=="
+      }
+    },
+    {
+      "kind": "firmware",
+      "name": "axera_firmware_v1.0.2.tar.gz",
+      "artifact": "H4sIAAAAAAAC/+3V3UoDMRAF4L32KfIEbWbyu89Q9NL7TDYBwbqw3VZ9e4MoQkULwi4q57tJIIEQTiYznsp0n5633YJ0E5x7HZvz8fOciI3vlOtWcDzMaWrHT+M4f7fv0vofNb7lL+1621+TP7Mm5L96/m2+VP7e2q/z/1h7zz9Qq3+N/Bd3kx7G3e21qnfT/jFNRZ1oozes5nKY1ankeZyuOvi3hA/H/WZ+WvJtX6p/ZnPe/401qP81FBNJyEsUn0t1QdhVTp6yWG91MdJad3aSuDKXUGnIPlaOqVbpOfieM+cSfZ+cFqtjy83ZYDN7rpWt6MTG+oGiSyUIpSGXTORqsb2k6omUOu9A+G4AAAAAAAAAAAAAAAAAAH7iBUwa4YYAKAAA",
+      "signature": {
+        "schema": 1,
+        "algorithm": "ed25519",
+        "keyId": "sha256:21fe31dfa154a261626bf854046fd2271b7bed4b6abe45aa58877ef47f9721b9",
+        "value": "XyuLMbzjJTkAdGV1/E3amJBiCn7GsXk5fjJL5pi/o0BGnjAH4VQ6BKHvFqYzFF+StFi5P/fQJukLalAuuOqgCQ=="
+      }
+    }
+  ]
+}

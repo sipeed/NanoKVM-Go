@@ -1,0 +1,41 @@
+#!/bin/sh
+set -e
+
+create_021_migration_marker() {
+	if [ "$1" != "configure" ]; then
+		return 0
+	fi
+
+	old_version="${2:-}"
+	if [ -z "$old_version" ]; then
+		return 0
+	fi
+
+	if ! /usr/bin/dpkg --compare-versions "$old_version" lt 0.2.1; then
+		return 0
+	fi
+
+	migration_dir="${DPKG_ROOT:-}/var/lib/nanokvm-go-update/migrations"
+	pending_file="$migration_dir/0.2.1.pending"
+	if [ -e "$pending_file" ] || [ -L "$pending_file" ]; then
+		return 0
+	fi
+
+	if ! mkdir -p -- "$migration_dir"; then
+		return 1
+	fi
+
+	temporary_file="$(mktemp "$migration_dir/.0.2.1.pending.XXXXXX")" || return 1
+	if ! mv -f -- "$temporary_file" "$pending_file"; then
+		rm -f -- "$temporary_file"
+		return 1
+	fi
+
+	return 0
+}
+
+create_021_migration_marker "$@" || true
+
+#DEBHELPER#
+
+exit 0

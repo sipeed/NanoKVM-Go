@@ -1,0 +1,203 @@
+kvmcomm (0.2.7) unstable; urgency=medium
+
+  * Preserve spaces in OCR recognition results.
+
+ -- Sipeed <support@sipeed.com>  Thu, 05 Nov 2026 18:16:51 +0800
+
+kvmcomm (0.2.6) unstable; urgency=medium
+
+  * Synchronize the package version with the NanoKVM-Go 0.2.6 application
+    release.
+
+ -- Sipeed <support@sipeed.com>  Wed, 04 Nov 2026 17:35:08 +0800
+
+kvmcomm (0.2.5) unstable; urgency=medium
+
+  * Add on-device Network setup with privacy consent, verification codes,
+    pairing status, and hold-to-confirm controls.
+  * Support WPA3/SAE, including short and UTF-8 passwords, while preserving
+    WPA2 compatibility.
+  * Coordinate local and USB storage ownership and preserve keyboard and mouse
+    HID across storage conflicts and failures.
+  * Reduce memory and CPU use.
+  * Refresh the device clock after timezone changes without restarting.
+  * Require firmware v1.0.10.
+
+ -- Sipeed <support@sipeed.com>  Fri, 30 Oct 2026 15:39:41 +0800
+
+kvmcomm (0.2.4) unstable; urgency=medium
+
+  * Keep Screen Timelapse recordings continuous when appending new frames.
+  * Hide Region and Tailscale tiles in on-device settings.
+  * Use the shared feature switch for Tailscale status in all regions.
+
+ -- Sipeed <support@sipeed.com>  Thu, 24 Sep 2026 17:15:58 +0800
+
+kvmcomm (0.2.3) unstable; urgency=medium
+
+  * Add on-device region switching and feature-gated Tailscale pairing,
+    connection status, and hold-to-confirm controls.
+  * Improve Wi-Fi scanning in AP mode and automatic SSID scrolling.
+  * Add configurable BMP screenshot capture through signals and the device CLI.
+  * Reduce logging and binary size.
+
+ -- Sipeed <support@sipeed.com>  Wed, 23 Sep 2026 16:59:48 +0800
+
+kvmcomm (0.2.2) unstable; urgency=medium
+
+  * Synchronize the package version with the NanoKVM-Go 0.2.2 application
+    release; this release contains no native kvmcomm changes.
+
+ -- Sipeed <support@sipeed.com>  Fri, 04 Sep 2026 17:24:46 +0800
+
+kvmcomm (0.2.1) unstable; urgency=medium
+
+  * Add MJPEG HTTP streaming, improve Screen Timelapse quality, and capture a
+    frame every 20 seconds.
+  * Improve HID pointer handling.
+  * Add persistent Wi-Fi presets with transactional boot fallback, better SSID/IP
+    presentation, and more responsive touch and connection actions.
+
+ -- Sipeed <support@sipeed.com>  Fri, 04 Sep 2026 11:40:36 +0800
+
+kvmcomm (0.2.0) unstable; urgency=medium
+
+  * Improve the on-device Wi-Fi workflow with open-network access, unified
+    station and boot state, responsive scan progress, and reliable long-SSID
+    rendering.
+  * Add an About More page for device and system information.
+  * Make on-device Settings actions respond optimistically and shorten Rotation
+    feedback.
+  * Add multitouch USB HID gadget support and replace the 4K49 EDID preset with
+    4K50.
+  * Make USB network startup and SD card bootloader updates more reliable,
+    and require firmware v1.0.8.
+
+ -- Sipeed <support@sipeed.com>  Tue, 01 Sep 2026 10:44:21 +0800
+
+kvmcomm (0.1.6) unstable; urgency=medium
+
+  * Features:
+    - apps: Improve upload and launcher UX
+  * Fixes:
+    - Reset state without reinstalling packages
+
+ -- Sipeed <support@sipeed.com>  Fri, 21 Aug 2026 18:30:16 +0800
+
+kvmcomm (0.1.5) unstable; urgency=medium
+
+  * Features:
+    - wifi: Restore AP captive portal redirect and DNS responder with cleanup guards
+  * Fixes:
+    - wifi: Reconnect confirmed station after QR exit
+    - wifi: Extend scan command deadline
+    - wifi: Wait for asynchronous scan completion
+
+ -- Sipeed <support@sipeed.com>  Fri, 21 Aug 2026 11:55:15 +0800
+
+kvmcomm (0.1.4) unstable; urgency=medium
+
+  * Reverts:
+    - wifi: Remove AP captive portal redirect and DNS responder
+
+ -- Sipeed <support@sipeed.com>  Fri, 21 Aug 2026 10:46:13 +0800
+
+kvmcomm (0.1.3) unstable; urgency=medium
+
+  * Features:
+    - fonts: Promote runtime TTF fonts
+  * Fixes:
+    - wifi: Keep boot marker separate from saved config
+    - video: Restore VENC startup state transition
+
+ -- Sipeed <support@sipeed.com>  Thu, 20 Aug 2026 16:28:13 +0800
+
+kvmcomm (0.1.2) unstable; urgency=medium
+
+  * Features:
+    - Manage captive-portal HTTP redirection and DNS lifecycle during Wi-Fi
+      access-point startup, SSID changes, and shutdown.
+  * Fixes:
+    - Roll back partial access-point startup cleanly and retain public DNS when
+      the captive DNS responder is unavailable.
+    - Enable adaptive UAC2 speaker synchronization and require firmware v1.0.7.
+
+ -- Sipeed <support@sipeed.com>  Thu, 20 Aug 2026 10:17:33 +0800
+
+kvmcomm (0.1.1) unstable; urgency=medium
+
+  * Features:
+    - Redesign the on-device Wi-Fi workflow with clearer connection controls,
+      faster SSID filtering, and multilingual SSID rendering.
+    - Add optional TTF font catalogs as verified rootfs packages with status,
+      integrity-check, and uninstall helpers.
+    - Add safe virtual-disk creation and mount lifecycle support with capacity
+      validation and rollback on failure.
+  * Fixes:
+    - Keep cached Wi-Fi controls and saved network availability consistent
+      across page transitions and refreshes.
+    - Preserve last-known-good device status during transient runtime read
+      failures.
+    - Release temporary SSID rendering data after leaving the Wi-Fi workflow.
+
+ -- Sipeed <support@sipeed.com>  Wed, 19 Aug 2026 15:25:40 +0800
+
+kvmcomm (0.1.0) unstable; urgency=medium
+
+  * Fixes:
+    - Improve video recovery after HDMI signal loss and resolution changes.
+    - Resume H.264/H.265 streams from a fresh keyframe after the input stabilizes.
+
+ -- Sipeed <support@sipeed.com>  Fri, 14 Aug 2026 17:33:11 +0800
+
+kvmcomm (0.0.27) unstable; urgency=medium
+
+  * Features:
+    - Add signed Firmware updates and factory recovery.
+  * Fixes:
+    - Coordinate application updates, Firmware updates, and factory resets.
+
+ -- Sipeed <support@sipeed.com>  Thu, 13 Aug 2026 13:51:08 +0800
+
+kvmcomm (0.0.25) unstable; urgency=medium
+
+  * Fixes:
+    - Support 512-byte LT7911EXC EDID
+    - Update EDID display timings
+    - kvm-ui: Restore PageManager behavior parity
+    - kvm-ui: Make runtime status publication race-free
+    - update: Authenticate privileged update delivery
+    - runtime: Harden local native and mount boundaries
+
+ -- Sipeed <support@sipeed.com>  Tue, 11 Aug 2026 18:07:45 +0800
+
+kvmcomm (0.0.24) unstable; urgency=medium
+
+  * Support self-contained, manifest-based Python Apps in the on-device UI.
+  * Refresh the on-device App list automatically after Apps are installed or
+    removed.
+  * Package the shared NanoKVM Go App runtime under /kvmcomm/apps.
+
+ -- Sipeed <support@sipeed.com>  Fri, 31 Jul 2026 17:40:28 +0800
+
+kvmcomm (0.0.23) unstable; urgency=medium
+
+  * Improve on-device navigation, reset feedback, and interrupted Servo safety.
+  * Make Wi-Fi setup and QR access-point shutdown reliable and visibly pending.
+  * Make Screen Timelapse recording commits crash-safe and coordinate them with
+    retention cleanup.
+  * Correct NanoKVM-Go firmware sources and DTB selection, and run update
+    checks without delaying KVM startup.
+  * Keep USB mass-storage functions consistent while an image is mounted.
+  * Select the correct UAC capture source for virtual speaker input.
+  * Add on-demand JPEG snapshots over HTTP with optional token authentication
+    and live resolution switching.
+  * Accept -v as a version shortcut for the on-device UI.
+
+ -- Sipeed <support@sipeed.com>  Mon, 27 Jul 2026 16:51:08 +0800
+
+kvmcomm (0.0.22) unstable; urgency=medium
+
+  * Initial debhelper packaging.
+
+ -- Sipeed <support@sipeed.com>  Wed, 06 May 2026 10:00:00 +0800

@@ -1,0 +1,68 @@
+name: Issue Tracker
+
+on:
+  issues:
+    types: [opened, reopened, closed]
+
+jobs:
+  track-issue:
+    name: Track Issue Updates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Issue Data to API
+        env:
+          RAW_TITLE: ${{ github.event.issue.title }}
+          RAW_BODY: ${{ github.event.issue.body }}
+          RAW_LABELS: ${{ toJSON(github.event.issue.labels) }}
+          RAW_ASSIGNEES: ${{ toJSON(github.event.issue.assignees) }}
+          API_URL: ${{ secrets.ISSUE_TRACKER_API_URL }}
+          VERIFY_TOKEN: ${{ secrets.VERIFY_TOKEN }}
+        run: |
+          ISSUE_DATA=$(jq -n \
+            --arg action "${{ github.event.action }}" \
+            --arg id "${{ github.event.issue.id }}" \
+            --arg num "${{ github.event.issue.number }}" \
+            --arg title "$RAW_TITLE" \
+            --arg body "$RAW_BODY" \
+            --arg state "${{ github.event.issue.state }}" \
+            --arg created_at "${{ github.event.issue.created_at }}" \
+            --arg updated_at "${{ github.event.issue.updated_at }}" \
+            --arg closed_at "${{ github.event.issue.closed_at }}" \
+            --arg url "${{ github.event.issue.html_url }}" \
+            --arg user_login "${{ github.event.issue.user.login }}" \
+            --arg repository "${{ github.repository }}" \
+            --argjson labels "$RAW_LABELS" \
+            --argjson assignees "$RAW_ASSIGNEES" \
+            '{
+              action: $action,
+              issue: {
+                id: ($id | tonumber),
+                number: ($num | tonumber),
+                title: $title,
+                body: $body,
+                state: $state,
+                created_at: $created_at,
+                updated_at: $updated_at,
+                closed_at: $closed_at,
+                url: $url,
+                user: { login: $user_login },
+                labels: $labels,
+                assignees: $assignees
+              },
+              repository: { name: $repository },
+            }')
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL" \
+            -H "Content-Type: application/json" \
+            -H "Token: $VERIFY_TOKEN" \
+            -d "$ISSUE_DATA")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "Successfully sent issue data to API"
+          else
+            echo "Failed to send issue data to API"
+            exit 1
+          fi

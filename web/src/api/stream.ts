@@ -1,0 +1,93 @@
+import { w3cwebsocket } from 'websocket';
+
+import { http } from '@/lib/http.ts';
+import { getBaseUrl } from '@/lib/service.ts';
+
+export type EncoderSettings = {
+  rate_control: 'cbr' | 'vbr';
+  bitrate: number;
+  gop: number;
+  fps: number;
+};
+
+let encoderSettingsRequest: ReturnType<typeof http.get> | undefined;
+
+// get persisted encoder settings
+export function getEncoderSettings() {
+  if (encoderSettingsRequest) {
+    return encoderSettingsRequest;
+  }
+
+  const request = http.get('/api/stream/encoder');
+  encoderSettingsRequest = request;
+  void request.then(
+    () => {
+      if (encoderSettingsRequest === request) {
+        encoderSettingsRequest = undefined;
+      }
+    },
+    () => {
+      if (encoderSettingsRequest === request) {
+        encoderSettingsRequest = undefined;
+      }
+    }
+  );
+
+  return request;
+}
+
+// set rate control mode
+export function setRateControlMode(mode: string) {
+  const data = { mode };
+  return http.post('/api/stream/rate-control', data);
+}
+
+// set video stream mode
+export function setMode(mode: string) {
+  const data = { mode };
+  return http.post('/api/stream/mode', data);
+}
+
+// set stream FPS
+export function setFps(fps: number) {
+  const data = { fps };
+  return http.post('/api/stream/fps', data);
+}
+
+// set stream quality
+export function setQuality(quality: number) {
+  const data = { quality };
+  return http.post('/api/stream/quality', data);
+}
+
+// set stream GOP
+export function setGop(gop: number) {
+  const data = { gop };
+  return http.post('/api/stream/gop', data);
+}
+
+// WebRTC H.264 connection
+export function webrtcH264() {
+  return getWebSocket('/api/stream/h264/webrtc');
+}
+
+// direct H.264 connection
+export function directH264() {
+  return getWebSocket('/api/stream/h264/direct');
+}
+
+// WebRTC H.265 connection
+export function webrtcH265() {
+  return getWebSocket('/api/stream/h265/webrtc');
+}
+
+// direct H.265 connection
+export function directH265() {
+  return getWebSocket('/api/stream/h265/direct');
+}
+
+function getWebSocket(url: string) {
+  const baseUrl = getBaseUrl('ws');
+
+  return new w3cwebsocket(`${baseUrl}${url}`);
+}

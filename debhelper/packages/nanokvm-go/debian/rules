@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --without autoreconf
+
+override_dh_dwz:
+	@echo "Skip dh_dwz for prebuilt/cross binaries"
+
+override_dh_shlibdeps:
+	@echo "Skip dh_shlibdeps for prebuilt/cross binaries"
+
+override_dh_strip:
+	@echo "Skip dh_strip for prebuilt/cross binaries"
+
+override_dh_makeshlibs:
+	@echo "Skip dh_makeshlibs for prebuilt/cross binaries"
+
+override_dh_installsystemd:
+	dh_installsystemd --name=nanokvm-go nanokvm-go.service
+	dh_installsystemd --name=memfab --no-start --no-enable --no-stop-on-upgrade memfab.service

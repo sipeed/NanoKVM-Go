@@ -1,0 +1,141 @@
+name: Create Tag
+
+# Tags a tested commit of main as release X.Y.Z and, with `release` checked,
+# starts Release on the new tag. A tag created with GITHUB_TOKEN starts no
+# workflow by itself, so Release is dispatched explicitly.
+#
+# The X.Y.Z tag ruleset must let this workflow create tags. A bypass for
+# GitHub Actions as a whole lets any workflow with contents: write create or
+# move X.Y.Z tags, including one pushed on a branch, so Release also requires
+# the tagged commit to be on main. A dedicated GitHub App as the only bypass
+# actor is the tighter setup.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release version, X.Y.Z (must equal debian/changelog at the commit)
+        required: true
+        type: string
+      commit:
+        description: Commit to tag (SHA, 7+ characters; leave empty for the head of main)
+        required: false
+        type: string
+        default: ''
+      release:
+        description: Start Release on the new tag
+        required: false
+        type: boolean
+        default: true
+      publish_cdn:
+        description: Publish to the CDN after signing (with Release)
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: create-tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: write
+    env:
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Check inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          COMMIT="${COMMIT,,}"
+          if ! [[ "$TAG" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "tag $TAG is not X.Y.Z" >&2
+            exit 1
+          fi
+          if [ -n "$COMMIT" ] && ! [[ "$COMMIT" =~ ^[0-9a-f]{7,40}$ ]]; then
+            echo "commit must be a SHA of at least 7 hex characters" >&2
+            exit 1
+          fi
+          if gh api "repos/${GH_REPO}/git/ref/tags/${TAG}" --silent 2>/dev/null; then
+            echo "tag $TAG already exists" >&2
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Commit must be on main
+        id: target
+        env:
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          COMMIT="${COMMIT,,}"
+          sha="$(git rev-parse HEAD)"
+          if [ -n "$COMMIT" ]; then
+            # Expands a short SHA; fails if it is unknown or ambiguous.
+            if ! full="$(git rev-parse --verify --quiet "${COMMIT}^{commit}")"; then
+              echo "$COMMIT is not a unique commit" >&2
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$full" "$sha"; then
+              echo "$COMMIT is not on main" >&2
+              exit 1
+            fi
+            sha="$full"
+            git checkout --quiet --detach "$sha"
+          fi
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+      - name: The commit must have a green CI run on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.target.outputs.sha }}
+        run: |
+          count="$(gh run list --workflow ci.yml --branch main --event push --commit "$SHA" --status success \
+            --limit 1 --json databaseId --jq length)"
+          if [ "$count" != "1" ]; then
+            echo "no successful CI run for $SHA" >&2
+            exit 1
+          fi
+      - name: Changelog version must equal the tag
+        run: |
+          if ! command -v dpkg-parsechangelog >/dev/null; then
+            sudo apt-get update >/dev/null
+            sudo apt-get install --yes --no-install-recommends dpkg-dev >/dev/null
+          fi
+          python3 ci/scripts/validate_version.py --tag "$TAG" --output "$RUNNER_TEMP/version.env"
+      - name: Create the tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.target.outputs.sha }}
+        run: |
+          tag_object="$(gh api "repos/${GH_REPO}/git/tags" \
+            -f tag="$TAG" -f message="Release $TAG" -f object="$SHA" -f type=commit \
+            --jq .sha)"
+          gh api "repos/${GH_REPO}/git/refs" -f ref="refs/tags/${TAG}" -f sha="$tag_object" --silent
+          test "$(gh api "repos/${GH_REPO}/git/ref/tags/${TAG}" --jq .object.sha)" = "$tag_object"
+          {
+            echo "### Tagged ${TAG}"
+            echo "- Commit: \`${SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Start Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ inputs.release }}
+          PUBLISH_CDN: ${{ inputs.publish_cdn }}
+        run: |
+          if [ "$RELEASE" != "true" ]; then
+            echo "- Next: run **Release** with tag \`${TAG}\`" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh workflow run release.yml --ref main -f tag="$TAG" -f publish_cdn="$PUBLISH_CDN"
+          echo "- Release started on \`${TAG}\` (publish to the CDN: ${PUBLISH_CDN})" >> "$GITHUB_STEP_SUMMARY"

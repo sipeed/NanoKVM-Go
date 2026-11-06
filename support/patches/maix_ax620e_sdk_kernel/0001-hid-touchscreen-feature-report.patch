@@ -1,0 +1,34 @@
+diff --git a/linux/linux-4.19.125/drivers/usb/gadget/function/f_hid.c b/linux/linux-4.19.125/drivers/usb/gadget/function/f_hid.c
+index 4f6e27e3c..0a2533bfb 100644
+--- a/linux/linux-4.19.125/drivers/usb/gadget/function/f_hid.c
++++ b/linux/linux-4.19.125/drivers/usb/gadget/function/f_hid.c
+@@ -22,6 +22,10 @@
+ 
+ #define HIDG_MINORS	4
+ 
++#define HIDG_FEATURE_REPORT_TYPE		3
++#define HIDG_TOUCHSCREEN_FEATURE_REPORT_ID	4
++#define HIDG_TOUCHSCREEN_MAX_CONTACTS		10
++
+ static int major, minors;
+ static struct class *hidg_class;
+ static DEFINE_IDA(hidg_ida);
+@@ -702,6 +706,18 @@ static int hidg_setup(struct usb_function *f,
+ 		  | HID_REQ_GET_REPORT):
+ 		VDBG(cdev, "get_report\n");
+ 
++		if ((value >> 8) == HIDG_FEATURE_REPORT_TYPE &&
++		    (value & 0xff) == HIDG_TOUCHSCREEN_FEATURE_REPORT_ID) {
++			length = min_t(unsigned int, length, 2);
++			if (length > 0)
++				((u8 *)req->buf)[0] =
++					HIDG_TOUCHSCREEN_FEATURE_REPORT_ID;
++			if (length > 1)
++				((u8 *)req->buf)[1] =
++					HIDG_TOUCHSCREEN_MAX_CONTACTS;
++			goto respond;
++		}
++
+ 		/* send an empty report */
+ 		length = min_t(unsigned, length, hidg->report_length);
+ 		memset(req->buf, 0x0, length);

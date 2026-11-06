@@ -1,0 +1,10 @@
+#pragma once
+
+namespace lvgl_main::build_info
+{
+
+inline constexpr const char *kAppName = "@NANOKVM_GO_APP_NAME@";
+inline constexpr const char *kAppVersion = "@NANOKVM_GO_APP_VERSION@";
+inline constexpr const char *kGitCommit = "@NANOKVM_GO_GIT_COMMIT@";
+
+} // namespace lvgl_main::build_info

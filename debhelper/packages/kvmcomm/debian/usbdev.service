@@ -1,0 +1,13 @@
+[Unit]
+Description=USB Device Service
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash /opt/scripts/usbdev.sh start
+ExecStop=/bin/bash /opt/scripts/usbdev.sh stop
+ExecReload=/bin/bash /opt/scripts/usbdev.sh restart
+
+[Install]
+WantedBy=multi-user.target

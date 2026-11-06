@@ -1,0 +1,28 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --without autoreconf
+
+override_dh_shlibdeps:
+	@echo "Skip dh_shlibdeps for prebuilt/cross binaries"
+
+override_dh_dwz:
+	@echo "Skip dh_dwz for prebuilt/cross binaries"
+
+override_dh_strip:
+	@echo "Skip dh_strip for prebuilt/cross binaries"
+
+override_dh_makeshlibs:
+	@echo "Skip dh_makeshlibs for prebuilt/cross binaries"
+
+override_dh_install:
+	test -f rootfs/kvmcomm/apps/appbase.py
+	test -f rootfs/kvmcomm/apps/appbase.pyi
+	dh_install -X.git
+
+override_dh_installsystemd:
+	dh_installsystemd --name=kvmcomm kvmcomm.service
+	dh_installsystemd --name=wifi --no-stop-on-upgrade wifi.service
+	dh_installsystemd --name=usbdev usbdev.service
+	dh_installsystemd --no-enable --no-start --name=data --no-stop-on-upgrade data.mount
+	dh_installsystemd --name=nano_ocr --no-enable --no-start --no-stop-on-upgrade nano_ocr.service

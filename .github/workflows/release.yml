@@ -1,0 +1,216 @@
+name: Release
+run-name: Release ${{ inputs.tag }}${{ inputs.publish_cdn && ' and publish to the CDN' || '' }}
+
+# Builds an existing X.Y.Z tag with the full CI pipeline, signs the bundle with
+# the CI update key in the `release` environment and attaches it to a draft
+# GitHub release. With `publish_cdn` checked, publish-cdn.yml then uploads it
+# to the CDN channel and makes the release public; otherwise run Publish to CDN
+# with the tag later. Leave it unchecked until the v2 bridge release, which is
+# root-signed, has been published by hand.
+#
+# Repository setup this workflow relies on:
+# - Environment `release`: required reviewers, deployments limited to the
+#   main branch, secret NANOKVM_CI_SIGNING_KEY (Ed25519 PEM).
+# - A tag ruleset that restricts who may create or move X.Y.Z tags; see
+#   create-tag.yml for the bypass it needs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag, X.Y.Z
+        required: true
+        type: string
+      publish_cdn:
+        description: Publish to the CDN after signing
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    # Run from main only, so the signing job always runs main's workflow.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.tag.outputs.sha }}
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      # Defence in depth for the tag ruleset: whoever created the tag, only
+      # code already on main is signed.
+      - name: Tag must be X.Y.Z and on main
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! [[ "$TAG" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "tag $TAG is not X.Y.Z" >&2
+            exit 1
+          fi
+          if ! gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --silent 2>/dev/null; then
+            echo "tag $TAG does not exist; create it with Create Tag first" >&2
+            exit 1
+          fi
+          sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/refs/tags/${TAG}" --jq .sha)"
+          status="$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${sha}" --jq .status)"
+          case "$status" in
+            identical|behind) ;;
+            *)
+              echo "$sha is not on main (compare status: $status)" >&2
+              exit 1
+              ;;
+          esac
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+
+  ci:
+    needs: resolve
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.resolve.outputs.sha }}
+    # build-armv7 declares packages: write for main pushes; a release build
+    # never pushes the image (TRUSTED is false), but the caller must still
+    # grant it.
+    permissions:
+      contents: read
+      packages: write
+
+  sign:
+    needs: [resolve, ci]
+    # A fresh GitHub-hosted VM: the signing key never touches a persistent
+    # self-hosted runner.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: release
+    permissions:
+      contents: write
+    env:
+      RELEASE_VERSION: ${{ needs.ci.outputs.version }}
+      SHA: ${{ needs.resolve.outputs.sha }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Tag must match the package version
+        run: |
+          test -n "$RELEASE_VERSION"
+          if [ "$TAG" != "$RELEASE_VERSION" ]; then
+            echo "tag $TAG does not match debian/changelog version $RELEASE_VERSION" >&2
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SHA }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: nanokvm-go-${{ env.RELEASE_VERSION }}-armv7-unsigned
+          path: build
+      # The unsigned build may come from a self-hosted runner. Rebuild the key
+      # ring from the checked-in official keys and require the built one to
+      # match byte for byte, so a tampered build cannot get an extra key
+      # signed into every device. package_update then checks that the ring
+      # inside kvmcomm equals this file.
+      - name: Key ring must be exactly the official keys
+        run: |
+          python3 support/scripts/update_signing.py keyring \
+            --public-key support/keys/nanokvm-go-release.pub.pem \
+            --public-key support/keys/nanokvm-go-ci.pub.pem \
+            --output "$RUNNER_TEMP/expected-keys.json"
+          cmp "$RUNNER_TEMP/expected-keys.json" build/update-keys.json
+      - name: Sign the update bundle
+        env:
+          SIGNING_KEY: ${{ secrets.NANOKVM_CI_SIGNING_KEY }}
+        run: |
+          key="$RUNNER_TEMP/update-signing.pem"
+          trap 'rm -f -- "$key"' EXIT
+          test -n "$SIGNING_KEY"
+          (umask 077 && printf '%s\n' "$SIGNING_KEY" > "$key")
+          # package_update first checks that the packaged kvmcomm key ring
+          # pins this key, then signs the exact bytes of both debs.
+          python3 build.py package_update --version "$RELEASE_VERSION" --signing-key "$key"
+          test ! -e build/update/UNSIGNED-DO-NOT-DISTRIBUTE
+      - name: Verify with the device verifier against the CI key alone
+        run: |
+          python3 support/scripts/update_signing.py keyring \
+            --public-key support/keys/nanokvm-go-ci.pub.pem \
+            --output "$RUNNER_TEMP/ci-only-keys.json"
+          mkdir "$RUNNER_TEMP/bundle"
+          tar -xzf "build/update/nanokvm-go_${RELEASE_VERSION}.tar.gz" -C "$RUNNER_TEMP/bundle"
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE/server:/src:ro" \
+            --volume "$RUNNER_TEMP:/work" \
+            --workdir /src \
+            --env GOFLAGS=-buildvcs=false --env GOCACHE=/tmp/gocache --env GOMODCACHE=/tmp/gomod \
+            --env RELEASE_VERSION \
+            golang:1.26.5-bookworm \
+            bash -euo pipefail -c '
+              go build -o /tmp/nanokvm-update-verify ./cmd/nanokvm-update-verify
+              bundle=$(find /work/bundle -mindepth 1 -maxdepth 1 -type d)
+              /tmp/nanokvm-update-verify bundle \
+                --bundle "$bundle" \
+                --keyring /work/ci-only-keys.json \
+                --requested-version "$RELEASE_VERSION"
+            '
+      - name: Checksums
+        working-directory: build
+        run: |
+          sha256sum \
+            "kvmcomm_${RELEASE_VERSION}_armhf.deb" \
+            "nanokvm-go_${RELEASE_VERSION}_armhf.deb" \
+            "update/nanokvm-go_${RELEASE_VERSION}.tar.gz" \
+            update/latest.json |
+            # The release lists assets flat, so name them as they are downloaded.
+            sed 's#  update/#  #' > SHA256SUMS
+          cat SHA256SUMS
+          ! grep -q '/' SHA256SUMS
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nanokvm-go-${{ env.RELEASE_VERSION }}-signed
+          path: |
+            build/kvmcomm_${{ env.RELEASE_VERSION }}_armhf.deb
+            build/nanokvm-go_${{ env.RELEASE_VERSION }}_armhf.deb
+            build/update/nanokvm-go_${{ env.RELEASE_VERSION }}.tar.gz
+            build/update/latest.json
+            build/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
+      - name: Draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The tag may have moved since the build; never attach these assets
+          # to a different commit.
+          tagged="$(gh api "repos/${GITHUB_REPOSITORY}/commits/refs/tags/${TAG}" --jq .sha)"
+          if [ "$tagged" != "$SHA" ]; then
+            echo "tag $TAG now points at $tagged, built $SHA" >&2
+            exit 1
+          fi
+          gh release create "$TAG" --draft --verify-tag \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "nanokvm-go@${TAG}" \
+            --notes "Signed by the CI update key." \
+            "build/kvmcomm_${RELEASE_VERSION}_armhf.deb" \
+            "build/nanokvm-go_${RELEASE_VERSION}_armhf.deb" \
+            "build/update/nanokvm-go_${RELEASE_VERSION}.tar.gz" \
+            build/update/latest.json \
+            build/SHA256SUMS
+
+  publish:
+    needs: [resolve, sign]
+    if: inputs.publish_cdn
+    uses: ./.github/workflows/publish-cdn.yml
+    with:
+      tag: ${{ inputs.tag }}
+      sha: ${{ needs.resolve.outputs.sha }}
+    # A called workflow sees no secrets, not even those of the environment
+    # its job names, unless the caller passes them on.
+    secrets: inherit
+    permissions:
+      contents: write

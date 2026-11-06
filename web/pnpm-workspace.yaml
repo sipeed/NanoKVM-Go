@@ -1,0 +1,21 @@
+packages:
+  - .
+
+allowBuilds:
+  bufferutil: true
+  es5-ext: true
+  esbuild: true
+  msw: true
+  utf-8-validate: true
+
+overrides:
+  brace-expansion@1.1.14: 1.1.21
+  brace-expansion@5.0.6: 5.0.12
+  esbuild@0.27.7: 0.28.1
+  js-yaml@4.1.1: 4.3.2
+  # mpegts.js ships its worker in dist; use the registry release for its Git dependency.
+  mpegts.js>webworkify-webpack: 2.1.5
+  nanoid@3.3.12: 3.3.18
+  postcss@8.5.15: 8.5.26
+  # Tailwind 3 and postcss-nested 6 request parser 6; security fixes require 7.
+  postcss-selector-parser@^6.1.2: 7.1.7

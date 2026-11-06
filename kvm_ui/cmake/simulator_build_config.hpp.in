@@ -1,0 +1,18 @@
+#pragma once
+
+#include <string_view>
+
+namespace lvgl_main::simulator_build_config
+{
+
+inline constexpr std::string_view kDefaultConfigPath =
+	"@NANOKVM_GO_SIMULATOR_CONFIG_PATH@";
+inline constexpr std::string_view kAppsPath =
+	"@NANOKVM_GO_SIMULATOR_APPS_PATH@";
+inline constexpr std::string_view kWindowTitle =
+	"@NANOKVM_GO_SIMULATOR_WINDOW_TITLE@";
+inline constexpr int kLogicalWidth = @NANOKVM_GO_SIMULATOR_LOGICAL_WIDTH@;
+inline constexpr int kLogicalHeight = @NANOKVM_GO_SIMULATOR_LOGICAL_HEIGHT@;
+inline constexpr int kWindowZoom = @NANOKVM_GO_SIMULATOR_WINDOW_ZOOM@;
+
+} // namespace lvgl_main::simulator_build_config

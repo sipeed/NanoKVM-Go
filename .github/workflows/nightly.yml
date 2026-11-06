@@ -1,0 +1,152 @@
+name: Nightly
+
+# Republishes the unsigned ARMv7 bundle of the head of main, once its CI run
+# has succeeded, as a rolling `nightly` prerelease for testers. Nothing is rebuilt,
+# signed, or uploaded to the CDN.
+#
+# The bundle carries the debian/changelog version (plain X.Y.Z), so a device
+# shows the same version as the last release. It installs only by offline
+# upload with application update signature verification switched off.
+
+on:
+  # Every green push build of main replaces the nightly.
+  workflow_run:
+    workflows: [Build and Test]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Republish even if the nightly already points at this commit
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Find the green CI run for the head of main
+        id: run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force || false }}
+        run: |
+          # Only the head of main: GITHUB_TOKEN may not point a new tag at a
+          # commit whose workflow files differ from the default branch.
+          sha="$(gh api "repos/${GH_REPO}/commits/main" --jq .sha)"
+          run_id="$(gh run list --workflow ci.yml --branch main --event push --commit "$sha" \
+            --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+          if [ -z "$run_id" ]; then
+            echo "::notice::CI for main at $sha has not succeeded; keeping the current nightly"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          current="$(gh api "repos/${GH_REPO}/git/ref/tags/nightly" --jq .object.sha 2>/dev/null || true)"
+          if [ "$current" = "$sha" ] && [ "$FORCE" != "true" ]; then
+            echo "nightly already points at $sha"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          {
+            echo "skip=false"
+            echo "id=${run_id}"
+            echo "sha=${sha}"
+          } >> "$GITHUB_OUTPUT"
+      - name: Download the unsigned bundle
+        if: steps.run.outputs.skip == 'false'
+        id: bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.run.outputs.id }}
+        run: |
+          gh run download "$RUN_ID" --pattern 'nanokvm-go-*-armv7-unsigned' --dir "$RUNNER_TEMP/dl"
+          # Exactly one bundle artifact per CI run.
+          test "$(find "$RUNNER_TEMP/dl" -mindepth 1 -maxdepth 1 -type d | wc -l)" -eq 1
+          dir="$(find "$RUNNER_TEMP/dl" -mindepth 1 -maxdepth 1 -type d)"
+          test -e "$dir/update/UNSIGNED-DO-NOT-DISTRIBUTE"
+          version="$(jq -er .version "$dir/update/latest.json")"
+          {
+            echo "dir=${dir}"
+            echo "version=${version}"
+          } >> "$GITHUB_OUTPUT"
+      - if: steps.run.outputs.skip == 'false'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.run.outputs.sha }}
+          persist-credentials: false
+      # Testers install a nightly with signature verification off, so a build
+      # from a self-hosted runner must not slip an extra trusted key into
+      # kvmcomm: require exactly the official key ring, as Release does.
+      - name: Key ring must be exactly the official keys
+        if: steps.run.outputs.skip == 'false'
+        env:
+          DIR: ${{ steps.bundle.outputs.dir }}
+          VERSION: ${{ steps.bundle.outputs.version }}
+        run: |
+          python3 support/scripts/update_signing.py keyring \
+            --public-key support/keys/nanokvm-go-release.pub.pem \
+            --public-key support/keys/nanokvm-go-ci.pub.pem \
+            --output "$RUNNER_TEMP/expected-keys.json"
+          cmp "$RUNNER_TEMP/expected-keys.json" "$DIR/update-keys.json"
+          dpkg-deb -x "$DIR/kvmcomm_${VERSION}_armhf.deb" "$RUNNER_TEMP/kvmcomm"
+          cmp "$RUNNER_TEMP/expected-keys.json" "$RUNNER_TEMP/kvmcomm/usr/share/nanokvm/update-keys.json"
+      - name: Replace the nightly prerelease
+        if: steps.run.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.run.outputs.id }}
+          SHA: ${{ steps.run.outputs.sha }}
+          DIR: ${{ steps.bundle.outputs.dir }}
+          VERSION: ${{ steps.bundle.outputs.version }}
+        run: |
+          out="$RUNNER_TEMP/out"
+          mkdir "$out"
+          cp "$DIR/kvmcomm_${VERSION}_armhf.deb" \
+            "$DIR/nanokvm-go_${VERSION}_armhf.deb" \
+            "$DIR/update/nanokvm-go_${VERSION}.tar.gz" "$out/"
+          (cd "$out" && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
+          short="${SHA:0:8}"
+          date="$(TZ=Asia/Shanghai date +%Y-%m-%d)"
+          last="$(gh release view --json tagName --jq .tagName 2>/dev/null || echo "${VERSION}")"
+          cat > "$RUNNER_TEMP/notes.md" <<EOF
+          Unsigned nightly build of \`main\` at ${SHA} (${date}), from [CI run ${RUN_ID}](${GITHUB_SERVER_URL}/${GH_REPO}/actions/runs/${RUN_ID}).
+
+          **For testing only. Not signed and never published to the CDN.**
+
+          - The package version is \`${VERSION}\`, the same as in \`debian/changelog\`; identify this build by commit \`${short}\`.
+          - To install: switch off application update signature verification in Settings → Update, then upload \`nanokvm-go_${VERSION}.tar.gz\` as an offline update. Switch verification back on afterwards.
+          - Later signed releases install over it as usual. A device on a nightly reports \`${VERSION}\`, so it is not offered \`${VERSION}\` itself online; reinstall that by offline upload.
+
+          Changes since the last release: ${GITHUB_SERVER_URL}/${GH_REPO}/compare/${last}...${SHA}
+          EOF
+          if gh release view nightly >/dev/null 2>&1; then
+            gh release delete nightly --cleanup-tag --yes
+          fi
+          # A leftover tag would make the new release reuse the old commit.
+          if gh api "repos/${GH_REPO}/git/ref/tags/nightly" --silent 2>/dev/null; then
+            gh api --method DELETE "repos/${GH_REPO}/git/refs/tags/nightly"
+          fi
+          gh release create nightly \
+            --target "$SHA" \
+            --title "nanokvm-go@nightly" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --prerelease \
+            --latest=false \
+            "$out"/*
+          test "$(gh api "repos/${GH_REPO}/git/ref/tags/nightly" --jq .object.sha)" = "$SHA"

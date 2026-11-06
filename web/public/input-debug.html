@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>KVM-GO Browser Input Router Debug</title>
+    <link rel="stylesheet" href="/input-debug.css" />
+  </head>
+  <body>
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">KVM-GO · BROWSER INPUT → HID</p>
+          <h1>输入输出实时调试</h1>
+          <p class="subtitle">真实 PointerEvent / TouchEvent、Router 决策与最终 hidgX 报告按同一事件序号关联。</p>
+        </div>
+        <div class="toolbar">
+          <span id="connection" class="status status-waiting">正在连接</span>
+          <button id="pause" type="button">暂停</button>
+          <button id="clear" type="button">清空本地记录</button>
+          <button id="copy" type="button">复制 JSON</button>
+          <button id="export" type="button">导出 JSON</button>
+        </div>
+      </header>
+
+      <section id="auth-warning" class="notice hidden" role="alert">
+        当前会话无权读取输入调试数据。请先在主页面登录，再重新打开此页面。
+        <a href="/">返回登录</a>
+      </section>
+
+      <section class="metrics" aria-label="Browser input performance">
+        <article class="metric"><span>浏览器事件输入</span><strong id="metric-capture-rate">0/s</strong><small id="metric-capture-total">0 条</small></article>
+        <article class="metric"><span>Router 事件</span><strong id="metric-router-rate">0/s</strong><small id="metric-router-total">0 条</small></article>
+        <article class="metric"><span>HID 输出</span><strong id="metric-output-rate">0/s</strong><small id="metric-output-total">0 条</small></article>
+        <article class="metric"><span>关联输出 / 浏览器事件</span><strong id="metric-routing-ratio">—</strong><small>最近 2 秒</small></article>
+        <article class="metric metric-latency"><span>浏览器处理 P50 / P95</span><strong id="metric-client-latency">—</strong><small>捕获 → Router 发送</small></article>
+        <article class="metric metric-latency"><span>Router P50 / P95</span><strong id="metric-router-latency">—</strong><small>解码 → 输出完成</small></article>
+        <article class="metric metric-latency"><span>HID 写入 P50 / P95</span><strong id="metric-hid-latency">—</strong><small>写入 hidgX</small></article>
+        <article class="metric metric-danger"><span>失败 / 丢弃 / 重试</span><strong id="metric-errors">0 / 0 / 0</strong><small>设备累计</small></article>
+      </section>
+
+      <section class="panel pipeline-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">SELECTED EVENT FLOW</p>
+            <h2>Browser Event → Router → HID Gadget</h2>
+          </div>
+          <div id="selected-summary" class="selected-summary">等待浏览器输入事件</div>
+        </div>
+        <div class="pipeline" aria-label="Selected browser input event pipeline">
+          <article class="pipeline-node capture-node" data-stage="capture">
+            <span class="node-index">01</span>
+            <h3>浏览器原始事件</h3>
+            <dl id="node-capture"></dl>
+            <pre id="browser-event-json" class="event-json">等待真实浏览器输入事件。</pre>
+          </article>
+          <div class="pipeline-arrow" aria-hidden="true">›</div>
+          <article class="pipeline-node" data-stage="mapping">
+            <span class="node-index">02</span>
+            <h3>模式与坐标处理</h3>
+            <dl id="node-mapping"></dl>
+          </article>
+          <div class="pipeline-arrow" aria-hidden="true">›</div>
+          <article class="pipeline-node" data-stage="route">
+            <span class="node-index">03</span>
+            <h3>Input Router</h3>
+            <dl id="node-route"></dl>
+            <div id="router-flow-graph" class="router-flow-graph"></div>
+          </article>
+          <div class="pipeline-arrow" aria-hidden="true">›</div>
+          <article class="pipeline-node" data-stage="encode">
+            <span class="node-index">04</span>
+            <h3>HID 报告</h3>
+            <dl id="node-encode"></dl>
+          </article>
+          <div class="pipeline-arrow" aria-hidden="true">›</div>
+          <article class="pipeline-node" data-stage="dispatch">
+            <span class="node-index">05</span>
+            <h3>hidgX 输出</h3>
+            <dl id="node-dispatch"></dl>
+          </article>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <article class="panel stream-panel">
+          <div class="panel-heading compact">
+            <div><p class="section-kicker">TRANSACTION TRACE</p><h2>实时输入与路由事件</h2></div>
+            <span id="visible-count" class="counter">0 / 0</span>
+          </div>
+          <div class="filters">
+            <label>API<select id="filter-api"><option value="">全部</option></select></label>
+            <label>Event Type<select id="filter-event"><option value="">全部</option></select></label>
+            <label>Pointer Type<select id="filter-pointer"><option value="">全部</option></select></label>
+            <label>Router Event<select id="filter-kind"><option value="">全部</option></select></label>
+            <label>HID 输出<select id="filter-output"><option value="">全部</option></select></label>
+            <label>会话<input id="filter-session" inputmode="numeric" placeholder="全部" /></label>
+            <label class="search-label">搜索<input id="filter-text" type="search" placeholder="PointerEvent / TouchEvent / route / report / error" /></label>
+          </div>
+          <div class="trace-table-wrap">
+            <table class="trace-table">
+              <thead>
+                <tr>
+                  <th>TRACE</th>
+                  <th>时间</th>
+                  <th>浏览器输入</th>
+                  <th>设备</th>
+                  <th>输入内容</th>
+                  <th>Router 事件</th>
+                  <th>路由关系</th>
+                  <th>HID 输出</th>
+                  <th>结果</th>
+                  <th>性能</th>
+                </tr>
+              </thead>
+              <tbody id="trace-body"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <aside class="side-stack">
+          <article class="panel point-panel">
+            <div class="panel-heading compact">
+              <div><p class="section-kicker">HID COORDINATES</p><h2>输出坐标与多点轨迹</h2></div>
+              <span id="point-count" class="counter">0 点</span>
+            </div>
+            <canvas id="point-canvas" width="720" height="420"></canvas>
+            <div id="point-legend" class="point-legend"></div>
+          </article>
+          <article class="panel raw-panel">
+            <div class="panel-heading compact">
+              <div><p class="section-kicker">LINKED JSON</p><h2>完整事件事务</h2></div>
+            </div>
+            <pre id="raw-json">等待选择事件。</pre>
+          </article>
+        </aside>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel">
+          <div class="panel-heading compact"><div><p class="section-kicker">OUTPUT ROUTES</p><h2>HID 路由与所有权</h2></div></div>
+          <div id="routes" class="route-grid"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-heading compact"><div><p class="section-kicker">SESSIONS</p><h2>活动输入会话</h2></div></div>
+          <div id="sessions" class="session-list"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-heading compact"><div><p class="section-kicker">PERFORMANCE</p><h2>性能与来源明细</h2></div></div>
+          <div id="performance" class="performance-grid"></div>
+          <div id="sources" class="source-list"></div>
+          <div id="debug-health" class="debug-health"></div>
+        </article>
+      </section>
+
+      <footer>
+        原始 PointerEvent / TouchEvent 仅在本页面打开时按需采集；页面关闭后停止上报，Trace 只保存在当前浏览器内存中。
+      </footer>
+    </main>
+    <script src="/input-debug.js" defer></script>
+  </body>
+</html>

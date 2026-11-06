@@ -1,0 +1,15 @@
+[Unit]
+Description=Nano OCR daemon
+After=network-online.target memfab.service kvmcomm.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/kvmcomm/ocr/nano_ocr_app --snapshot-socket /run/kvm/vin_snapshot.sock --socket-wait-ms 15000 --no-save-json --upload
+StandardOutput=null
+StandardError=journal
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

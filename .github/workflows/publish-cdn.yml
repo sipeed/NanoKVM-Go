@@ -1,0 +1,146 @@
+name: Publish to CDN
+run-name: Publish ${{ inputs.tag }} to the CDN
+
+# Uploads the signed update bundle of a release tag to the CDN channel, then
+# makes its draft GitHub release public. Release calls it after signing when
+# `publish_cdn` is checked; run it by hand with the tag to publish later or to
+# retry a failed publish without rebuilding or re-signing.
+#
+# Repository setup this workflow relies on:
+# - Environment `release`: secrets QINIU_ACCESS_KEY and QINIU_SECRET_KEY.
+# - Repository variables QINIU_BUCKET, QINIU_PREFIX (e.g. nanokvm-go/v2),
+#   QINIU_S3_ENDPOINT, QINIU_S3_REGION and QINIU_CDN_BASE_URL.
+# The channel must already hold a latest.json; see ci/scripts/publish_cdn.py.
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag, X.Y.Z
+        required: true
+        type: string
+      sha:
+        description: Commit the caller signed; the tag must still point at it.
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish, X.Y.Z
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    # Run from main only, so the job holding the CDN keys runs main's workflow.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: release
+    # One CDN publish at a time; a queued one never cancels a running one.
+    concurrency:
+      group: publish-cdn
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    env:
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ inputs.tag }}
+      SIGNED_SHA: ${{ inputs.sha }}
+    steps:
+      - name: Tag must be X.Y.Z and on main
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! [[ "$TAG" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "tag $TAG is not X.Y.Z" >&2
+            exit 1
+          fi
+          if ! gh api "repos/${GH_REPO}/git/ref/tags/${TAG}" --silent 2>/dev/null; then
+            echo "tag $TAG does not exist" >&2
+            exit 1
+          fi
+          sha="$(gh api "repos/${GH_REPO}/commits/refs/tags/${TAG}" --jq .sha)"
+          status="$(gh api "repos/${GH_REPO}/compare/main...${sha}" --jq .status)"
+          case "$status" in
+            identical|behind) ;;
+            *)
+              echo "$sha is not on main (compare status: $status)" >&2
+              exit 1
+              ;;
+          esac
+          if [ -n "$SIGNED_SHA" ] && [ "$sha" != "$SIGNED_SHA" ]; then
+            echo "tag $TAG now points at $sha, signed $SIGNED_SHA" >&2
+            exit 1
+          fi
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.tag.outputs.sha }}
+          persist-credentials: false
+      - name: Download the release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$TAG" --dir dl \
+            --pattern "nanokvm-go_${TAG}.tar.gz" --pattern latest.json --pattern SHA256SUMS
+          test "$(find dl -type f | wc -l)" -eq 3
+          for name in "nanokvm-go_${TAG}.tar.gz" latest.json; do
+            grep -Eq "^[0-9a-f]{64}  ${name//./\\.}\$" dl/SHA256SUMS || {
+              echo "SHA256SUMS does not list $name" >&2
+              exit 1
+            }
+          done
+          (cd dl && sha256sum --check --ignore-missing --strict SHA256SUMS)
+      # The bundle must still verify with the device verifier and the official
+      # key ring after the round trip through the release.
+      - name: Verify with the device verifier
+        run: |
+          python3 support/scripts/update_signing.py keyring \
+            --public-key support/keys/nanokvm-go-release.pub.pem \
+            --public-key support/keys/nanokvm-go-ci.pub.pem \
+            --output "$RUNNER_TEMP/official-keys.json"
+          mkdir "$RUNNER_TEMP/bundle"
+          tar -xzf "dl/nanokvm-go_${TAG}.tar.gz" -C "$RUNNER_TEMP/bundle"
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE/server:/src:ro" \
+            --volume "$RUNNER_TEMP:/work" \
+            --workdir /src \
+            --env GOFLAGS=-buildvcs=false --env GOCACHE=/tmp/gocache --env GOMODCACHE=/tmp/gomod \
+            --env TAG \
+            golang:1.26.5-bookworm \
+            bash -euo pipefail -c '
+              go build -o /tmp/nanokvm-update-verify ./cmd/nanokvm-update-verify
+              bundle=$(find /work/bundle -mindepth 1 -maxdepth 1 -type d)
+              /tmp/nanokvm-update-verify bundle \
+                --bundle "$bundle" \
+                --keyring /work/official-keys.json \
+                --requested-version "$TAG"
+            '
+      - name: Upload, refresh and check the CDN
+        env:
+          QINIU_ACCESS_KEY: ${{ secrets.QINIU_ACCESS_KEY }}
+          QINIU_SECRET_KEY: ${{ secrets.QINIU_SECRET_KEY }}
+          BUCKET: ${{ vars.QINIU_BUCKET }}
+          PREFIX: ${{ vars.QINIU_PREFIX }}
+          ENDPOINT: ${{ vars.QINIU_S3_ENDPOINT }}
+          REGION: ${{ vars.QINIU_S3_REGION }}
+          CDN_BASE: ${{ vars.QINIU_CDN_BASE_URL }}
+        run: |
+          for name in QINIU_ACCESS_KEY QINIU_SECRET_KEY BUCKET PREFIX ENDPOINT REGION CDN_BASE; do
+            test -n "${!name}" || { echo "$name is not configured" >&2; exit 1; }
+          done
+          python3 ci/scripts/publish_cdn.py \
+            --version "$TAG" --dir dl \
+            --bucket "$BUCKET" --prefix "$PREFIX" \
+            --endpoint "$ENDPOINT" --region "$REGION" \
+            --cdn-base "$CDN_BASE"
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$TAG" --draft=false --latest

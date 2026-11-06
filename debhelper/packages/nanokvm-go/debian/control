@@ -1,0 +1,14 @@
+Source: nanokvm-go
+Section: misc
+Priority: optional
+Maintainer: Sipeed <support@sipeed.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://github.com/sipeed
+
+Package: nanokvm-go
+Architecture: armhf
+Depends: ${misc:Depends}
+Description: NanoKVM Go application package
+ NanoKVM Go runtime files and service unit.

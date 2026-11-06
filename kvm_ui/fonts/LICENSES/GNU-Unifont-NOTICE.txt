@@ -1,0 +1,27 @@
+GNU Unifont 17.0.05 attribution notice
+
+This catalog includes the unmodified locked upstream files
+unifont-17.0.05.otf and unifont_upper-17.0.05.otf from GNU Unifont 17.0.05:
+
+  https://ftp.gnu.org/gnu/unifont/unifont-17.0.05/
+
+The locked GNU Unifont 17.0.05 files record this Name ID 0 copyright
+attribution:
+
+  Copyright © 1998-2026 Roman Czyborra, Paul Hardy, Qianqian Fang, Andrew
+  Miller, Johnnie Weaver, David Corbett, Ælla Chiana Moskopp, Rebecca
+  Bettencourt, Ho-Seok Ee, et al.
+
+Their Name ID 13 licensing metadata states:
+
+  Dual license: SIL Open Font License version 1.1, and GNU GPL version 2 or
+  later with the GNU Font Embedding Exception.
+
+The complete upstream GNU Unifont license text is recorded separately as
+LICENSES/GNU-Unifont-LICENSE.txt. Its source is:
+
+  https://unifoundry.com/LICENSE.txt
+
+For this catalog, the unmodified locked GNU Unifont files are distributed
+under the SIL Open Font License 1.1 option. This distribution choice does not
+apply GNU GPL terms to kvm_ui, firmware, or other application code.

@@ -1,0 +1,7 @@
+#ifndef __LIBKVM_BUILDINFO_VERSION_H__
+#define __LIBKVM_BUILDINFO_VERSION_H__
+
+__attribute__((used)) static const char LIB_VERSION[] =
+    "GIT_HASH=@GIT_HASH@ GIT_DIRTY=@GIT_DIRTY@ @BUILD_TIMESTAMP@";
+
+#endif  // __LIBKVM_BUILDINFO_VERSION_H__

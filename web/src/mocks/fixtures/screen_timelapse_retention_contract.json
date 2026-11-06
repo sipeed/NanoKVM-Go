@@ -1,0 +1,170 @@
+{
+  "contractVersion": 1,
+  "configFile": {
+    "path": "/etc/kvm/timelapse.json",
+    "default": {
+      "version": 1,
+      "revision": 0,
+      "cleanup": {
+        "enabled": false,
+        "retentionDays": 180,
+        "maxStorageMiB": 49152
+      }
+    }
+  },
+  "constraints": {
+    "version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "revision": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "cleanup": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "retentionDays": {
+        "minimum": 0,
+        "maximum": 3650,
+        "type": "integer"
+      },
+      "maxStorageMiB": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "enabledRequiresOnePositiveLimit": true
+    }
+  },
+  "errors": {
+    "invalidArguments": -1,
+    "operationFailed": -2,
+    "revisionConflict": -3,
+    "sensitiveActionVerificationRequired": -4,
+    "busy": -5
+  },
+  "endpoints": {
+    "getRetention": {
+      "method": "GET",
+      "path": "/api/ai/screen-timelapse/retention",
+      "request": null,
+      "success": {
+        "code": 0,
+        "msg": "ok",
+        "data": {
+          "config": {
+            "revision": 12,
+            "cleanup": {
+              "enabled": true,
+              "retentionDays": 7,
+              "maxStorageMiB": 2048
+            }
+          },
+          "status": {
+            "running": false,
+            "scannedAt": "2026-07-20T02:59:58+08:00",
+            "usageBytes": 6442450944,
+            "managedDays": 12,
+            "overLimit": false,
+            "blockedReason": "",
+            "lastCleanupAt": "2026-07-20T03:00:00+08:00",
+            "lastTrigger": "scheduled",
+            "lastDeletedDays": 2,
+            "lastDeletedBytes": 2147483648,
+            "lastError": ""
+          }
+        }
+      }
+    },
+    "putRetention": {
+      "method": "PUT",
+      "path": "/api/ai/screen-timelapse/retention",
+      "request": {
+        "revision": 12,
+        "cleanup": {
+          "enabled": true,
+          "retentionDays": 7,
+          "maxStorageMiB": 2048
+        },
+        "challenge": ""
+      },
+      "success": {
+        "code": 0,
+        "msg": "ok",
+        "data": {
+          "config": {
+            "revision": 13,
+            "cleanup": {
+              "enabled": true,
+              "retentionDays": 7,
+              "maxStorageMiB": 2048
+            }
+          },
+          "changed": true,
+          "cleanupTriggered": true
+        }
+      }
+    },
+    "previewCleanup": {
+      "method": "POST",
+      "path": "/api/ai/screen-timelapse/cleanup",
+      "request": {
+        "dryRun": true,
+        "config": {
+          "enabled": true,
+          "retentionDays": 7,
+          "maxStorageMiB": 2048
+        }
+      },
+      "success": {
+        "code": 0,
+        "msg": "ok",
+        "data": {
+          "dryRun": true,
+          "beforeBytes": 6442450944,
+          "projectedAfterBytes": 1932735283,
+          "overLimitAfterCleanup": false,
+          "wouldDeleteDays": 4,
+          "wouldDeleteBytes": 4509715661,
+          "candidates": [
+            {
+              "date": "2026-06-01",
+              "bytes": 1073741824,
+              "reasons": ["expired", "quota"]
+            }
+          ],
+          "skipped": [
+            {
+              "date": "2026-07-20",
+              "reason": "today"
+            }
+          ],
+          "warnings": []
+        }
+      }
+    },
+    "triggerCleanup": {
+      "method": "POST",
+      "path": "/api/ai/screen-timelapse/cleanup",
+      "request": {
+        "dryRun": false,
+        "challenge": ""
+      },
+      "success": {
+        "code": 0,
+        "msg": "ok",
+        "data": {
+          "accepted": true
+        }
+      }
+    }
+  },
+  "cleanupRules": {
+    "dryRunAllowsCandidateConfig": true,
+    "triggerRejectsCandidateConfig": true,
+    "triggerUsesPersistedConfig": true,
+    "getAndDryRunRequireChallenge": false,
+    "putAndTriggerRequireScreenTimelapseChallenge": true
+  }
+}

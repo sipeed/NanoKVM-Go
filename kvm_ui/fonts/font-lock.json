@@ -1,0 +1,177 @@
+{
+  "schema_version": 3,
+  "catalog": "kvm-ui-base-image-fonts",
+  "expected_asset_count": 242,
+  "expected_total_bytes": 144586156,
+  "source_sets": {
+    "noto": {
+      "project": "Noto Fonts",
+      "revision": "ffebf8c1ee449e544955a7e813c54f9b73848eac",
+      "url_template": "https://raw.githubusercontent.com/notofonts/noto-fonts/ffebf8c1ee449e544955a7e813c54f9b73848eac/{path}",
+      "license": "OFL-1.1",
+      "license_evidence_id": "noto-fonts"
+    },
+    "source-han": {
+      "project": "Source Han Sans",
+      "revision": "2.005R (6c709ca72d3d7c46ab42ebecc1a26e7d69595a37)",
+      "url_template": "https://raw.githubusercontent.com/adobe-fonts/source-han-sans/6c709ca72d3d7c46ab42ebecc1a26e7d69595a37/{path}",
+      "license": "OFL-1.1",
+      "license_evidence_id": "source-han-sans"
+    },
+    "noto-emoji": {
+      "project": "Noto Emoji",
+      "revision": "8998f5dd683424a73e2314a8c1f1e359c19e8742",
+      "url_template": "https://raw.githubusercontent.com/googlefonts/noto-emoji/8998f5dd683424a73e2314a8c1f1e359c19e8742/{path}",
+      "license": "OFL-1.1",
+      "license_evidence_id": "noto-emoji"
+    },
+    "gnu-unifont": {
+      "project": "GNU Unifont",
+      "revision": "17.0.05",
+      "url_template": "https://ftp.gnu.org/gnu/unifont/unifont-17.0.05/{path}",
+      "license": "OFL-1.1",
+      "license_evidence_id": "gnu-unifont"
+    }
+  },
+  "noto_tree": {
+    "source_set": "noto",
+    "tree_sha1": "38aaac139d3bdffb7d015ce4d3ea1d3e7216688b",
+    "tree_url": "https://api.github.com/repos/notofonts/noto-fonts/git/trees/38aaac139d3bdffb7d015ce4d3ea1d3e7216688b?recursive=1",
+    "path_regex": "^hinted/ttf/Noto.+-Regular\\.ttf$",
+    "install_subdirectory": "noto",
+    "default_role": "future-catalog",
+    "path_roles": {
+      "hinted/ttf/NotoSans/NotoSans-Regular.ttf": "active-base"
+    },
+    "path_install_paths": {
+      "hinted/ttf/NotoSans/NotoSans-Regular.ttf": "NotoSans-Regular.ttf"
+    },
+    "expected_count": 233,
+    "expected_total_bytes": 34797164,
+    "tree_manifest_sha256": "fe32d80a180f1cc2b223691feebe302ea01e200a607fe59ba19c9eb415bed939",
+    "payload_manifest_sha256": "b7a97d3a34d554df24414b58658f98b639548ab771ff6a147d751a1294e7b353"
+  },
+  "assets": [
+    {
+      "id": "source-han/hk",
+      "source_set": "source-han",
+      "source_path": "OTF/TraditionalChineseHK/SourceHanSansHC-Regular.otf",
+      "install_name": "SourceHanSansHK-Regular.otf",
+      "size": 16519524,
+      "sha256": "b2ec9fbf96fc77d9d471a1e05d9dfa208c1e8ba539c394519b8d776b972ba17b",
+      "role": "active-cjk-hk"
+    },
+    {
+      "id": "source-han/jp",
+      "source_set": "source-han",
+      "source_path": "OTF/Japanese/SourceHanSans-Regular.otf",
+      "install_name": "SourceHanSansJP-Regular.otf",
+      "size": 16560052,
+      "sha256": "6fe3b72967986ccdef600128752d1ade57c13c68129a548cdebe4c7d3c0f8543",
+      "role": "active-cjk-jp"
+    },
+    {
+      "id": "source-han/kr",
+      "source_set": "source-han",
+      "source_path": "OTF/Korean/SourceHanSansK-Regular.otf",
+      "install_name": "SourceHanSansKR-Regular.otf",
+      "size": 16525428,
+      "sha256": "14f0ac1c902bdb973136a80c7f45bfcbe0cea9306bee323886dd94d98061941b",
+      "role": "active-cjk-kr"
+    },
+    {
+      "id": "source-han/sc",
+      "source_set": "source-han",
+      "source_path": "OTF/SimplifiedChinese/SourceHanSansSC-Regular.otf",
+      "install_name": "SourceHanSansSC-Regular.otf",
+      "size": 16529832,
+      "sha256": "f1d8611151880c6c336aabeac4640ef434fa13cbfbf1ffe82d0a71b2a5637256",
+      "role": "active-cjk-sc"
+    },
+    {
+      "id": "source-han/tc",
+      "source_set": "source-han",
+      "source_path": "OTF/TraditionalChinese/SourceHanSansTC-Regular.otf",
+      "install_name": "SourceHanSansTC-Regular.otf",
+      "size": 16528276,
+      "sha256": "10e6d832bc73650840aa7fbfec4e10c527f8136ae2aec71c3e1c13a67475c24a",
+      "role": "active-cjk-tc"
+    },
+    {
+      "id": "noto-emoji/color-bitmap",
+      "source_set": "noto-emoji",
+      "source_path": "fonts/NotoColorEmoji.ttf",
+      "install_name": "NotoColorEmoji.ttf",
+      "size": 10673480,
+      "sha256": "72a635cb3d2f3524c51620cdde406b217204e8a6a06c6a096ff8ed4b5fd6e27b",
+      "role": "future-emoji-cbdt"
+    },
+    {
+      "id": "noto-emoji/colrv1",
+      "source_set": "noto-emoji",
+      "source_path": "fonts/Noto-COLRv1.ttf",
+      "install_name": "Noto-COLRv1.ttf",
+      "size": 4991984,
+      "sha256": "0ae57fe58645638523ba35f388d93739d292539a9acb84df5700c81b1e1a28d2",
+      "role": "future-emoji-colrv1"
+    },
+    {
+      "id": "gnu-unifont/base",
+      "source_set": "gnu-unifont",
+      "source_path": "unifont-17.0.05.otf",
+      "install_name": "unifont-17.0.05.otf",
+      "size": 5321628,
+      "sha256": "85701ab9b1e251ee16f4df00b13f22eac311d72b7dab427a7d975fe7f5064702",
+      "role": "future-unifont"
+    },
+    {
+      "id": "gnu-unifont/upper",
+      "source_set": "gnu-unifont",
+      "source_path": "unifont_upper-17.0.05.otf",
+      "install_name": "unifont_upper-17.0.05.otf",
+      "size": 6138788,
+      "sha256": "f4fd6d5d752726d384feef175bb780c9f29382cd4941c9e1e6990d7c3822a090",
+      "role": "future-unifont-upper"
+    }
+  ],
+  "license_evidence": [
+    {
+      "id": "noto-fonts",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-fonts/ffebf8c1ee449e544955a7e813c54f9b73848eac/LICENSE",
+      "install_path": "LICENSES/Noto-Fonts-LICENSE",
+      "sha256": "0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb"
+    },
+    {
+      "id": "source-han-sans",
+      "url": "https://raw.githubusercontent.com/adobe-fonts/source-han-sans/6c709ca72d3d7c46ab42ebecc1a26e7d69595a37/LICENSE.txt",
+      "install_path": "LICENSES/Source-Han-Sans-LICENSE.txt",
+      "sha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+    },
+    {
+      "id": "noto-emoji",
+      "url": "https://raw.githubusercontent.com/googlefonts/noto-emoji/8998f5dd683424a73e2314a8c1f1e359c19e8742/LICENSE",
+      "install_path": "LICENSES/Noto-Emoji-LICENSE",
+      "sha256": "500bb1ccf43df7bbb522112f9133a52b16e1c35e809632f5d8609b179152de5b"
+    },
+    {
+      "id": "gnu-unifont",
+      "url": "https://unifoundry.com/LICENSE.txt",
+      "install_path": "LICENSES/GNU-Unifont-LICENSE.txt",
+      "sha256": "1e74cb82bf476843e97c2596297b04219b1a7e51f7238944a8c031cb9401fa87"
+    }
+  ],
+  "local_license_evidence": [
+    {
+      "id": "gnu-unifont-attribution",
+      "source_path": "LICENSES/GNU-Unifont-NOTICE.txt",
+      "install_path": "LICENSES/GNU-Unifont-NOTICE.txt",
+      "sha256": "621ecb0deddd04329ab7a67cfc07907d9e2e2096b99bd20e9c8044e160936519"
+    }
+  ],
+  "canonical_license": {
+    "id": "canonical-ofl-1.1",
+    "source_path": "LICENSES/OFL-1.1.txt",
+    "install_path": "LICENSES/OFL-1.1.txt",
+    "sha256": "58b163abfa7a0f2f1a25333e0240ee154e5a6faa7a11967e33ad896ea62ceb32"
+  }
+}

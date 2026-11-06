@@ -1,0 +1,4 @@
+[submodule "debhelper/packages/kvmcomm/rootfs/kvmcomm/apps"]
+	path = debhelper/packages/kvmcomm/rootfs/kvmcomm/apps
+	url = https://github.com/sipeed/NanoKVM-Go-Apps.git
+	branch = base

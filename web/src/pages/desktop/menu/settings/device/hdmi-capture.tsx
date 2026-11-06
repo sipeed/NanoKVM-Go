@@ -1,0 +1,67 @@
+import { useEffect, useState } from 'react';
+import { Switch } from 'antd';
+import { useTranslation } from 'react-i18next';
+
+import * as api from '@/api/vm.ts';
+
+export const HdmiCapture = () => {
+  const { t } = useTranslation();
+
+  const [isEnabled, setIsEnabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    getCapture();
+  }, []);
+
+  function getCapture() {
+    setIsLoading(true);
+
+    api
+      .getHdmiCapture()
+      .then((rsp) => {
+        if (rsp.code !== 0) {
+          console.log(rsp.msg);
+          return;
+        }
+
+        setIsEnabled(!!rsp.data?.enabled);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }
+
+  function update() {
+    if (isLoading) return;
+    setIsLoading(true);
+
+    api
+      .setHdmiCapture(!isEnabled)
+      .then((rsp) => {
+        if (rsp.code !== 0) {
+          console.log(rsp.msg);
+          return;
+        }
+
+        setIsEnabled(!isEnabled);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-1">
+        <div className="flex items-center space-x-2">
+          <span>{t('settings.device.capture.title')}</span>
+        </div>
+
+        <span className="text-xs text-neutral-500">{t('settings.device.capture.description')}</span>
+      </div>
+
+      <Switch checked={isEnabled} loading={isLoading} onChange={update} />
+    </div>
+  );
+};

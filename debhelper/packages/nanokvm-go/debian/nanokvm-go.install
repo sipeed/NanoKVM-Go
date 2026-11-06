@@ -1,0 +1,11 @@
+rootfs/kvmapp/* kvmapp/
+rootfs/res/* res/
+rootfs/usr/lib/systemd/journald.conf.d/* usr/lib/systemd/journald.conf.d/
+rootfs/usr/lib/systemd/system/tailscaled.service.d/* usr/lib/systemd/system/tailscaled.service.d/
+rootfs/usr/lib/systemd/system/nanokvm-netbird.service.d/* usr/lib/systemd/system/nanokvm-netbird.service.d/
+../../../build/web/* kvmapp/server/web/
+../../../build/NanoKVM-Server kvmapp/server/
+../../../build/libkvm.so kvmapp/server/dl_lib/
+../../../build/libkvm.so.0 kvmapp/server/dl_lib/
+../../../build/libkvm.so.0.1.0 kvmapp/server/dl_lib/
+../../../build/memfab usr/bin/
