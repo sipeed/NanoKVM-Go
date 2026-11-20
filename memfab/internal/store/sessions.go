@@ -3,7 +3,30 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+
+	"memfab/internal/capture"
 )
+
+// SQLite's julianday() is millisecond precision. Use it for the ordinary
+// comparison and resolve ties using the parsed RFC3339 nanoseconds and offset.
+func compareCaptureInstants(a, b string) int {
+	if a == b {
+		return 0
+	}
+	left, leftErr := capture.ParseTimestamp(a)
+	right, rightErr := capture.ParseTimestamp(b)
+	switch {
+	case leftErr == nil && rightErr == nil:
+		return left.Compare(right)
+	case leftErr != nil && rightErr == nil:
+		return -1
+	case leftErr == nil && rightErr != nil:
+		return 1
+	default:
+		return strings.Compare(a, b)
+	}
+}
 
 type SessionStatus string
 
@@ -105,7 +128,7 @@ func (db *DB) ListSessions(status string, limit int) ([]SessionRow, error) {
 
 func (db *DB) LatestSessionEnd() (string, bool, error) {
 	var end string
-	err := db.Conn.QueryRow(`SELECT end_time FROM sessions WHERE end_time IS NOT NULL ORDER BY end_time DESC LIMIT 1`).Scan(&end)
+	err := db.Conn.QueryRow(`SELECT end_time FROM sessions WHERE end_time IS NOT NULL ORDER BY julianday(end_time) DESC, end_time COLLATE memfab_instant DESC LIMIT 1`).Scan(&end)
 	if err == sql.ErrNoRows {
 		return "", false, nil
 	}
@@ -134,8 +157,8 @@ func (db *DB) ObservationsSince(since string, limit int) ([]ObservationHit, erro
 	where := "1=1"
 	args := []any{}
 	if since != "" {
-		where = "julianday(captured_at) > julianday(?)"
-		args = append(args, since)
+		where = "(julianday(captured_at), captured_at COLLATE memfab_instant) > (julianday(?), ?)"
+		args = append(args, since, since)
 	}
 	args = append(args, limit)
 	rows, err := db.Conn.Query(fmt.Sprintf(`SELECT id, captured_at, source_kind, source_device, source_engine,
@@ -143,7 +166,7 @@ func (db *DB) ObservationsSince(since string, limit int) ([]ObservationHit, erro
 	             ocr_text, confidence, block_count, tags
 	        FROM ocr_observations
 	       WHERE %s
-	    ORDER BY julianday(captured_at) ASC, rowid ASC LIMIT ?`, where), args...)
+	    ORDER BY julianday(captured_at) ASC, captured_at COLLATE memfab_instant ASC, rowid ASC LIMIT ?`, where), args...)
 	if err != nil {
 		return nil, err
 	}

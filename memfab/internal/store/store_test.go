@@ -672,3 +672,39 @@ func TestClassifierStoreHelpers(t *testing.T) {
 		t.Fatalf("files=%+v err=%v", files, err)
 	}
 }
+
+func TestExactSessionCursorAcrossTimezonesAndSQLiteMillisecondTies(t *testing.T) {
+	db := testDB(t)
+	// All four instants round to the same SQLite millisecond. Include a legacy
+	// whole-second row, offset spellings, and reverse insertion order.
+	stamps := []string{
+		"2026-11-20T14:43:59.999900Z",
+		"2026-11-20T14:44:00Z",
+		"2026-11-20T16:44:00.000099998+02:00",
+		"2026-11-20T14:44:00.000099999Z",
+	}
+	for i := len(stamps) - 1; i >= 0; i-- {
+		o := observationAt(stamps[i], "App", stamps[i], stamps[i])
+		insertObservationForTest(t, db, o)
+		_, err := db.InsertSession(SessionRow{ID: stamps[i], StartTime: stamps[i], EndTime: stamps[i], Status: string(SessionReduced), CreatedAt: stamps[i], UpdatedAt: stamps[i]})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, found, err := db.LatestSessionEnd()
+	if err != nil || !found || got != stamps[3] {
+		t.Fatalf("latest session = %q, want %q: %v", got, stamps[3], err)
+	}
+	cursor := ""
+	for _, want := range stamps {
+		rows, err := db.ObservationsSince(cursor, 1)
+		if err != nil || len(rows) != 1 || rows[0].CapturedAt != want {
+			t.Fatalf("next after %q, want %q: rows=%v, err=%v", cursor, want, rows, err)
+		}
+		cursor = rows[0].CapturedAt
+	}
+	rows, err := db.ObservationsSince("2026-11-20T16:44:00.000099999+02:00", 1)
+	if err != nil || len(rows) != 0 {
+		t.Fatalf("equivalent offset re-read the same observation: rows=%v, err=%v", rows, err)
+	}
+}
