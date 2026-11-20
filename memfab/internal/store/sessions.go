@@ -127,14 +127,18 @@ func (db *DB) EarliestObservationTime() (string, bool, error) {
 	return start, true, nil
 }
 
-func (db *DB) ObservationsSince(since string, limit int) ([]ObservationHit, error) {
+func (db *DB) SessionObservations(since string, includeStart bool, limit int) ([]ObservationHit, error) {
 	if limit <= 0 || limit > 500 {
 		limit = 200
 	}
 	where := "1=1"
 	args := []any{}
 	if since != "" {
-		where = "julianday(captured_at) > julianday(?)"
+		comparison := " > "
+		if includeStart {
+			comparison = " >= "
+		}
+		where = "julianday(captured_at)" + comparison + "julianday(?)"
 		args = append(args, since)
 	}
 	args = append(args, limit)

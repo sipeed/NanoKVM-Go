@@ -60,29 +60,26 @@ func (m *Manager) Seed(id string, start time.Time) {
 	m.sessionID = id
 	m.sessionStart = start
 	m.lastEventTime = start
-	m.appSwitchedAt = start
 }
 
 func (m *Manager) OnEvent(event Event) []Decision {
+	var decisions []Decision
 	if !m.active {
-		id := m.id(event.Time)
-		m.active = true
-		m.sessionID = id
-		m.sessionStart = event.Time
-		m.lastEventTime = event.Time
-		m.lastApp = event.App
-		m.appSwitchedAt = event.Time
-		m.recentSwitches = []appSwitch{{At: event.Time, App: event.App}}
-		return []Decision{{Kind: DecisionStart, ID: id, StartTime: event.Time}}
+		m.Seed(m.id(event.Time), event.Time)
+		decisions = []Decision{{Kind: DecisionStart, ID: m.sessionID, StartTime: m.sessionStart}}
 	}
-	if event.App != m.lastApp {
-		m.lastApp = event.App
+	if m.appSwitchedAt.IsZero() {
+		// The first available observation establishes the app for this session.
+		m.appSwitchedAt = m.sessionStart
+		m.recentSwitches = []appSwitch{{At: m.sessionStart, App: event.App}}
+	} else if event.App != m.lastApp {
 		m.appSwitchedAt = event.Time
 		m.recentSwitches = append(m.recentSwitches, appSwitch{At: event.Time, App: event.App})
 	}
+	m.lastApp = event.App
 	m.lastEventTime = event.Time
 	m.pruneSwitches(event.Time)
-	return nil
+	return decisions
 }
 
 func (m *Manager) CheckCuts(now time.Time) []Decision {

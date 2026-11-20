@@ -74,6 +74,9 @@ func Tick(ctx context.Context, db *store.DB, cfg config.Config, now time.Time) (
 		return result, nil
 	}
 
+	// Replay the opening observation when restoring an active session. Later
+	// pages and completed sessions resume strictly after their cursor.
+	includeStart := active != nil
 	cursor := startCursor
 	for {
 		select {
@@ -81,7 +84,8 @@ func Tick(ctx context.Context, db *store.DB, cfg config.Config, now time.Time) (
 			return result, ctx.Err()
 		default:
 		}
-		observations, err := db.ObservationsSince(cursor, observationBatchLimit)
+		observations, err := db.SessionObservations(cursor, includeStart, observationBatchLimit)
+		includeStart = false
 		if err != nil {
 			return result, err
 		}
