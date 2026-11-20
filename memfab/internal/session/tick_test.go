@@ -165,3 +165,46 @@ func mustTime(t *testing.T, ts string) time.Time {
 	}
 	return parsed
 }
+
+func TestTickRestoresAppBeforeCheckingForSwitches(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		openingApp string
+		pruned     bool
+		wantEnded  int
+	}{
+		{name: "same app", openingApp: "Browser"},
+		{name: "opening capture pruned", openingApp: "Browser", pruned: true},
+		{name: "real switch", openingApp: "Terminal", wantEnded: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			db := sessionTestDB(t)
+			start := mustTime(t, "2026-05-14T16:37:12Z")
+			insertSessionObservation(t, db, start.Format(time.RFC3339), tc.openingApp)
+			first, err := Tick(context.Background(), db, testConfig(), start)
+			if err != nil || first.ActiveID == "" {
+				t.Fatalf("start session: %+v, %v", first, err)
+			}
+			if tc.pruned {
+				stem, err := capture.SafeFilename(start.Format(time.RFC3339))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := db.DeleteObservation(stem); err != nil {
+					t.Fatal(err)
+				}
+			}
+			for n := 1; n <= 10; n++ {
+				ts := start.Add(time.Duration(n) * 21 * time.Second)
+				insertSessionObservation(t, db, ts.Format(time.RFC3339), "Browser")
+			}
+			resumed, err := Tick(context.Background(), db, testConfig(), start.Add(210*time.Second))
+			if err != nil || resumed.Ended != tc.wantEnded {
+				t.Fatalf("resumed: %+v, want %d ended, error %v", resumed, tc.wantEnded, err)
+			}
+			if tc.wantEnded == 0 && resumed.ActiveID != first.ActiveID {
+				t.Fatalf("active session changed from %s to %s", first.ActiveID, resumed.ActiveID)
+			}
+		})
+	}
+}

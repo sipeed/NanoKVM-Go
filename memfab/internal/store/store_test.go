@@ -481,14 +481,14 @@ func TestObservationScanHelpers(t *testing.T) {
 	if err != nil || !found || earliest != "2026-05-14T00:01:00Z" {
 		t.Fatalf("earliest=%q found=%v err=%v", earliest, found, err)
 	}
-	obs, err := db.ObservationsSince("", 10)
+	obs, err := db.SessionObservations("", false, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(obs) != 2 || obs[0].AppName != "AppA" || obs[1].AppName != "AppB" {
 		t.Fatalf("obs=%+v", obs)
 	}
-	obs, err = db.ObservationsSince("2026-05-14T00:01:00Z", 10)
+	obs, err = db.SessionObservations("2026-05-14T00:01:00Z", false, 10)
 	if err != nil || len(obs) != 1 || obs[0].AppName != "AppB" {
 		t.Fatalf("since obs=%+v err=%v", obs, err)
 	}
