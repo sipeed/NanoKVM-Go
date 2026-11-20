@@ -165,3 +165,66 @@ func mustTime(t *testing.T, ts string) time.Time {
 	}
 	return parsed
 }
+
+// Stock writes legacy session bounds without fractional seconds even though
+// its deterministic session ID includes the original observation's nanoseconds.
+func TestTickResumesAfterLegacyReducedFractionalObservation(t *testing.T) {
+	db := sessionTestDB(t)
+	const legacyEnd = "2026-11-20T13:46:11Z"
+	const first = "2026-11-20T13:46:11.696033177Z"
+	const second = "2026-11-20T13:46:11.932573221Z"
+	oldID := sessionID(mustTime(t, first))
+	_, err := db.InsertSession(store.SessionRow{ID: oldID, StartTime: legacyEnd, EndTime: legacyEnd,
+		Status: string(store.SessionReduced), CreatedAt: legacyEnd, UpdatedAt: legacyEnd})
+	if err != nil {
+		t.Fatal(err)
+	}
+	insertSessionObservation(t, db, first, "App")
+	now := mustTime(t, "2026-11-20T13:46:32Z")
+	var results []Result
+	for i := 0; i < 3; i++ {
+		if i == 1 {
+			insertSessionObservation(t, db, second, "App")
+		}
+		r, err := Tick(context.Background(), db, testConfig(), now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		results = append(results, r)
+	}
+	active, err := db.GetActiveSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if results[0].Started != 0 || results[0].ActiveID != "" || results[1].Started != 1 || results[2].Started != 0 || active == nil || active.ID != sessionID(mustTime(t, second)) || active.StartTime != second {
+		t.Fatalf("legacy fractional observation was replayed: started %d/%d/%d, active row present %t", results[0].Started, results[1].Started, results[2].Started, active != nil)
+	}
+	previous, err := db.GetSession(oldID)
+	if err != nil || previous == nil || previous.Status != string(store.SessionReduced) || previous.EndTime != legacyEnd {
+		t.Fatalf("legacy record changed: %+v %v", previous, err)
+	}
+}
+
+func TestTickStoresExactFractionalBounds(t *testing.T) {
+	db := sessionTestDB(t)
+	const start = "2026-11-20T14:44:26.167030070Z"
+	const end = "2026-11-20T14:44:47.485913100Z"
+	insertSessionObservation(t, db, start, "App")
+	insertSessionObservation(t, db, end, "App")
+	for i := 0; i < 2; i++ {
+		r, err := Tick(context.Background(), db, testConfig(), mustTime(t, "2026-11-20T15:00:00Z"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if i == 1 && (r.Scanned != 0 || r.Started != 0 || r.Ended != 0) {
+			t.Fatalf("closed observation replayed: %+v", r)
+		}
+	}
+	row, err := db.GetSession(sessionID(mustTime(t, start)))
+	if err != nil || row == nil {
+		t.Fatalf("missing session: %v", err)
+	}
+	if !mustTime(t, row.StartTime).Equal(mustTime(t, start)) || !mustTime(t, row.EndTime).Equal(mustTime(t, end)) {
+		t.Fatal("stored session bounds lost precision")
+	}
+}

@@ -4,9 +4,18 @@ import (
 	"database/sql"
 	"encoding/json"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 	"memfab/internal/paths"
 )
+
+// Session cursors compare nanosecond OCR timestamps, including older rows
+// that use offsets or omit fractional seconds. The collation is connection-local;
+// the on-disk database stays readable by stock binaries and SQLite tools.
+func init() {
+	sql.Register("memfab-sqlite3", &sqlite3.SQLiteDriver{ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+		return conn.RegisterCollation("memfab_instant", compareCaptureInstants)
+	}})
+}
 
 const baseSchema = `
 DROP TRIGGER IF EXISTS captures_ai;
@@ -136,7 +145,7 @@ func Open() (*DB, error) {
 	if err := paths.SecureRegularFiles(databaseFiles...); err != nil {
 		return nil, err
 	}
-	conn, err := sql.Open("sqlite3", paths.IndexDB())
+	conn, err := sql.Open("memfab-sqlite3", paths.IndexDB())
 	if err != nil {
 		return nil, err
 	}

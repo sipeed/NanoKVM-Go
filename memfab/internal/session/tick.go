@@ -40,7 +40,7 @@ func ForceEndActive(ctx context.Context, db *store.DB, now time.Time) (bool, err
 	if err != nil {
 		return false, fmt.Errorf("parse active session start: %w", err)
 	}
-	if err := persistDecision(db, Decision{Kind: DecisionEnd, ID: active.ID, StartTime: start, EndTime: now, Reason: "manual_force_end"}, now); err != nil {
+	if err := endSession(db, Decision{Kind: DecisionEnd, ID: active.ID, StartTime: start, EndTime: now, Reason: "manual_force_end"}, now); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -94,7 +94,7 @@ func Tick(ctx context.Context, db *store.DB, cfg config.Config, now time.Time) (
 				return result, fmt.Errorf("parse observation timestamp: %w", err)
 			}
 			for _, decision := range manager.CheckCuts(eventTime) {
-				if err := persistDecision(db, decision, now); err != nil {
+				if err := endSession(db, decision, now); err != nil {
 					return result, err
 				}
 				if decision.Kind == DecisionEnd {
@@ -102,11 +102,25 @@ func Tick(ctx context.Context, db *store.DB, cfg config.Config, now time.Time) (
 				}
 			}
 			for _, decision := range manager.OnEvent(Event{Time: eventTime, App: obs.AppName}) {
-				if err := persistDecision(db, decision, now); err != nil {
+				inserted, err := db.InsertSession(store.SessionRow{
+					ID: decision.ID, StartTime: decision.StartTime.Format(time.RFC3339Nano),
+					Status: string(store.SessionActive), CreatedAt: now.Format(time.RFC3339), UpdatedAt: now.Format(time.RFC3339),
+				})
+				if err != nil {
 					return result, err
 				}
-				if decision.Kind == DecisionStart {
+				if inserted {
 					result.Started++
+					continue
+				}
+				// A legacy end cursor can replay the fractional observation that
+				// originally created a session the reducer has already closed.
+				existing, err := db.GetSession(decision.ID)
+				if err != nil {
+					return result, err
+				}
+				if existing == nil || existing.Status != string(store.SessionActive) {
+					manager = NewManager(configFrom(cfg), sessionID)
 				}
 			}
 			result.Scanned++
@@ -117,7 +131,7 @@ func Tick(ctx context.Context, db *store.DB, cfg config.Config, now time.Time) (
 		}
 	}
 	for _, decision := range manager.CheckCuts(now) {
-		if err := persistDecision(db, decision, now); err != nil {
+		if err := endSession(db, decision, now); err != nil {
 			return result, err
 		}
 		if decision.Kind == DecisionEnd {
@@ -155,22 +169,8 @@ func RunForever(ctx context.Context, db *store.DB, cfg config.Config) {
 	}
 }
 
-func persistDecision(db *store.DB, decision Decision, now time.Time) error {
-	switch decision.Kind {
-	case DecisionStart:
-		_, err := db.InsertSession(store.SessionRow{
-			ID:        decision.ID,
-			StartTime: decision.StartTime.Format(time.RFC3339),
-			Status:    string(store.SessionActive),
-			CreatedAt: now.Format(time.RFC3339),
-			UpdatedAt: now.Format(time.RFC3339),
-		})
-		return err
-	case DecisionEnd:
-		return db.MarkSessionEnded(decision.ID, decision.EndTime.Format(time.RFC3339), now.Format(time.RFC3339))
-	default:
-		return nil
-	}
+func endSession(db *store.DB, decision Decision, now time.Time) error {
+	return db.MarkSessionEnded(decision.ID, decision.EndTime.Format(time.RFC3339Nano), now.Format(time.RFC3339))
 }
 
 func configFrom(cfg config.Config) Config {
