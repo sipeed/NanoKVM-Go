@@ -918,16 +918,10 @@ fi
 
 reset_private_data
 
-if [ -f "/usr/share/zoneinfo/Asia/Shanghai" ]; then
-    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-    echo "Asia/Shanghai" > /etc/timezone
-    if [ $? -eq 0 ]; then
-        echo "$(date) - Successfully reset timezone to Asia/Shanghai" >>"$LOG_FILE"
-    else
-        echo "$(date) - Failed to reset timezone" >>"$LOG_FILE"
-    fi
+if /kvmcomm/scripts/set_default_timezone.sh 2>>"$LOG_FILE"; then
+    echo "$(date) - Successfully reset timezone" >>"$LOG_FILE"
 else
-    echo "$(date) - Timezone file not found: /usr/share/zoneinfo/Asia/Shanghai" >>"$LOG_FILE"
+    echo "$(date) - Failed to reset timezone" >>"$LOG_FILE"
 fi
 
 reset_kvm_configuration
