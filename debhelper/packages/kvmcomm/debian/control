@@ -9,6 +9,6 @@ Homepage: https://github.com/sipeed
 
 Package: kvmcomm
 Architecture: armhf
-Depends: ${misc:Depends}, tzdata
+Depends: ${misc:Depends}
 Description: KVM communication service package
  KVM communication runtime, scripts and systemd services.

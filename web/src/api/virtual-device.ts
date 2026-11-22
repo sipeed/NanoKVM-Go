@@ -59,3 +59,14 @@ export function refreshVirtualDevice(device: string) {
 
   return http.post('/api/vm/device/virtual/refresh', data);
 }
+
+export const WEBCAM_CHANGED = 'nanokvm:webcam-changed';
+
+export async function setWebcamEnabled(enabled: boolean) {
+  const rsp = await http.post('/api/vm/device/virtual', {
+    device: 'webcam',
+    mode: enabled ? 'on' : 'off'
+  });
+  window.dispatchEvent(new Event(WEBCAM_CHANGED));
+  return rsp;
+}

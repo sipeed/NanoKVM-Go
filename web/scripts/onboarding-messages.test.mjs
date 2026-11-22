@@ -202,6 +202,7 @@ const ONBOARDING_ITEM_LABELS = [
   ['display', 'pictureInPicture', ({ t }) => t.pictureInPicture.title],
   ['media', 'volume', ({ t }) => t.volume.title],
   ['media', 'microphone', ({ t }) => t.microphone.title],
+  ['input', 'mouseJiggler', ({ t }) => t.settings.device.mouseJiggler.title],
   ['input', 'keyboard', ({ t }) => t.keyboard.title],
   ['input', 'mouse', ({ t }) => t.mouse.title],
   ['input', 'preview', ({ t }) => t.preview.title],

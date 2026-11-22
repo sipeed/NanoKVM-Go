@@ -1,6 +1,6 @@
-# NanoKVM-Go Build and Packaging Guide
+# NanoKVM-go-Nomad Build and Packaging Guide
 
-This repository is the official build and packaging entry point for NanoKVM-Go.
+This guide covers builds from the NanoKVM-go-Nomad fork.
 Use the root-level Python build driver for normal builds and release packaging.
 
 ## Official Entry Point
@@ -28,6 +28,7 @@ packaging entry point.
 | `server` | Go 1.26.5 or later, Python 3, `patchelf`, configured ARMv7 toolchain |
 | `web` | Node.js, pnpm |
 | `libkvm`, `kvm_vin`, `kvm_ui`, `nano_ocr` | Python 3, CMake, Conan, configured ARMv7 toolchain |
+| `webcam` | Python 3 and the configured ARMv7 C toolchain |
 | `memfab` | Go 1.26.5 or later, Python 3, CMake, configured ARMv7 toolchain from `support/scripts/nanokvm-go.ini` |
 | Debian packaging | `dpkg-dev`, `debhelper` |
 | Signed releases | OpenSSL with Ed25519 `pkey` and `pkeyutl -rawin` support |
@@ -79,6 +80,7 @@ python3 build.py libkvm
 python3 build.py kvm_vin
 python3 build.py kvm_ui
 python3 build.py nano_ocr
+python3 build.py webcam
 python3 build.py memfab
 python3 build.py build
 ```
@@ -110,6 +112,7 @@ build/libkvm.so*
 build/kvm_vin
 build/kvm_ui
 build/nano_ocr_app
+build/nomad-uvc-feeder
 build/memfab
 build/nanokvm-update-verify
 build/update-keys.json
@@ -137,6 +140,19 @@ python3 build.py release --version <version> --signing-key /offline/path/update-
 `build/nanokvm-go_<version>_armhf.deb`. For both `package_update` and `release`,
 supplying `--signing-key` creates a signed application bundle; omitting it
 creates an unsigned bundle and prints a warning.
+
+Each numbered NanoKVM Go+ Nomad update includes the application and matching webcam kernel. On Go+ firmware v1.0.10, upload the tar.gz through the offline application updater and reboot if the kernel changed.
+
+For **NanoKVM-Go Nomad 0.2.7, build 1**, use the Git tag `v0.2.7-nomad.1`.
+
+To make the Normal update on Linux, start with the two original application Debian packages in `build/`. The packaging script checks the approved kernel digest and builds the numbered dashboard archive, its package metadata and the two release Debian packages.
+
+```bash
+bash support/scripts/package_nomad_normal.sh 0.2.7 1 build \
+  build/kernel/NanoKVM-go-Nomad-4.19.125-uvc-name/kernel.img build/v0.2.7-nomad.1
+```
+
+The installer checks the Go+ model, firmware and SD boot layout. When the kernel changes it keeps the previous image in `/boot/kernel.img.nomad-backup-<sha256>` and replaces the boot file atomically. Reinstalling the same kernel skips the boot write. Upgrades retain the existing Webcam setting.
 
 Release and versioned `kvmcomm` packaging require an initialized, clean Apps
 submodule checkout whose commit exactly matches the superproject gitlink. This
@@ -198,6 +214,7 @@ flow, and Debian artifacts are still collected into root `build/`.
 build/kvm_vin
 build/kvm_ui
 build/nano_ocr_app
+build/nomad-uvc-feeder
 build/nanokvm-update-verify
 build/update-keys.json
 debhelper/packages/kvmcomm/rootfs/usr/bin/ax_efuse_tool
@@ -221,6 +238,7 @@ Packaged binary locations:
 kvmcomm:    /kvmcomm/vin/kvm_vin
 kvmcomm:    /kvmcomm/ui/kvm_ui
 kvmcomm:    /kvmcomm/ocr/nano_ocr_app
+kvmcomm:    /kvmcomm/webcam/nomad-uvc-feeder
 kvmcomm:    /usr/bin/ax_efuse_tool
 kvmcomm:    /usr/bin/nanokvm-update-verify
 kvmcomm:    /usr/share/nanokvm/update-keys.json

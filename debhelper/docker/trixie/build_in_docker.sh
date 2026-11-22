@@ -38,6 +38,12 @@ if [[ "${PKG_NAME}" == "kvmcomm" ]] && [[ ! -f "${PROJECT_ROOT}/build/nano_ocr_a
 	exit 1
 fi
 
+if [[ "${PKG_NAME}" == "kvmcomm" ]] && [[ ! -f "${PROJECT_ROOT}/build/nomad-uvc-feeder" ]]; then
+	echo "missing ${PROJECT_ROOT}/build/nomad-uvc-feeder"
+	echo "please run: python3 build.py webcam"
+	exit 1
+fi
+
 if [[ "${PKG_NAME}" == "kvmcomm" ]] && [[ ! -f "${PROJECT_ROOT}/debhelper/packages/kvmcomm/rootfs/usr/bin/ax_efuse_tool" ]]; then
 	echo "missing ${PROJECT_ROOT}/debhelper/packages/kvmcomm/rootfs/usr/bin/ax_efuse_tool"
 	echo "please add ax_efuse_tool to kvmcomm rootfs"

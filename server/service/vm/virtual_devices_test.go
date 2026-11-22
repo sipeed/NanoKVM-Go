@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -982,5 +984,26 @@ func assertSingleUsbDevStopStart(t *testing.T, commands []string) {
 	}
 	if len(commands) < 2 || commands[0] != stop || commands[len(commands)-1] != start {
 		t.Fatalf("commands = %#v, want stop first and start last", commands)
+	}
+}
+
+func TestWebcamEndpointBudget(t *testing.T) {
+	dir := t.TempDir()
+	for _, name := range []string{"hid.keyboard", "hid.mouse", "hid.touch", "uvc.usb0", "mass_storage.disk0", "mass_storage.disk1"} {
+		if err := os.Symlink("../functions/"+name, filepath.Join(dir, name)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if !webcamEndpointsAvailable(dir, "mass_storage.disk1") {
+		t.Fatal("reusing the already-linked disk should fit all seven IN endpoints")
+	}
+	if webcamEndpointsAvailable(dir, "uac2.usb0") || webcamEndpointsAvailable(dir, "ncm.usb0") {
+		t.Fatal("an additional USB function exceeds the seven IN endpoints")
+	}
+	if err := os.Remove(filepath.Join(dir, "mass_storage.disk1")); err != nil {
+		t.Fatal(err)
+	}
+	if !webcamEndpointsAvailable(dir, "uac2.usb0") || webcamEndpointsAvailable(dir, "ncm.usb0") {
+		t.Fatal("one free endpoint should fit audio but not networking")
 	}
 }

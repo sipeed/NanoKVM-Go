@@ -173,7 +173,7 @@ export const BootStringSetting = ({ labels, maxLength, asciiOnly = false, api }:
               autoFocus
               value={value}
               placeholder={labels.placeholder}
-              maxLength={maxLength}
+              maxLength={asciiOnly ? maxLength : undefined}
               disabled={isLoading}
               onFocus={() => setResult(null)}
               onChange={(e) => setValue(e.target.value)}

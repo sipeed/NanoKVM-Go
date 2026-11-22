@@ -1,5 +1,7 @@
 #!/bin/bash
 
+webcam=/kvmcomm/webcam/control.sh
+
 lock_storage() {
     if [ "${NANOKVM_STORAGE_LOCK_FD:-}" != 3 ]; then
         exec 3>>/run/nanokvm-storage.lock || return 1
@@ -547,7 +549,20 @@ hid_start() {
         ln -s functions/uac2.usb0 configs/c.1/
     fi
 
-    ls /sys/class/udc/ | cat > UDC
+    local controller
+    controller=$(ls /sys/class/udc/) || return 1
+    if [ -e /boot/usb.webcam ]; then
+        if ! "$webcam" create || ! echo "$controller" > UDC || ! "$webcam" launch; then
+            echo "Webcam unavailable; restoring the base USB configuration" >&2
+            "$webcam" stop
+            if [ -n "$(cat UDC)" ]; then echo '' > UDC || return 1; fi
+            "$webcam" remove || return 1
+            rm -f /boot/usb.webcam
+            echo "$controller" > UDC || return 1
+        fi
+    else
+        echo "$controller" > UDC || return 1
+    fi
 
     if [ -e /boot/usb.rndis ]; then
         if [ -e /boot/rndis.dhcp ]; then
@@ -673,11 +688,13 @@ hid_stop() {
         stop_dhcp_service rndis
     fi
 
+    if [ -d "$GADGET_PATH/functions/uvc.nomad" ]; then "$webcam" stop || return 1; fi
     if [ -e "$GADGET_PATH/UDC" ]; then
         echo '' > "$GADGET_PATH/UDC" || return 1
         sleep 0.3
     fi
 
+    if [ -d "$GADGET_PATH/functions/uvc.nomad" ]; then "$webcam" remove || return 1; fi
     if [ -d "$GADGET_PATH/configs/c.1" ]; then
         rm -vf "$GADGET_PATH/configs/c.1/"hid.GS*
         rm -vf "$GADGET_PATH/configs/c.1/"rndis.usb0
@@ -723,6 +740,8 @@ hid_stop() {
 lock_storage || exit 1
 
 case "$1" in
+"webcam-on") "$webcam" on ;;
+"webcam-off") "$webcam" off ;;
 "start") hid_start ;;
 "stop")
     hid_stop && restore_local_storage

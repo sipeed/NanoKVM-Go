@@ -19,7 +19,7 @@ const (
 	menuBarPowerItem  = "power"
 )
 
-var defaultMenuBarDisabledItems = []string{menuBarPowerItem}
+var defaultMenuBarDisabledItems = []string{menuBarPowerItem, "mouseJiggler"}
 
 var (
 	menuBarMutex          sync.RWMutex

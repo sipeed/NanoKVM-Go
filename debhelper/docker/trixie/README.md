@@ -15,6 +15,7 @@ From project root:
    - `python3 build.py kvm_vin`
    - `python3 build.py kvm_ui`
    - `python3 build.py nano_ocr`
+   - `python3 build.py webcam`
    - `python3 build.py memfab`
    - `python3 build.py server`
    - `python3 build.py web`

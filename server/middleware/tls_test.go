@@ -28,6 +28,10 @@ func TestSecurityHeadersAndTlsSetExactSecurityHeaders(t *testing.T) {
 		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusNoContent)
 	}
 
+	if policy := recorder.Header().Get("Permissions-Policy"); !strings.Contains(", "+policy+", ", ", camera=(self), ") {
+		t.Fatalf("dashboard must allow same-origin webcam capture, got %q", policy)
+	}
+
 	want := map[string]string{
 		"Content-Security-Policy":      contentSecurityPolicy,
 		"Cross-Origin-Embedder-Policy": "require-corp",

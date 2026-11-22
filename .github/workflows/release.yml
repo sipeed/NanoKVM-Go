@@ -194,7 +194,7 @@ jobs:
           fi
           gh release create "$TAG" --draft --verify-tag \
             --repo "$GITHUB_REPOSITORY" \
-            --title "nanokvm-go@${TAG}" \
+            --title "NanoKVM-go-Nomad@${TAG}" \
             --notes "Signed by the CI update key." \
             "build/kvmcomm_${RELEASE_VERSION}_armhf.deb" \
             "build/nanokvm-go_${RELEASE_VERSION}_armhf.deb" \

@@ -34,7 +34,7 @@ export type OnboardingMessages = {
     };
     input: {
       title: string;
-      items: { keyboard: string; mouse: string; preview: string };
+      items: { mouseJiggler: string; keyboard: string; mouse: string; preview: string };
     };
     tools: {
       title: string;
@@ -109,6 +109,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Keyboard and mouse',
         items: {
+          mouseJiggler: '"Mouse Jiggler" — Prevent the remote host from sleeping',
           keyboard: '"Keyboard" — on-screen keys, shortcuts, and paste-as-typing.',
           mouse: '"Mouse" — switch pointer modes and calibrate.',
           preview: '"Preview" — watch the screen without sending any input.'
@@ -211,6 +212,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: '键盘与鼠标',
         items: {
+          mouseJiggler: '「鼠标抖动」 — 防止远程主机休眠',
           keyboard: '「键盘」提供屏幕键盘、快捷键和粘贴输入。',
           mouse: '「鼠标」切换指针模式并校准。',
           preview: '「预览」只看画面，不发送任何输入。'
@@ -312,6 +314,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: '鍵盤與滑鼠',
         items: {
+          mouseJiggler: '「滑鼠抖動模式 (Mouse Jiggler)」 — 避免遠端主機進入休眠狀態',
           keyboard: '「鍵盤」提供螢幕鍵盤、快速鍵與貼上輸入。',
           mouse: '「滑鼠」切換指標模式並校準。',
           preview: '「預覽」只看畫面，不傳送任何輸入。'
@@ -414,6 +417,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'キーボードとマウス',
         items: {
+          mouseJiggler: '「マウスジグラー」 — リモートホストの休止を防ぐ',
           keyboard: '「キーボード」— 画面上のキー、ショートカット、貼り付け入力。',
           mouse: '「マウス」— ポインターモードを切り替え、キャリブレーションを行います。',
           preview: '「プレビュー」— 入力を送らずに画面だけを表示します。'
@@ -516,6 +520,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: '키보드와 마우스',
         items: {
+          mouseJiggler: '"마우스 흔들기" — 원격 호스트가 절전 모드로 진입하는 것을 방지',
           keyboard: '"키보드" — 화면에 표시되는 키, 단축키, 붙여넣기 입력을 제공합니다.',
           mouse: '"마우스" — 포인터 모드를 전환하고 보정합니다.',
           preview: '"미리보기" — 입력을 보내지 않고 화면만 봅니다.'
@@ -620,6 +625,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Tastatur und Maus',
         items: {
+          mouseJiggler: '„Mausaktivitäts-Simulator“ — Verhindert, dass der remote Host in den Energiesparmodus wechselt',
           keyboard: '„Tastatur“ — Bildschirmtastatur, Kürzel und Einfügen als Tastatureingabe.',
           mouse: '„Maus“ — Zeigermodi wechseln und kalibrieren.',
           preview: '„Vorschau“ — das Bild anzeigen, ohne Eingaben zu senden.'
@@ -725,6 +731,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Clavier et souris',
         items: {
+          mouseJiggler: '«Souris Jiggler» — Empêcher l\'hôte distant de dormir',
           keyboard: "« Clavier » — touches à l'écran, raccourcis et saisie par collage.",
           mouse: '« Souris » — change de mode de pointeur et calibre.',
           preview: "« Aperçu » — affiche l'écran sans envoyer aucune entrée."
@@ -831,6 +838,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Teclado y ratón',
         items: {
+          mouseJiggler: '«Agitador de ratón» — Evitar que el host remoto entre en reposo',
           keyboard: '«Teclado» — teclas en pantalla, atajos y pegado como tecleo.',
           mouse: '«Ratón» — cambia los modos de puntero y calibra.',
           preview: '«Vista previa» — muestra la imagen sin enviar ninguna entrada.'
@@ -935,6 +943,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Tastiera e mouse',
         items: {
+          mouseJiggler: '"Muovi il mouse" — Impedisce la sospensione dell\'host remoto',
           keyboard: '"Tastiera" — tasti su schermo, scorciatoie e incolla come digitazione.',
           mouse: '"Mouse" — cambia le modalità del puntatore e calibra.',
           preview: '"Anteprima" — mostra lo schermo senza inviare alcun input.'
@@ -1041,6 +1050,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Toetsenbord en muis',
         items: {
+          mouseJiggler: '"Muisschommel" — Voorkom dat de externe host in slaap valt',
           keyboard: '"Toetsenbord" — schermtoetsen, sneltoetsen en plakken als typen.',
           mouse: '"Muis" — schakel tussen aanwijzermodi en kalibreer.',
           preview: '"Voorbeeld" — bekijk het scherm zonder invoer te sturen.'
@@ -1144,6 +1154,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Klawiatura i mysz',
         items: {
+          mouseJiggler: '„Jiggler myszy” — Uniemożliwia uśpienie zdalnego hosta',
           keyboard: '„Klawiatura” — klawisze na ekranie, skróty i wklejanie jako pisanie.',
           mouse: '„Mysz” — przełącza tryby wskaźnika i wykonuje jego kalibrację.',
           preview: '„Podgląd” — pokazuje obraz bez wysyłania jakichkolwiek danych wejściowych.'
@@ -1248,6 +1259,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Клавиатура и мышь',
         items: {
+          mouseJiggler: '«Дрожалка для мыши» — Включите данную опцию, если хост засыпает',
           keyboard: '«Клавиатура» — экранные клавиши, сочетания клавиш и ввод вставкой.',
           mouse: '«Мышь» — переключает режимы указателя и калибрует его.',
           preview: '«Предпросмотр» — показывает экран, не отправляя никакого ввода.'
@@ -1352,6 +1364,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Клавіатура і миша',
         items: {
+          mouseJiggler: '«Налаштування пацюка» — Не дозволяйте віддаленому хосту спати',
           keyboard: '«Клавіатура» — екранні клавіші, сполучення клавіш і ввід вставленням.',
           mouse: '«Миша» — перемикає режими вказівника та калібрує його.',
           preview: '«Попередній перегляд» — показує екран без надсилання будь-якого вводу.'
@@ -1457,6 +1470,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Klávesnice a myš',
         items: {
+          mouseJiggler: '„Pohyb myši (Jiggler)“ — Zabraňte spánku vzdáleného hostitele',
           keyboard: '„Klávesnice“ — klávesy na obrazovce, zkratky a vkládání textu jako psaní.',
           mouse: '„Myš“ — přepíná režimy ukazatele a provádí jeho kalibraci.',
           preview: '„Náhled“ — ukazuje obraz bez odesílání jakéhokoli vstupu.'
@@ -1561,6 +1575,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Tastatur og mus',
         items: {
+          mouseJiggler: '"Mus Jiggler" — Forhindrer fjernværten i at sove',
           keyboard: '"Tastatur" — skærmtaster, genveje og indsæt som tastning.',
           mouse: '"Mus" — skift mellem markørtilstande og kalibrer.',
           preview: '"Forhåndsvisning" — se skærmen uden at sende input.'
@@ -1665,6 +1680,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Billentyűzet és egér',
         items: {
+          mouseJiggler: '„Egér mozgató” — A távoli gazdagép alvó állapotának megakadályozása',
           keyboard:
             '„Billentyűzet” — képernyőn megjelenő billentyűk, gyorsbillentyűk és beillesztés gépelésként.',
           mouse: '„Egér” — váltja a mutató módjait és elvégzi a kalibrációt.',
@@ -1770,6 +1786,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Keyboard dan mouse',
         items: {
+          mouseJiggler: '"Tikus Jiggler" — Mencegah host jarak jauh tertidur',
           keyboard: '"Papan ketik" — tombol di layar, pintasan, dan tempel-sebagai-ketikan.',
           mouse: '"Mouse" — mengganti mode penunjuk dan mengalibrasi.',
           preview: '"Pratinjau" — menampilkan layar tanpa mengirim input apa pun.'
@@ -1874,6 +1891,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Tastatur og mus',
         items: {
+          mouseJiggler: '«Mus Jiggler» — Hindre den eksterne verten fra å sove',
           keyboard: '«Åpne tastatur» — skjermtaster, snarveier og innliming som tasting.',
           mouse: '«Mus» — bytt mellom pekermoduser og kalibrer.',
           preview: '«Forhåndsvisning» — se skjermen uten å sende inndata.'
@@ -1978,6 +1996,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'คีย์บอร์ดและเมาส์',
         items: {
+          mouseJiggler: '"เมาส์กระตุก" — ป้องกันไม่ให้โฮสต์ระยะไกลเข้าสู่โหมดสลีป',
           keyboard: '"คีบอร์ด" — แป้นพิมพ์บนหน้าจอ คีย์ลัด และการวางแบบพิมพ์',
           mouse: '"เมาส์" — สลับโหมดตัวชี้และปรับเทียบ',
           preview: '"ตัวอย่าง" — แสดงหน้าจอโดยไม่ส่งอินพุตใด ๆ'
@@ -2081,6 +2100,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       input: {
         title: 'Bàn phím và chuột',
         items: {
+          mouseJiggler: '"Máy lắc lư chuột" — Ngăn máy chủ từ xa ngủ',
           keyboard: '"Bàn phím" — phím trên màn hình, phím tắt và dán dưới dạng gõ phím.',
           mouse: '"Chuột" — đổi chế độ con trỏ và hiệu chỉnh.',
           preview: '"Xem trước" — chỉ xem màn hình mà không gửi bất kỳ đầu vào nào.'

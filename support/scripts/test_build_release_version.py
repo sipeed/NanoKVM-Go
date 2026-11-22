@@ -338,6 +338,7 @@ class BuildReleaseVersionTests(unittest.TestCase):
                 "validate_optional_update_signing_key",
                 return_value=args.signing_key,
             ) as signing_key_mock,
+            mock.patch.object(build, "verify_release_apps_checkout") as verify_apps_mock,
             mock.patch.object(build, "build_all") as build_all_mock,
             mock.patch.object(build, "package_kvmcomm") as kvmcomm_mock,
             mock.patch.object(build, "package_nanokvm_go") as nanokvm_mock,
@@ -345,6 +346,7 @@ class BuildReleaseVersionTests(unittest.TestCase):
         ):
             self.assertEqual(build.release(args), 0)
 
+        verify_apps_mock.assert_called_once_with("release")
         validate_mock.assert_called_once_with("release", "0.0.26")
         signing_key_mock.assert_called_once_with(args.signing_key)
         build_all_mock.assert_called_once()
@@ -368,6 +370,7 @@ class BuildReleaseVersionTests(unittest.TestCase):
                 "validate_optional_update_signing_key",
                 return_value=None,
             ),
+            mock.patch.object(build, "verify_release_apps_checkout") as verify_apps_mock,
             mock.patch.object(build, "build_all") as build_all_mock,
             mock.patch.object(build, "package_kvmcomm"),
             mock.patch.object(build, "package_nanokvm_go"),
@@ -375,6 +378,7 @@ class BuildReleaseVersionTests(unittest.TestCase):
         ):
             self.assertEqual(build.release(args), 0)
 
+        verify_apps_mock.assert_called_once_with("release")
         self.assertIsNone(build_all_mock.call_args.args[0].signing_key)
         self.assertIsNone(update_mock.call_args.args[0].signing_key)
 

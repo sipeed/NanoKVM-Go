@@ -2,6 +2,8 @@ rootfs/kvmcomm/edid kvmcomm/
 rootfs/kvmcomm/ko kvmcomm/
 rootfs/kvmcomm/models kvmcomm/
 rootfs/kvmcomm/scripts kvmcomm/
+rootfs/kvmcomm/webcam kvmcomm/
+../../../build/nomad-uvc-feeder kvmcomm/webcam/
 rootfs/kvmcomm/apps/README.md kvmcomm/apps/
 rootfs/kvmcomm/apps/README_zh.md kvmcomm/apps/
 rootfs/kvmcomm/apps/appbase.py kvmcomm/apps/

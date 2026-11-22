@@ -23,6 +23,7 @@ func streamRouter(r *gin.Engine) {
 	api.POST("/stream/gop", service.SetGop)                      // set stream gop
 	api.POST("/stream/fps", service.SetFps)                      // set stream fps
 	api.GET("/stream/encoder", service.GetEncoder)               // get encoder settings
+	api.GET("/stream/webcam", stream.ConnectWebcam)
 
 	api.GET("/stream/h264/direct", direct.Connect)     // h264 stream (direct)
 	api.GET("/stream/h264/webrtc", webrtc.Connect)     // h264 stream (webrtc)

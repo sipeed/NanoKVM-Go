@@ -154,6 +154,7 @@ type DeleteScriptReq struct {
 }
 
 type GetVirtualDeviceRsp struct {
+	IsWebcamEnabled  bool   `json:"isWebcamEnabled"`
 	IsNetworkEnabled bool   `json:"isNetworkEnabled"`
 	IsDiskEnabled    bool   `json:"isDiskEnabled"`
 	DiskMinSizeMiB   int64  `json:"diskMinSizeMiB"`
@@ -165,9 +166,9 @@ type GetVirtualDeviceRsp struct {
 }
 
 type UpdateVirtualDeviceReq struct {
-	Device      string `json:"device" form:"device" validate:"required"`                                            // disk | network | audio
-	Mode        string `json:"mode" form:"mode" validate:"required_if=Device audio,omitempty,oneof=off mic duplex"` // off | mic | duplex (audio only)
-	DiskSizeMiB int64  `json:"diskSizeMiB" form:"diskSizeMiB" validate:"omitempty,min=5120"`                        // required when initializing disk storage
+	Device      string `json:"device" form:"device" validate:"required"`                                               // disk | network | audio | webcam
+	Mode        string `json:"mode" form:"mode" validate:"required_if=Device audio,omitempty,oneof=on off mic duplex"` // audio: off, mic, duplex; webcam: on, off
+	DiskSizeMiB int64  `json:"diskSizeMiB" form:"diskSizeMiB" validate:"omitempty,min=5120"`                           // required when initializing disk storage
 }
 
 type RefreshVirtualDeviceReq struct {

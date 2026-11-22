@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 import { getHidMode } from '@/api/hid.ts';
@@ -16,6 +17,9 @@ export const VirtualDevices = () => {
   const [isHidOnlyMode, setIsHidOnlyMode] = useState(false);
   const [isImageMounted, setIsImageMounted] = useState(false);
 
+  const [webcamEnabled, setWebcamEnabled] = useState(false);
+  const [webcamBusy, setWebcamBusy] = useState(false);
+  const [webcamError, setWebcamError] = useState('');
   const [isNetworkEnabled, setIsNetworkEnabled] = useState(false);
   const [isDiskEnabled, setIsDiskEnabled] = useState(false);
   const [isSdCardExist, setIsSdCardExist] = useState(false);
@@ -58,6 +62,7 @@ export const VirtualDevices = () => {
       return;
     }
 
+    setWebcamEnabled(!!rsp.data.isWebcamEnabled);
     setIsNetworkEnabled(rsp.data.isNetworkEnabled);
     setIsDiskEnabled(rsp.data.isDiskEnabled);
     setIsSdCardExist(rsp.data.isSdCardExist);
@@ -84,6 +89,39 @@ export const VirtualDevices = () => {
           <span className="text-neutral-400">{t('settings.device.imageMounted')}</span>
         )
       )}
+
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <span>{t('webcam.title', 'Webcam')}</span>
+          <span className="text-xs text-neutral-500">
+            Expose a USB camera to the connected computer. Start sharing from the menu bar.
+          </span>
+          {webcamError && (
+            <span role="alert" className="text-xs text-red-400">
+              {webcamError}
+            </span>
+          )}
+        </div>
+        <Switch
+          aria-label="Webcam"
+          checked={webcamEnabled}
+          loading={webcamBusy}
+          disabled={isHidOnlyMode || isImageMounted}
+          onChange={async (enabled) => {
+            setWebcamBusy(true);
+            setWebcamError('');
+            try {
+              const rsp = await api.setWebcamEnabled(enabled);
+              if (rsp.code !== 0) setWebcamError(rsp.msg || 'Could not change the USB webcam.');
+              await getVirtualDevices();
+            } catch {
+              setWebcamError('Could not reach the webcam service.');
+            } finally {
+              setWebcamBusy(false);
+            }
+          }}
+        />
+      </div>
 
       <Disk
         isDisabled={isHidOnlyMode || isImageMounted}

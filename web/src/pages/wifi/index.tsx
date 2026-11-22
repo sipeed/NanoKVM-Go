@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 
 import * as api from '@/api/network.ts';
 import type { WifiNetwork } from '@/api/network.ts';
+import { projectName } from '@/lib/branding.ts';
 import { getWifiPortalViewMode, setWifiPortalViewMode } from '@/lib/localstorage.ts';
 import type { WifiPortalViewMode } from '@/lib/localstorage.ts';
 import { Head } from '@/components/head.tsx';
@@ -126,7 +127,7 @@ function PageShell({ children, footer }: PageShellProps) {
       <header className="flex shrink-0 items-center justify-between gap-4 px-5 pb-2 pt-[max(1rem,env(safe-area-inset-top,0px))]">
         <div className="flex items-center gap-2 text-neutral-100">
           <WifiIcon size={20} aria-hidden="true" />
-          <span className="text-base font-semibold">NanoKVM</span>
+          <span className="text-base font-semibold">{projectName}</span>
         </div>
         <LanguagePicker />
       </header>

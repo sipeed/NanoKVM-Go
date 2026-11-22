@@ -102,6 +102,7 @@ func (s *Service) GetVirtualDevice(c *gin.Context) {
 	}
 
 	rsp.OkRspWithData(c, &proto.GetVirtualDeviceRsp{
+		IsWebcamEnabled:  isFileExists("/boot/usb.webcam") && isFileExists("/run/nanokvm-webcam/live.sock"),
 		IsNetworkEnabled: isVirtualNetworkMounted(),
 		IsDiskEnabled:    virtualDiskRuntimeMounted(),
 		DiskMinSizeMiB:   diskMinSizeMiB,
@@ -128,6 +129,35 @@ func (s *Service) UpdateVirtualDevice(c *gin.Context) {
 	defer virtualDeviceUpdateMu.Unlock()
 	hid.LockUsbGadgetMutation()
 	defer hid.UnlockUsbGadgetMutation()
+
+	if req.Device == "webcam" {
+		if req.Mode != "on" && req.Mode != "off" {
+			rsp.ErrRsp(c, -1, "Webcam mode must be on or off")
+			return
+		}
+		if err := runVirtualDeviceCommands([]string{scriptUsbDev + " webcam-" + req.Mode}); err != nil {
+			log.Warnf("webcam update: %v", err)
+			rsp.ErrRsp(c, -3, err.Error())
+			return
+		}
+		rsp.OkRsp(c)
+		return
+	}
+	if isFileExists("/boot/usb.webcam") {
+		var requestedLink string
+		switch {
+		case req.Device == "network" && !isVirtualNetworkMounted():
+			requestedLink = "ncm.usb0"
+		case req.Device == "audio" && req.Mode != "off" && !isVirtualMicMounted():
+			requestedLink = "uac2.usb0"
+		case req.Device == "disk" && !isVirtualDiskMounted():
+			requestedLink = "mass_storage.disk1"
+		}
+		if requestedLink != "" && !webcamEndpointsAvailable("/sys/kernel/config/usb_gadget/g0/configs/c.1", requestedLink) {
+			rsp.ErrRsp(c, -3, "USB endpoints are in use. Disable Webcam or another virtual device first.")
+			return
+		}
+	}
 
 	if req.Device == "audio" && virtualAudioHidOnly() {
 		rsp.ErrRsp(c, -5, "virtual audio is unavailable in HID-only mode")
@@ -210,6 +240,36 @@ func (s *Service) UpdateVirtualDevice(c *gin.Context) {
 	} else {
 		log.Debugf("update virtual device %s success", req.Device)
 	}
+}
+
+func webcamEndpointsAvailable(configDir, requestedLink string) bool {
+	links, err := os.ReadDir(configDir)
+	if err != nil {
+		return false
+	}
+	// An ejected disk can still have a linked USB function and consume an endpoint.
+	functions := []string{requestedLink}
+	for _, link := range links {
+		if link.Type()&os.ModeSymlink == 0 {
+			continue
+		}
+		if link.Name() != requestedLink {
+			functions = append(functions, link.Name())
+		}
+	}
+	used := 0
+	for _, function := range functions {
+		kind, _, _ := strings.Cut(function, ".")
+		switch kind {
+		case "hid", "uac2", "mass_storage":
+			used++
+		case "uvc", "rndis", "ncm", "acm":
+			used += 2
+		default:
+			return false
+		}
+	}
+	return used <= 7
 }
 
 func (s *Service) RefreshVirtualDevice(c *gin.Context) {

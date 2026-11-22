@@ -306,6 +306,15 @@ export function setUac2FunctionName(enabled: boolean, value: string) {
   return http.post('/api/vm/uac2-function-name', { enabled, value });
 }
 
+// get / set webcam function name
+export function getWebcamFunctionName() {
+  return http.get('/api/vm/webcam-function-name');
+}
+
+export function setWebcamFunctionName(enabled: boolean, value: string) {
+  return http.post('/api/vm/webcam-function-name', { enabled, value });
+}
+
 // reboot NanoKVM itself (optionally protected by an advanced 2FA challenge)
 export function reboot(challenge?: string) {
   return challenge

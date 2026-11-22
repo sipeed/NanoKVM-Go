@@ -25,7 +25,7 @@ const LOGIN_USERNAME_KEY = 'nano-kvm-login-username';
 const LOGIN_PASSWORD_KEY = 'nano-kvm-login-password';
 const REMEMBERED_LOGIN_PASSWORD_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-const DEFAULT_MENU_DISABLED_ITEMS = ['power'];
+const DEFAULT_MENU_DISABLED_ITEMS = ['power', 'mouseJiggler'];
 
 type ItemWithExpiry = {
   value: string;

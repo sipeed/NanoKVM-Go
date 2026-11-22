@@ -1,4 +1,4 @@
-# NanoKVM-Go
+# NanoKVM-Go Nomad
 
 [English](README.md) | 中文
 
@@ -10,18 +10,30 @@
      |
     <a href="https://wiki.sipeed.com/hardware/zh/kvm/NanoKVM_Go/user_guide.html">📖 使用指南</a>
      |
-    <a href="https://github.com/sipeed/NanoKVM-Go/releases/latest">💾 固件下载</a>
+    <a href="https://github.com/sipeed/NanoKVM-Go/releases/latest">💾 Sipeed 官方固件</a>
   </h3>
   <br>
 </div>
 
-## 🌟 NanoKVM-Go 是什么？
+## 🌟 NanoKVM-go-Nomad 是什么？
 
-NanoKVM-Go 是 **NanoKVM Go 系列**的开源软件仓库。该系列是 [Sipeed](https://sipeed.com) 推出的掌上 USB-C KVM，针对手机、平板和便携电脑优化。完成初始网络配置后，将它连接到支持 USB-C 视频输出的设备，即可从另一台手机或电脑的浏览器中查看画面，并进行点击、滑动和输入。
+NanoKVM-go-Nomad 是 Sipeed NanoKVM-Go 的分支，适用于 **NanoKVM Go 系列**。该系列是 [Sipeed](https://sipeed.com) 推出的掌上 USB-C KVM，针对手机、平板和便携电脑优化。完成初始网络配置后，将它连接到支持 USB-C 视频输出的设备，即可从另一台手机或电脑的浏览器中查看画面，并进行点击、滑动和输入。
 
 与远程桌面软件不同，NanoKVM Go 从硬件层采集画面，并以硬件方式模拟键盘、鼠标和存储设备。被控端无需安装专用驱动或远程控制客户端；即使操作系统卡死、无法联网或尚未启动，也能用于 UEFI/BIOS 设置、系统安装和故障排查，同样适合日常的远程协助。
 
 Go 系列还提供完善的 AI 集成：可选的 MCP Server 让兼容 MCP 的 AI 工具获取画面并发送键鼠操作；Go+ 额外配备端侧 NPU、记忆织网与屏幕延时回放，可从画面变化中提取可检索的文字与上下文。
+
+## NanoKVM-Go Nomad 0.2.7, build 1 的改动
+
+**Go+ 远程摄像头。** 浏览器所在电脑的摄像头可作为标准 USB 摄像头提供给被控电脑。USB 端采用 1024 × 600 MJPEG，帧率为 30 fps。安装支持 UVC 的 Nomad 内核后，通过 HTTPS 打开控制台，在 **Settings → Device → Webcam** 中启用摄像头。切换时 USB 设备会重新连接。标准更新包含摄像头内核、脚本和视频帧输出程序。在运行 v1.0.10 固件的 Go+ 上，通过控制台上传更新，内核更换后重启一次。[内核补丁](support/patches/maix_ax620e_sdk_kernel/README.md)
+
+在摄像头菜单中选择本地摄像头并点击 **Start**。校准从 5 Mbps、30 fps 开始，先预热 1 秒，再连续采集五组、每组 2 秒的数据，通过二分搜索在 2–8 Mbps、15–30 fps 范围内调整。降低码率时也会适当降低帧率，以保留单帧细节。校准期间若被控电脑打开摄像头，画面会立即开始传输。传输期间若持续丢帧，控制器会调低目标值，传输稳定后再逐步提高。**Calibrating** 和 **Streaming** 显示接收码率、帧率和上传延迟。被控电脑空闲时，**Ready** 只显示校准后的目标码率和帧率。支持后台工作线程的浏览器可在线程中采集图像，Safari 等 WebKit 浏览器可通过视频元素采集。点击 **Stop** 会释放本地摄像头并使 USB 画面恢复为黑屏。麦克风单独控制。[摄像头使用与校准](docs/remote-webcam.md)
+
+使用配套内核时，USB 摄像头默认使用驱动提供的通用名称。可在 **Settings → Device → Advanced → USB Webcam Name** 中修改被控电脑看到的名称，下次启用摄像头或重启 Go+ 时生效。
+
+**菜单栏。** 初始工具栏沿用上游默认设置，鼠标抖动器快捷入口默认隐藏，可在外观设置中启用。启用 USB 摄像头后会显示摄像头快捷入口。音量未静音、摄像头已开启或鼠标抖动器已启用时，相应图标显示绿色。点击鼠标抖动器即可使用本次浏览器会话中上次启用的模式切换开关。可在 **Settings → Appearance** 中调整菜单图标的可见性。
+
+**默认设置和项目标识。** 沿用上游的时区、EDID 与网页标题默认值，恢复出厂设置使用 Asia/Shanghai。Wi-Fi 页面、关于页面和更新页面保留 Nomad 项目标识。**Check for Updates** 显示上游应用版本和 Nomad 构建编号。
 
 ## 📦 产品家族
 

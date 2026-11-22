@@ -144,7 +144,7 @@ jobs:
           fi
           gh release create nightly \
             --target "$SHA" \
-            --title "nanokvm-go@nightly" \
+            --title "NanoKVM-go-Nomad@nightly" \
             --notes-file "$RUNNER_TEMP/notes.md" \
             --prerelease \
             --latest=false \

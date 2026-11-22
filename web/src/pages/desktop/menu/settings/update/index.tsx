@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 
 import * as api from '@/api/application.ts';
 import type { ApplicationUpdateStatus } from '@/api/application.ts';
+import { projectUrl, releaseName } from '@/lib/branding.ts';
 import { isNewerVersion, normalizeVersion } from '@/lib/version.ts';
 import { client } from '@/lib/websocket.ts';
 import { ButtonBase } from '@/components/ui/button-base.tsx';
@@ -772,6 +773,7 @@ export const Update = ({ setIsLocked }: UpdateProps) => {
     <>
       {contextHolder}
       <div className="text-base font-bold">{t('settings.update.title')}</div>
+      <div className="mt-1 text-sm text-neutral-400">{releaseName}</div>
       <Divider className="opacity-50" />
 
       <Preview
@@ -906,7 +908,7 @@ export const Update = ({ setIsLocked }: UpdateProps) => {
           <Button
             type="link"
             size="small"
-            href="https://github.com/sipeed/NanoKVM-Go/blob/main/CHANGELOG.md"
+            href={`${projectUrl}/blob/main/CHANGELOG.md`}
             target="_blank"
             disabled={isBusy}
           >

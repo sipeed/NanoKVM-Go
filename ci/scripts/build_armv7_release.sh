@@ -43,7 +43,7 @@ test -f kvm_ui/profile/nanokvm-go
 
 # build.py pins the checked-in official public keys by default, so the packaged
 # key ring matches an official release even though CI holds no private key.
-for target in libkvm kvm_vin kvm_ui nano_ocr memfab server; do
+for target in libkvm kvm_vin kvm_ui nano_ocr webcam memfab server; do
     python3 build.py "$target"
 done
 

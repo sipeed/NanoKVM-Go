@@ -1,0 +1,11 @@
+--- a/linux/linux-4.19.125/arch/arm/configs/axera_AX620Q_emmc_arm32_k419_sipeed_nanoagent_defconfig
++++ b/linux/linux-4.19.125/arch/arm/configs/axera_AX620Q_emmc_arm32_k419_sipeed_nanoagent_defconfig
+@@ -2909,7 +2909,7 @@
+ CONFIG_USB_CONFIGFS_F_UAC2=y
+ # CONFIG_USB_CONFIGFS_F_MIDI is not set
+ CONFIG_USB_CONFIGFS_F_HID=y
+-# CONFIG_USB_CONFIGFS_F_UVC is not set
++CONFIG_USB_CONFIGFS_F_UVC=y
+ # CONFIG_USB_CONFIGFS_F_PRINTER is not set
+ CONFIG_TYPEC=y
+ CONFIG_TYPEC_TCPM=y

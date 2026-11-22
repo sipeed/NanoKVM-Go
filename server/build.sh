@@ -256,7 +256,7 @@ resolve_sysroot() {
 build_link_stub() {
     log_info "Building link stub library..."
 
-    "$CXX_BIN" --sysroot="$SYSROOT_DIR" -Iinclude -fPIC -shared -o dl_lib/libkvm.so dl_lib/kvmimpl.cpp || {
+    "$CXX_BIN" --sysroot="$SYSROOT_DIR" -Iinclude -fPIC -shared -Wl,-soname,libkvm.so -o dl_lib/libkvm.so dl_lib/kvmimpl.cpp || {
         log_error "Failed to build dl_lib/libkvm.so"
         return 1
     }

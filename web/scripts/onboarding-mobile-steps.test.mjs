@@ -54,6 +54,7 @@ const { deriveMobileOnboardingSteps, MOBILE_ONBOARDING_VERSION } = loadTsModule(
 const { deriveOnboardingSteps, ONBOARDING_VERSION } = loadTsModule(stepsFile, moduleCache);
 
 const ALL_ITEMS = [
+  'mouseJiggler',
   'pictureInPicture',
   'volume',
   'microphone',
@@ -111,7 +112,7 @@ test('default portrait rail yields welcome, rail, grouped steps, finish in order
   assert.deepEqual(stepByKey(steps, 'input'), {
     key: 'input',
     anchor: 'input',
-    items: ['keyboard', 'mouse', 'preview']
+    items: ['keyboard', 'mouse', 'preview', 'mouseJiggler']
   });
   assert.deepEqual(stepByKey(steps, 'tools'), {
     key: 'tools',

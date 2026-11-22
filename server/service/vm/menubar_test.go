@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"NanoKVM-Server/proto"
@@ -33,8 +34,8 @@ func TestMissingMenuBarUsesDisabledDefault(t *testing.T) {
 	if menuBarFingerRobotEnabled(config) {
 		t.Fatalf("missing menu-bar config enabled finger robot: %+v", config)
 	}
-	if len(config.DisabledItems) != 1 || config.DisabledItems[0] != menuBarPowerItem {
-		t.Fatalf("missing menu-bar default = %+v, want [%q]", config.DisabledItems, menuBarPowerItem)
+	if !slices.Equal(config.DisabledItems, []string{menuBarPowerItem, "mouseJiggler"}) {
+		t.Fatalf("missing menu-bar default = %+v, want power and mouseJiggler", config.DisabledItems)
 	}
 }
 
@@ -55,8 +56,8 @@ func TestGetMissingMenuBarReturnsDisabledDefault(t *testing.T) {
 	if rsp.Code != 0 || rsp.Data == nil {
 		t.Fatalf("missing menu-bar GET response = %+v, want code 0 with data", rsp)
 	}
-	if len(rsp.Data.DisabledItems) != 1 || rsp.Data.DisabledItems[0] != menuBarPowerItem {
-		t.Fatalf("missing menu-bar GET disabledItems = %v, want [%q]", rsp.Data.DisabledItems, menuBarPowerItem)
+	if !slices.Equal(rsp.Data.DisabledItems, []string{menuBarPowerItem, "mouseJiggler"}) {
+		t.Fatalf("missing menu-bar GET disabledItems = %v, want power and mouseJiggler", rsp.Data.DisabledItems)
 	}
 }
 

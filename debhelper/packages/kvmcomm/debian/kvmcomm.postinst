@@ -1,9 +1,15 @@
 #!/bin/sh
 set -e
 
-# Set the device default only when configuring a fresh installation.
-if [ "$1" = configure ] && [ -z "${2:-}" ]; then
-    "${DPKG_ROOT:-}/kvmcomm/scripts/set_default_timezone.sh" "${DPKG_ROOT:-}"
+# Release the live UVC handles before debhelper restarts usbdev.service.
+# Its normal USB stop/start path will rebind the user's selected functions.
+if [ "$1" = configure ] && [ -z "${DPKG_ROOT:-}" ] && [ -d /run/systemd/system ] &&
+   [ -L /sys/kernel/config/usb_gadget/g0/configs/c.1/uvc.nomad ]; then
+    if systemctl is-active --quiet nanokvm-go.service; then
+        systemctl stop nanokvm-go.service
+        trap 'systemctl start nanokvm-go.service' 0
+    fi
+    /kvmcomm/webcam/control.sh stop
 fi
 
 #DEBHELPER#

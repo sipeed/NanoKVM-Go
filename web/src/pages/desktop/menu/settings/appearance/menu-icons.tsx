@@ -8,9 +8,11 @@ import {
   HistoryIcon,
   MaximizeIcon,
   MicIcon,
+  MousePointerClickIcon,
   NetworkIcon,
   PictureInPicture2Icon,
   TerminalSquareIcon,
+  VideoIcon,
   Volume2Icon,
   XIcon
 } from 'lucide-react';
@@ -37,6 +39,12 @@ export const MenuIcons = () => {
   const allItems = [
     { key: 'volume', icon: <Volume2Icon size={16} /> },
     { key: 'microphone', icon: <MicIcon size={16} /> },
+    { key: 'webcam', icon: <VideoIcon size={16} /> },
+    {
+      key: 'mouseJiggler',
+      icon: <MousePointerClickIcon size={16} />,
+      label: 'settings.device.mouseJiggler.title'
+    },
     {
       key: 'pictureInPicture',
       icon: <PictureInPicture2Icon size={16} />,

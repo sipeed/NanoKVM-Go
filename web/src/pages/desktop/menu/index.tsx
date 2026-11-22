@@ -29,6 +29,7 @@ import { Fullscreen } from './fullscreen';
 import { Keyboard } from './keyboard';
 import { Microphone } from './microphone';
 import { Mouse } from './mouse';
+import { MouseJigglerButton } from './mouse-jiggler.tsx';
 import { Collapse, Expand } from './operations';
 import { PictureInPicture } from './picture-in-picture';
 import { Portal } from './portal';
@@ -40,6 +41,7 @@ import { ScreenTimelapse } from './settings/ai/screen-timelapse';
 import { Storage } from './storage';
 import { Terminal } from './terminal';
 import { Volume } from './volume';
+import { useWebcamShare, Webcam } from './webcam';
 import { Wol } from './wol';
 
 const screenTimelapseServiceID = 'screenTimelapse';
@@ -87,6 +89,7 @@ export const Menu = () => {
 
   const videoMode = useAtomValue(videoModeAtom);
   const menuDisabledItems = useAtomValue(menuDisabledItemsAtom);
+  const webcam = useWebcamShare(!menuDisabledItems.includes('webcam'));
   const setMenuDisabledItems = useSetAtom(menuDisabledItemsAtom);
   const [isInitialized, setIsInitialized] = useAtom(menuConfigInitializedAtom);
   const [isScreenTimelapseEnabled, setIsScreenTimelapseEnabled] = useAtom(
@@ -295,6 +298,7 @@ export const Menu = () => {
     const isWebRTCVideoMode = videoMode === 'h264-webrtc' || videoMode === 'h265-webrtc';
     const showVolume = isEnabled('volume') && isWebRTCVideoMode;
     const showMicrophone = isEnabled('microphone') && isWebRTCVideoMode;
+    const showWebcam = isEnabled('webcam') && webcam.enabled;
     const tooltipPlacement =
       variant === 'mobile' ? (mobilePlacement === 'right' ? 'left' : 'right') : 'bottom';
 
@@ -310,13 +314,14 @@ export const Menu = () => {
         </>
       )
     );
-    if (showVolume || showMicrophone) {
+    if (showVolume || showMicrophone || showWebcam) {
       items.push(
         renderGroup(
           'media',
           <>
             {showVolume && <Volume key="volume" />}
             {showMicrophone && <Microphone key="microphone" tooltipPlacement={tooltipPlacement} />}
+            {showWebcam && <Webcam share={webcam} />}
           </>
         )
       );
@@ -330,6 +335,7 @@ export const Menu = () => {
           <Keyboard key="keyboard" />
           <Mouse key="mouse" />
           <Preview key="preview" />
+          {isEnabled('mouseJiggler') && <MouseJigglerButton tooltipPlacement={tooltipPlacement} />}
         </>
       )
     );

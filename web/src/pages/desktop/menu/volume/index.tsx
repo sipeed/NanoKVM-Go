@@ -22,9 +22,9 @@ export const Volume = () => {
       {videoVolume === 0 ? (
         <VolumeXIcon size={18} />
       ) : videoVolume < 50 ? (
-        <Volume1Icon size={18} />
+        <Volume1Icon size={18} className="text-green-400" />
       ) : (
-        <Volume2Icon size={18} />
+        <Volume2Icon size={18} className="text-green-400" />
       )}
     </>
   );

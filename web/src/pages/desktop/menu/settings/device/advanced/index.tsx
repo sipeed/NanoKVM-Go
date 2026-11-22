@@ -9,6 +9,7 @@ import { StaticIp } from './static-ip.tsx';
 import { Swap } from './swap.tsx';
 import { Uac2FunctionName } from './uac2-function-name.tsx';
 import { UsbId } from './usb-id.tsx';
+import { WebcamFunctionName } from './webcam-function-name.tsx';
 
 export const Advanced = () => {
   const { t } = useTranslation();
@@ -30,6 +31,7 @@ export const Advanced = () => {
               <DiskInquiry />
               <DiskInquiryCdrom />
               <Uac2FunctionName />
+              <WebcamFunctionName />
               <RebootToFlashing />
             </div>
           )

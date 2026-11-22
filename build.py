@@ -37,12 +37,13 @@ NANOKVM_GO_INI = SUPPORT_SCRIPTS_DIR / "nanokvm-go.ini"
 UPDATE_VERIFIER = BUILD_DIR / "nanokvm-update-verify"
 UPDATE_KEYRING = BUILD_DIR / "update-keys.json"
 
-BUILD_SEQUENCE = ("libkvm", "kvm_vin", "kvm_ui", "nano_ocr", "memfab", "server", "web")
+BUILD_SEQUENCE = ("libkvm", "kvm_vin", "kvm_ui", "nano_ocr", "webcam", "memfab", "server", "web")
 DPKG_BUILDPACKAGE = ("dpkg-buildpackage", "-d", "-us", "-uc", "-b", "-aarmhf")
 PACKAGE_ARTIFACT_SUFFIXES = ("deb", "changes", "buildinfo")
 UPDATE_VERSION_PATTERN = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+")
 
 KVMCOMM_INPUT_FILES = (
+    BUILD_DIR / "nomad-uvc-feeder",
     BUILD_DIR / "kvm_vin",
     BUILD_DIR / "kvm_ui",
     BUILD_DIR / "nano_ocr_app",
@@ -546,9 +547,7 @@ def read_toolchain_value(config: configparser.ConfigParser, key: str) -> str:
     return value
 
 
-def build_memfab(_: argparse.Namespace) -> int:
-    target = "memfab"
-    log(target, f"target: {target}")
+def arm_toolchain() -> tuple[Path, Path]:
     require_file(NANOKVM_GO_INI)
 
     config = configparser.ConfigParser()
@@ -568,6 +567,29 @@ def build_memfab(_: argparse.Namespace) -> int:
             f"or check {format_path(NANOKVM_GO_INI)}"
         )
 
+    return toolchain_dir, arm_cc
+
+
+def build_webcam(_: argparse.Namespace) -> int:
+    target = "webcam"
+    log(target, f"target: {target}")
+    _, arm_cc = arm_toolchain()
+    BUILD_DIR.mkdir(exist_ok=True)
+    run(
+        target,
+        (
+            str(arm_cc), "-O2", "-Wall", "-Wextra", "-Werror",
+            str(ROOT / "support" / "webcam" / "feeder.c"),
+            "-o", str(BUILD_DIR / "nomad-uvc-feeder"),
+        ),
+    )
+    return 0
+
+
+def build_memfab(_: argparse.Namespace) -> int:
+    target = "memfab"
+    log(target, f"target: {target}")
+    toolchain_dir, arm_cc = arm_toolchain()
     memfab_dir = ROOT / "memfab"
     build_dir = memfab_dir / "build-go"
     run(
@@ -807,6 +829,7 @@ BUILD_TARGETS = {
     "kvm_vin": build_kvm_vin,
     "kvm_ui": build_kvm_ui,
     "nano_ocr": build_nano_ocr,
+    "webcam": build_webcam,
     "memfab": build_memfab,
 }
 

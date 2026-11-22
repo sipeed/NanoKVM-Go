@@ -40,6 +40,7 @@ function getVirtualDeviceResponse(state: MockState) {
       : 'mic';
 
   return {
+    isWebcamEnabled: state.virtualDevice.isWebcamEnabled,
     isNetworkEnabled: state.virtualDevice.isNetworkEnabled,
     isDiskEnabled: state.virtualDevice.isDiskEnabled,
     isSdCardExist: state.virtualDevice.isSdCardExist,
@@ -886,6 +887,16 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       if (enabled === false) state.vm.uac2FunctionName.value = '';
       return ok(state.vm.uac2FunctionName);
     }),
+    http.get(`${origin}/api/vm/webcam-function-name`, () => ok(state.vm.webcamFunctionName)),
+    http.post(`${origin}/api/vm/webcam-function-name`, async ({ request }) => {
+      const body = await readJsonObject(request);
+      const enabled = readBoolean(body, 'enabled');
+      const value = readString(body, 'value');
+      if (enabled !== null) state.vm.webcamFunctionName.enabled = enabled;
+      if (value !== null) state.vm.webcamFunctionName.value = value;
+      if (enabled === false) state.vm.webcamFunctionName.value = '';
+      return ok(state.vm.webcamFunctionName);
+    }),
     http.get(`${origin}/api/network/wifi`, () => ok(getWifiResponse(state))),
     http.get(`${origin}/api/network/wifi/scan`, ({ request }) => {
       if (state.network.wifi.apMode && !hasMockAPKey(request)) {
@@ -987,7 +998,11 @@ export function createDeviceHandlers(origin: string, state: MockState) {
     http.post(`${origin}/api/vm/device/virtual`, async ({ request }) => {
       const body = await readJsonObject(request);
       const device = readString(body, 'device');
-      if (device === 'network') {
+      if (device === 'webcam') {
+        const mode = readString(body, 'mode');
+        if (mode !== 'on' && mode !== 'off') return fail<ReturnType<typeof getVirtualDeviceResponse>>(-1, 'Invalid webcam mode');
+        state.virtualDevice.isWebcamEnabled = mode === 'on';
+      } else if (device === 'network') {
         state.virtualDevice.isNetworkEnabled = !state.virtualDevice.isNetworkEnabled;
       } else if (device === 'disk') {
         if (!state.virtualDevice.isSdCardExist) {

@@ -2,6 +2,15 @@
 
 Notable changes to NanoKVM-Go, with the newest version first.
 
+## NanoKVM-Go Nomad 0.2.7, build 1
+
+- Share a browser camera with the Go+ USB host as a 1024 × 600 MJPEG webcam. The device setting is optional and persists across restarts. Each browser session starts sharing explicitly. The USB output returns to black when the publisher stops.
+- Calibrate on Start with one second of warmup and five two-second samples. Auto starts at 5 Mbps and 30 fps, searches within 2–8 Mbps and 15–30 fps, and continues adjusting during use. The menu shows live throughput, frame rate and upload delay during calibration and streaming, and the calibrated target when ready. [Webcam operation](docs/remote-webcam.md)
+- Support worker-based capture and a Safari/WebKit fallback. Add a configurable host-visible webcam name and USB endpoint checks. The Normal offline update bundles the UVC kernel and application for Go+ firmware v1.0.10.
+- Add webcam and one-click Mouse Jiggler toolbar controls, active-state colors, configurable shortcut visibility and a localized jiggler tour step. Keep the jiggler shortcut hidden on a fresh toolbar.
+- Identify the fork and build number in the dashboard and update UI. Use Sipeed’s timezone and EDID defaults and preserve configured values on upgrade.
+- Package the webcam feeder separately from the Memory Fabric build and set the link stub’s library name explicitly for the ARM server build.
+
 ## 0.2.7 - 2026-11-05
 
 - Support custom HTTP/HTTPS update servers with persistent settings and stable and preview channels.

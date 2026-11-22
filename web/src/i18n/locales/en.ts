@@ -1,5 +1,6 @@
 const en = {
   translation: {
+    webcam: { title: 'Webcam' },
     storage: {
       cards: { mount: 'Disk mount', share: 'File sharing' },
       title: 'Images & File sharing',
@@ -896,6 +897,19 @@ const en = {
           failed: 'Configuration failed.',
           success: 'Configuration complete. USB gadget restarted.',
           okBtn: 'Ok',
+          cancelBtn: 'Cancel'
+        },
+        webcamFunctionName: {
+          title: 'USB Webcam Name',
+          config: 'Config',
+          tip: 'Set the USB camera name reported to the attached computer. A new name takes effect the next time Webcam is enabled or the Go+ restarts.',
+          enable: 'Use a custom webcam name',
+          placeholder: 'UVC Camera',
+          notEmpty: 'Enter a webcam name.',
+          notValid: 'Use a name of up to 63 characters without line breaks or control characters.',
+          failed: 'Could not save the webcam name.',
+          success: 'Webcam name saved.',
+          okBtn: 'Save',
           cancelBtn: 'Cancel'
         },
         uac2FunctionName: {

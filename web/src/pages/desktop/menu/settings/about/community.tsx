@@ -2,6 +2,8 @@ import { DiscordOutlined, GithubOutlined, XOutlined } from '@ant-design/icons';
 import { BookOpenIcon, MessageCircleQuestionIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { projectUrl } from '@/lib/branding.ts';
+
 export const Community = () => {
   const { t } = useTranslation();
 
@@ -14,7 +16,7 @@ export const Community = () => {
     {
       name: 'GitHub',
       icon: <GithubOutlined style={{ fontSize: '20px' }} width={24} height={24} />,
-      url: 'https://github.com/sipeed/NanoKVM-Go'
+      url: projectUrl
     },
     {
       name: 'X',

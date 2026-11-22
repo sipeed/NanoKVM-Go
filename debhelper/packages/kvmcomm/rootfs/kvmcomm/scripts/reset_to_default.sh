@@ -896,7 +896,7 @@ stop_and_disable_optional_services
 
 echo "Restoring default configuration files..."
 
-rm -f /boot/usb* /boot/rndis* /boot/ncm* || true
+rm -f /boot/usb* /boot/rndis* /boot/ncm* /boot/uvc.function_name || true
 rm -f /boot/force* || true
 request_default_hostname_restore
 rm -f /boot/wifi.nodhcp || true
@@ -918,10 +918,16 @@ fi
 
 reset_private_data
 
-if /kvmcomm/scripts/set_default_timezone.sh 2>>"$LOG_FILE"; then
-    echo "$(date) - Successfully reset timezone" >>"$LOG_FILE"
+if [ -f "/usr/share/zoneinfo/Asia/Shanghai" ]; then
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+    echo "Asia/Shanghai" > /etc/timezone
+    if [ $? -eq 0 ]; then
+        echo "$(date) - Successfully reset timezone to Asia/Shanghai" >>"$LOG_FILE"
+    else
+        echo "$(date) - Failed to reset timezone" >>"$LOG_FILE"
+    fi
 else
-    echo "$(date) - Failed to reset timezone" >>"$LOG_FILE"
+    echo "$(date) - Timezone file not found: /usr/share/zoneinfo/Asia/Shanghai" >>"$LOG_FILE"
 fi
 
 reset_kvm_configuration

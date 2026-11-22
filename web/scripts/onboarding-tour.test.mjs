@@ -35,6 +35,7 @@ function loadStepsModule() {
 const { deriveOnboardingSteps } = loadStepsModule();
 
 const ALL_ITEMS = [
+  'mouseJiggler',
   'pictureInPicture',
   'volume',
   'microphone',
@@ -268,6 +269,7 @@ test('tour steps type-check against the i18n module shape', () => {
     'pictureInPicture',
     'volume',
     'microphone',
+    'mouseJiggler',
     'keyboard',
     'mouse',
     'preview',

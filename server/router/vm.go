@@ -86,6 +86,8 @@ func vmRouter(r *gin.Engine) {
 	api.POST("/vm/disk-inquiry", service.SetDiskInquiry)            // set mass storage inquiry string
 	api.GET("/vm/disk-inquiry-cdrom", service.GetDiskInquiryCdrom)  // get CD-ROM inquiry string
 	api.POST("/vm/disk-inquiry-cdrom", service.SetDiskInquiryCdrom) // set CD-ROM inquiry string
+	api.GET("/vm/webcam-function-name", service.GetWebcamFunctionName)
+	api.POST("/vm/webcam-function-name", service.SetWebcamFunctionName)
 	api.GET("/vm/uac2-function-name", service.GetUac2FunctionName)  // get UAC2 function name
 	api.POST("/vm/uac2-function-name", service.SetUac2FunctionName) // set UAC2 function name
 

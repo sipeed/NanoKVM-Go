@@ -1,0 +1,23 @@
+--- a/linux/linux-4.19.125/drivers/usb/gadget/function/uvc_video.c
++++ b/linux/linux-4.19.125/drivers/usb/gadget/function/uvc_video.c
+@@ -10,6 +10,7 @@
+ #include <linux/device.h>
+ #include <linux/errno.h>
+ #include <linux/jiffies.h>
++#include <linux/math64.h>
+ #include <linux/usb/ch9.h>
+ #include <linux/usb/gadget.h>
+ #include <linux/usb/video.h>
+@@ -55,9 +56,10 @@
+ static u32 axera_uvc_clock_48mhz(void)
+ {
+ 	u64 nanoseconds = ktime_get_ns();
+-	u64 ticks = div_u64(nanoseconds, 1000) * 48;
++	u32 remainder;
++	u64 ticks = div_u64_rem(nanoseconds, 1000, &remainder) * 48;
+ 
+-	ticks += div_u64((nanoseconds % 1000) * 48, 1000);
++	ticks += remainder * 48 / 1000;
+ 	return (u32)ticks;
+ }
+ #endif

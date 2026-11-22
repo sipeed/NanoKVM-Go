@@ -6,6 +6,7 @@ import type {
 } from '@/api/ai.ts';
 import type { ApplicationUpdateStatus } from '@/api/application.ts';
 import type { FingerRobotDebugData } from '@/api/vm.ts';
+import { getDefaultMenuDisabledItems } from '../lib/localstorage.ts';
 
 export type MockFingerRobotArmID = 'long' | 'short';
 
@@ -215,6 +216,7 @@ export type MockState = {
     diskInquiry: { enabled: boolean; value: string };
     diskInquiryCdrom: { enabled: boolean; value: string };
     uac2FunctionName: { enabled: boolean; value: string };
+    webcamFunctionName: { enabled: boolean; value: string };
     dialBackground: {
       current: string;
       files: Array<{ name: string; size: number; modTime: number; url: string }>;
@@ -247,6 +249,7 @@ export type MockState = {
     shortcuts: Array<{ id: string; keys: string[] }>;
   };
   virtualDevice: {
+    isWebcamEnabled: boolean;
     isNetworkEnabled: boolean;
     isDiskEnabled: boolean;
     isSdCardExist: boolean;
@@ -415,7 +418,7 @@ export function createMockState(): MockState {
       }
     },
     menu: {
-      disabledItems: []
+      disabledItems: getDefaultMenuDisabledItems()
     },
     onboarding: {
       completedVersion: '',
@@ -460,6 +463,7 @@ export function createMockState(): MockState {
       diskInquiry: { enabled: false, value: 'sipeed  Flash Drive     1.00' },
       diskInquiryCdrom: { enabled: false, value: 'sipeed  Optical Drive   1.00' },
       uac2FunctionName: { enabled: false, value: 'NanoKVM-Go Audio' },
+      webcamFunctionName: { enabled: false, value: '' },
       dialBackground: {
         current: 'mock-grid.bmp',
         files: [
@@ -577,6 +581,7 @@ export function createMockState(): MockState {
       shortcuts: []
     },
     virtualDevice: {
+      isWebcamEnabled: false,
       isNetworkEnabled: true,
       isDiskEnabled: true,
       isSdCardExist: true,

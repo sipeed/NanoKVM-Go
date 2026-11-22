@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	diskInquiryFile      = "/boot/disk.inquiry_string"
-	diskInquiryCdromFile = "/boot/disk.inquiry_string_cdrom"
-	uac2FunctionNameFile = "/boot/uac2.function_name"
+	diskInquiryFile        = "/boot/disk.inquiry_string"
+	diskInquiryCdromFile   = "/boot/disk.inquiry_string_cdrom"
+	webcamFunctionNameFile = "/boot/uvc.function_name"
+	uac2FunctionNameFile   = "/boot/uac2.function_name"
 
 	diskInquiryMaxLen      = 28
 	uac2FunctionNameMaxLen = 64
@@ -29,7 +30,7 @@ func (s *Service) GetDiskInquiry(c *gin.Context) {
 }
 
 func (s *Service) SetDiskInquiry(c *gin.Context) {
-	setBootString(c, diskInquiryFile, "disk inquiry", normalizeDiskInquiryString)
+	setBootString(c, diskInquiryFile, "disk inquiry", normalizeDiskInquiryString, true)
 }
 
 func (s *Service) GetDiskInquiryCdrom(c *gin.Context) {
@@ -37,7 +38,7 @@ func (s *Service) GetDiskInquiryCdrom(c *gin.Context) {
 }
 
 func (s *Service) SetDiskInquiryCdrom(c *gin.Context) {
-	setBootString(c, diskInquiryCdromFile, "disk inquiry cdrom", normalizeDiskInquiryString)
+	setBootString(c, diskInquiryCdromFile, "disk inquiry cdrom", normalizeDiskInquiryString, true)
 }
 
 func (s *Service) GetUac2FunctionName(c *gin.Context) {
@@ -45,7 +46,20 @@ func (s *Service) GetUac2FunctionName(c *gin.Context) {
 }
 
 func (s *Service) SetUac2FunctionName(c *gin.Context) {
-	setBootString(c, uac2FunctionNameFile, "uac2 function name", normalizeUac2FunctionName)
+	setBootString(c, uac2FunctionNameFile, "uac2 function name", normalizeUac2FunctionName, true)
+}
+
+func (s *Service) GetWebcamFunctionName(c *gin.Context) {
+	getBootString(c, webcamFunctionNameFile)
+}
+
+func (s *Service) SetWebcamFunctionName(c *gin.Context) {
+	// Apply when the webcam is next bound, so renaming never interrupts a USB session.
+	setBootString(c, webcamFunctionNameFile, "webcam name", normalizeWebcamFunctionName, false)
+}
+
+func normalizeWebcamFunctionName(raw string) (string, error) {
+	return normalizeBootString(raw, 63)
 }
 
 func getBootString(c *gin.Context, path string) {
@@ -62,7 +76,7 @@ func getBootString(c *gin.Context, path string) {
 	log.Debugf("get boot string %s: enabled=%v value=%q", path, data.Enabled, data.Value)
 }
 
-func setBootString(c *gin.Context, path, label string, normalize bootStringNormalizer) {
+func setBootString(c *gin.Context, path, label string, normalize bootStringNormalizer, restart bool) {
 	var req proto.SetBootStringReq
 	var rsp proto.Response
 
@@ -93,10 +107,12 @@ func setBootString(c *gin.Context, path, label string, normalize bootStringNorma
 		}
 	}
 
-	if err := restartUsbGadget(); err != nil {
-		log.Errorf("failed to restart usb gadget after set %s: %v", label, err)
-		rsp.ErrRsp(c, -5, "restart usb failed")
-		return
+	if restart {
+		if err := restartUsbGadget(); err != nil {
+			log.Errorf("failed to restart usb gadget after set %s: %v", label, err)
+			rsp.ErrRsp(c, -5, "restart usb failed")
+			return
+		}
 	}
 
 	rsp.OkRsp(c)
