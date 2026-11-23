@@ -8,25 +8,25 @@ import (
 type toolRateLimiter struct {
 	mu          sync.Mutex
 	minInterval time.Duration
-	last        map[string]time.Time
+	nextAllowed map[string]time.Time
 }
 
 func newToolRateLimiter(minInterval time.Duration) *toolRateLimiter {
 	return &toolRateLimiter{
 		minInterval: minInterval,
-		last:        make(map[string]time.Time),
+		nextAllowed: make(map[string]time.Time),
 	}
 }
 
-func (l *toolRateLimiter) Allow(tool string) bool {
+func (l *toolRateLimiter) allowN(tool string, count int) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
 	now := time.Now()
-	if previous, ok := l.last[tool]; ok && now.Sub(previous) < l.minInterval {
+	if now.Before(l.nextAllowed[tool]) {
 		return false
 	}
 
-	l.last[tool] = now
+	l.nextAllowed[tool] = now.Add(time.Duration(count) * l.minInterval)
 	return true
 }

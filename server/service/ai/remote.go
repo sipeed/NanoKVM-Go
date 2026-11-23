@@ -1,6 +1,8 @@
 package ai
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -179,6 +181,36 @@ func (r *Remote) Scroll(deltaY int) error {
 			return err
 		}
 		deltaY -= wheel
+	}
+	return nil
+}
+
+const (
+	maxScrollRepeat    = 8
+	scrollTickInterval = 40 * time.Millisecond
+)
+
+func (r *Remote) scrollTicks(ctx context.Context, direction, count int) error {
+	r.hidMu.Lock()
+	defer r.hidMu.Unlock()
+
+	report := buildRelativeMouseReport(0, 0, 0, direction)
+	for tick := 0; tick < count; tick++ {
+		if tick > 0 {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(scrollTickInterval):
+			}
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		writeErr := hid.RouteReliablePointerInput(hid.InternalInputSessionAI, report)
+		// Each standalone scroll releases its input session after the wheel report.
+		if err := errors.Join(writeErr, r.releaseInput()); err != nil {
+			return fmt.Errorf("scroll tick %d of %d: %w", tick+1, count, err)
+		}
 	}
 	return nil
 }

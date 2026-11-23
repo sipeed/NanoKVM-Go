@@ -283,6 +283,13 @@ Fields:
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `deltaY` | integer | yes | Vertical wheel movement. Sign depends on the target OS and UI. |
+| `repeat` | integer | no | Number of ticks, from 1 to 8. Defaults to 1. For two or more ticks, use `deltaY` of 1 or -1. |
+
+For a target that responds better to separate wheel ticks, send
+`{"deltaY": 1, "repeat": 4}`. The server waits 40 ms between ticks.
+Each tick counts toward the scroll rate limit. Cancellation or an output
+error stops the remaining ticks. Use a fresh screenshot to check how far
+the target actually scrolled.
 
 Result:
 
