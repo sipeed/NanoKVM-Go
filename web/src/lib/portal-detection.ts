@@ -3,7 +3,7 @@ import { ScreenCropState } from '@/lib/screen-crop.ts';
 const MAX_SAMPLE_SIZE = 260;
 const LINE_SAMPLE_COUNT = 160;
 const BORDER_LINE_RATIO = 0.88;
-const COLOR_DISTANCE_LIMIT = 38;
+const COLOR_DISTANCE_LIMIT = 12;
 const MAX_BORDER_LUMA = 95;
 const MIN_CONTENT_RATIO = 0.15;
 const MIN_BORDER_RATIO = 0.05;
@@ -31,22 +31,27 @@ type RGB = {
   b: number;
 };
 
+type PortalFrameDetection = ScreenCropState & { visibleBounds: PortalRect | null };
+
 export function detectPortalEffectiveAreaFromImageData(
   imageData: ImageData,
   sourceWidth: number,
   sourceHeight: number
-): ScreenCropState {
-  const base = {
+): PortalFrameDetection {
+  const base: PortalFrameDetection = {
     sourceWidth,
     sourceHeight,
     contentRect: null,
     contentAspectRatio: sourceWidth > 0 && sourceHeight > 0 ? sourceWidth / sourceHeight : 0,
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
+    visibleBounds: null
   };
 
   if (sourceWidth <= 0 || sourceHeight <= 0 || imageData.width <= 0 || imageData.height <= 0) {
     return base;
   }
+
+  base.visibleBounds = getVisibleBounds(imageData);
 
   const rect = detectPortalRect(imageData, sourceWidth, sourceHeight);
   if (!rect) {
@@ -103,14 +108,26 @@ function detectPortalRect(imageData: ImageData, sourceWidth: number, sourceHeigh
     return null;
   }
 
-  const scaleX = sourceWidth / sampleWidth;
-  const scaleY = sourceHeight / sampleHeight;
+  // The true edge lies between the first content sample and the previous
+  // border sample. Include that interval instead of rounding into content.
+  const paddingX = sourceWidth > sampleWidth ? 1 : 0;
+  const paddingY = sourceHeight > sampleHeight ? 1 : 0;
+  const sourceLeft = left > 0 ? sampleCoord(left - 1, sampleWidth, sourceWidth) + 1 - paddingX : 0;
+  const sourceTop = top > 0 ? sampleCoord(top - 1, sampleHeight, sourceHeight) + 1 - paddingY : 0;
+  const sourceRight =
+    right < sampleWidth - 1
+      ? sampleCoord(right + 1, sampleWidth, sourceWidth) + paddingX
+      : sourceWidth;
+  const sourceBottom =
+    bottom < sampleHeight - 1
+      ? sampleCoord(bottom + 1, sampleHeight, sourceHeight) + paddingY
+      : sourceHeight;
   const detectedRect = clampRect(
     {
-      left: Math.floor(left * scaleX),
-      top: Math.floor(top * scaleY),
-      width: Math.ceil((right - left + 1) * scaleX),
-      height: Math.ceil((bottom - top + 1) * scaleY)
+      left: sourceLeft,
+      top: sourceTop,
+      width: sourceRight - sourceLeft,
+      height: sourceBottom - sourceTop
     },
     sourceWidth,
     sourceHeight
@@ -327,6 +344,38 @@ function isBorderColor(color: RGB, borderColor: RGB) {
   return dr * dr + dg * dg + db * db <= COLOR_DISTANCE_LIMIT * COLOR_DISTANCE_LIMIT;
 }
 
+function getVisibleBounds(imageData: ImageData): PortalRect | null {
+  const { sampleWidth, sampleHeight } = portalSampleSize(imageData.width, imageData.height);
+  const borderColor = estimateBorderColor(imageData, imageData.width, imageData.height);
+  if (luma(borderColor) > MAX_BORDER_LUMA) {
+    return { left: 0, top: 0, width: 1, height: 1 };
+  }
+  let left = imageData.width;
+  let top = imageData.height;
+  let right = -1;
+  let bottom = -1;
+  for (let y = 0; y < sampleHeight; y += 1) {
+    for (let x = 0; x < sampleWidth; x += 1) {
+      const sourceX = sampleCoord(x, sampleWidth, imageData.width);
+      const sourceY = sampleCoord(y, sampleHeight, imageData.height);
+      if (!isBorderColor(pixel(imageData, sourceX, sourceY), borderColor)) {
+        left = Math.min(left, sourceX);
+        top = Math.min(top, sourceY);
+        right = Math.max(right, sourceX);
+        bottom = Math.max(bottom, sourceY);
+      }
+    }
+  }
+  if (right < left) return null;
+  // Normalized bounds survive the caller's sample-to-source rescaling.
+  return {
+    left: left / imageData.width,
+    top: top / imageData.height,
+    width: (right - left + 1) / imageData.width,
+    height: (bottom - top + 1) / imageData.height
+  };
+}
+
 function pixel(imageData: ImageData, x: number, y: number) {
   const sourceX = Math.max(0, Math.min(imageData.width - 1, Math.round(x)));
   const sourceY = Math.max(0, Math.min(imageData.height - 1, Math.round(y)));
@@ -372,7 +421,7 @@ export class PortalDetectionTracker {
   private candidateSignatures = new Set<number>();
   private fullFrameConfirmations = 0;
 
-  update(area: ScreenCropState, contentSignature?: number): PortalDetectionUpdate {
+  update(area: PortalFrameDetection, contentSignature?: number): PortalDetectionUpdate {
     if (!this.sameSource(this.lockedArea, area)) {
       this.reset();
     }
@@ -385,6 +434,11 @@ export class PortalDetectionTracker {
         return { area, phase: 'idle' };
       }
 
+      if (visibleContentFitsCrop(area, this.lockedArea)) {
+        this.fullFrameConfirmations = 0;
+        return { area: this.lockedArea, phase: 'active' };
+      }
+
       this.fullFrameConfirmations += 1;
       if (this.fullFrameConfirmations >= PORTAL_UNLOCK_CONFIRMATIONS) {
         this.reset();
@@ -395,7 +449,12 @@ export class PortalDetectionTracker {
     }
 
     this.fullFrameConfirmations = 0;
-    if (this.lockedArea && samePortalArea(this.lockedArea, area)) {
+    // Black UI margins cannot be distinguished from new bars. Keep previously
+    // visible edges until content expands, changes geometry, or the source resets.
+    if (
+      this.lockedArea &&
+      (samePortalArea(this.lockedArea, area) || containsSameOrientationArea(this.lockedArea, area))
+    ) {
       this.candidateArea = null;
       this.candidateConfirmations = 0;
       this.candidateSignatures.clear();
@@ -454,6 +513,32 @@ export class PortalDetectionTracker {
       (previous.sourceWidth === next.sourceWidth && previous.sourceHeight === next.sourceHeight)
     );
   }
+}
+
+function visibleContentFitsCrop(frame: PortalFrameDetection, area: ScreenCropState) {
+  const bounds = frame.visibleBounds;
+  const rect = area.contentRect;
+  if (!bounds) return true;
+  if (!rect) return false;
+  return (
+    bounds.left >= rect.left / area.sourceWidth &&
+    bounds.top >= rect.top / area.sourceHeight &&
+    bounds.left + bounds.width <= (rect.left + rect.width) / area.sourceWidth &&
+    bounds.top + bounds.height <= (rect.top + rect.height) / area.sourceHeight
+  );
+}
+
+function containsSameOrientationArea(outer: ScreenCropState, inner: ScreenCropState) {
+  if (!outer.contentRect || !inner.contentRect) return false;
+  const a = outer.contentRect;
+  const b = inner.contentRect;
+  return (
+    (a.width >= a.height) === (b.width >= b.height) &&
+    b.left >= a.left &&
+    b.top >= a.top &&
+    b.left + b.width <= a.left + a.width &&
+    b.top + b.height <= a.top + a.height
+  );
 }
 
 function isPortraitPillarbox(area: ScreenCropState) {
