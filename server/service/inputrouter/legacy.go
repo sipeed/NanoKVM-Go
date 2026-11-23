@@ -51,6 +51,7 @@ func (router *Router) routeLegacySession(
 		eventEpoch,
 		"legacy-adapted",
 		"legacy WebSocket HID report converted to input-router v1",
+		false,
 	)
 }
 
@@ -66,6 +67,7 @@ func (router *Router) routeAdaptedSession(
 	eventEpoch uint64,
 	stage string,
 	meaning string,
+	reliable bool,
 ) error {
 	now := router.now().UnixMilli()
 	record := TraceRecord{
@@ -95,7 +97,7 @@ func (router *Router) routeAdaptedSession(
 	}
 
 	router.traces.Publish(record)
-	return router.routeSessionAtEpoch(session, frame, eventEpoch)
+	return router.routeSessionAtEpoch(session, frame, eventEpoch, reliable)
 }
 
 func adaptLegacyKeyboard(report []byte, sequence, capturedAtMS uint32) ([]byte, Kind, error) {

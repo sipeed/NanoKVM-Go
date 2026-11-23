@@ -54,7 +54,8 @@ type ClickMouseParams struct {
 }
 
 type ScrollMouseParams struct {
-	DeltaY int `json:"deltaY" jsonschema:"vertical wheel movement"`
+	DeltaY int  `json:"deltaY" jsonschema:"vertical wheel movement; use 1 or -1 for repeated ticks"`
+	Repeat *int `json:"repeat,omitempty" jsonschema:"number of wheel ticks, 1 to 8 (default 1); repeated ticks are spaced 40 ms apart"`
 }
 
 type ScreenshotParams struct {
@@ -279,12 +280,28 @@ func clickMouseHandler(remote *Remote, limiter *toolRateLimiter) mcp.ToolHandler
 }
 
 func scrollMouseHandler(remote *Remote, limiter *toolRateLimiter) mcp.ToolHandlerFor[ScrollMouseParams, ToolOKResult] {
-	return func(_ context.Context, _ *mcp.CallToolRequest, input ScrollMouseParams) (*mcp.CallToolResult, ToolOKResult, error) {
-		if err := checkRate(limiter, "scroll_mouse"); err != nil {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, input ScrollMouseParams) (*mcp.CallToolResult, ToolOKResult, error) {
+		repeat := 1
+		if input.Repeat != nil {
+			repeat = *input.Repeat
+		}
+		if repeat < 1 || repeat > maxScrollRepeat {
+			return nil, ToolOKResult{}, fmt.Errorf("repeat must be between 1 and %d", maxScrollRepeat)
+		}
+		if repeat > 1 && input.DeltaY != -1 && input.DeltaY != 1 {
+			return nil, ToolOKResult{}, fmt.Errorf("deltaY must be -1 or 1 when repeat is greater than 1")
+		}
+		if err := checkRateN(limiter, "scroll_mouse", repeat); err != nil {
 			return nil, ToolOKResult{}, err
 		}
 
-		if err := remote.Scroll(input.DeltaY); err != nil {
+		var err error
+		if repeat == 1 {
+			err = remote.Scroll(input.DeltaY)
+		} else {
+			err = remote.scrollTicks(ctx, input.DeltaY, repeat)
+		}
+		if err != nil {
 			return nil, ToolOKResult{}, err
 		}
 		return nil, ToolOKResult{OK: true}, nil
@@ -450,10 +467,14 @@ func clampClickCount(value int) int {
 }
 
 func checkRate(limiter *toolRateLimiter, tool string) error {
+	return checkRateN(limiter, tool, 1)
+}
+
+func checkRateN(limiter *toolRateLimiter, tool string, count int) error {
 	if limiter == nil {
 		return nil
 	}
-	if !limiter.Allow(tool) {
+	if !limiter.allowN(tool, count) {
 		return fmt.Errorf("rate limit exceeded for %s", tool)
 	}
 	return nil

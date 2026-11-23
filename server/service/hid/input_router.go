@@ -107,6 +107,18 @@ func RoutePointerInput(session uint64, report []byte) error {
 	return GetHid().RoutePointerInput(session, report)
 }
 
+// RouteReliablePointerInput requires a successful write of the full report.
+// Relative movement and wheel deltas return a failed write without replay.
+func RouteReliablePointerInput(session uint64, report []byte) error {
+	sink, ok := inputRouterSink().(interface {
+		RouteReliableVirtualPointerSession(session uint64, report []byte) error
+	})
+	if !ok {
+		return ErrInputRouterUnavailable
+	}
+	return sink.RouteReliableVirtualPointerSession(session, report)
+}
+
 func RouteTouchInput(session uint64, report []byte) error {
 	return GetHid().RouteTouchInput(session, report)
 }

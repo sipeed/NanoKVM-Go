@@ -1,6 +1,8 @@
 package ai
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -17,20 +19,20 @@ type HIDWriter interface {
 type Remote struct {
 	hid     HIDWriter
 	hidMu   sync.Mutex
-	release func()
+	release func() error
 }
 
 func NewRemote() *Remote {
 	return &Remote{
 		hid: &routedHIDWriter{session: hid.InternalInputSessionAI},
-		release: func() {
-			_ = hid.ReleaseInputSession(hid.InternalInputSessionAI, "AI action complete")
+		release: func() error {
+			return hid.ReleaseInputSession(hid.InternalInputSessionAI, "AI action complete")
 		},
 	}
 }
 
 func newRemoteWithHID(writer HIDWriter) *Remote {
-	return &Remote{hid: writer, release: func() {}}
+	return &Remote{hid: writer}
 }
 
 type routedHIDWriter struct {
@@ -49,10 +51,11 @@ func (writer *routedHIDWriter) WriteAbsoluteMouseReport(report []byte) error {
 	return hid.RoutePointerInput(writer.session, report)
 }
 
-func (r *Remote) releaseInput() {
+func (r *Remote) releaseInput() error {
 	if r.release != nil {
-		r.release()
+		return r.release()
 	}
+	return nil
 }
 
 func (r *Remote) TypeText(text string, delay time.Duration) ([]rune, error) {
@@ -178,6 +181,36 @@ func (r *Remote) Scroll(deltaY int) error {
 			return err
 		}
 		deltaY -= wheel
+	}
+	return nil
+}
+
+const (
+	maxScrollRepeat    = 8
+	scrollTickInterval = 40 * time.Millisecond
+)
+
+func (r *Remote) scrollTicks(ctx context.Context, direction, count int) error {
+	r.hidMu.Lock()
+	defer r.hidMu.Unlock()
+
+	report := buildRelativeMouseReport(0, 0, 0, direction)
+	for tick := 0; tick < count; tick++ {
+		if tick > 0 {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(scrollTickInterval):
+			}
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		writeErr := hid.RouteReliablePointerInput(hid.InternalInputSessionAI, report)
+		// Each standalone scroll releases its input session after the wheel report.
+		if err := errors.Join(writeErr, r.releaseInput()); err != nil {
+			return fmt.Errorf("scroll tick %d of %d: %w", tick+1, count, err)
+		}
 	}
 	return nil
 }
