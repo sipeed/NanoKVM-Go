@@ -15,9 +15,10 @@ type HIDWriter interface {
 }
 
 type Remote struct {
-	hid     HIDWriter
-	hidMu   sync.Mutex
-	release func() error
+	hid               HIDWriter
+	hidMu             sync.Mutex
+	release           func() error
+	pointerModeStatus func() hid.PointerModeStatus
 }
 
 func NewRemote() *Remote {
@@ -26,6 +27,7 @@ func NewRemote() *Remote {
 		release: func() error {
 			return hid.ReleaseInputSession(hid.InternalInputSessionAI, "AI action complete")
 		},
+		pointerModeStatus: hid.GetPointerModeStatus,
 	}
 }
 

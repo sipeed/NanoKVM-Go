@@ -12,7 +12,7 @@ func TestMCPControlToolSet(t *testing.T) {
 	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "1"}, nil)
 	registerTools(server, nil, nil)
 	assertMCPToolSet(t, server, []string{
-		"type_text", "press_keys", "move_mouse", "click_mouse", "scroll_mouse", "screenshot",
+		"type_text", "press_keys", "move_mouse", "click_mouse", "drag_mouse", "scroll_mouse", "screenshot",
 		"media_session_help", "media_session_create", "media_session_status", "media_session_close",
 	})
 }
