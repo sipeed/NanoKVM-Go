@@ -492,18 +492,7 @@ func assertMCPToolSet(t *testing.T, server *mcp.Server, want []string) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	serverTransport, clientTransport := mcp.NewInMemoryTransports()
-	serverSession, err := server.Connect(ctx, serverTransport, nil)
-	if err != nil {
-		t.Fatalf("connect server: %v", err)
-	}
-	t.Cleanup(func() { _ = serverSession.Close() })
-	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "1"}, nil)
-	clientSession, err := client.Connect(ctx, clientTransport, nil)
-	if err != nil {
-		t.Fatalf("connect client: %v", err)
-	}
-	defer clientSession.Close()
+	clientSession := connectInMemoryMCP(t, ctx, server)
 	result, err := clientSession.ListTools(ctx, nil)
 	if err != nil {
 		t.Fatalf("list tools: %v", err)
@@ -520,6 +509,23 @@ func assertMCPToolSet(t *testing.T, server *mcp.Server, want []string) {
 			t.Fatalf("tool %q missing from %#v", name, got)
 		}
 	}
+}
+
+func connectInMemoryMCP(t *testing.T, ctx context.Context, server *mcp.Server) *mcp.ClientSession {
+	t.Helper()
+	serverTransport, clientTransport := mcp.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatalf("connect server: %v", err)
+	}
+	t.Cleanup(func() { _ = serverSession.Close() })
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "1"}, nil)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		t.Fatalf("connect client: %v", err)
+	}
+	t.Cleanup(func() { _ = clientSession.Close() })
+	return clientSession
 }
 
 func TestMemfabBridgeUnavailable(t *testing.T) {

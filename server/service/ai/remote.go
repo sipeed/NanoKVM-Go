@@ -17,20 +17,20 @@ type HIDWriter interface {
 type Remote struct {
 	hid     HIDWriter
 	hidMu   sync.Mutex
-	release func()
+	release func() error
 }
 
 func NewRemote() *Remote {
 	return &Remote{
 		hid: &routedHIDWriter{session: hid.InternalInputSessionAI},
-		release: func() {
-			_ = hid.ReleaseInputSession(hid.InternalInputSessionAI, "AI action complete")
+		release: func() error {
+			return hid.ReleaseInputSession(hid.InternalInputSessionAI, "AI action complete")
 		},
 	}
 }
 
 func newRemoteWithHID(writer HIDWriter) *Remote {
-	return &Remote{hid: writer, release: func() {}}
+	return &Remote{hid: writer}
 }
 
 type routedHIDWriter struct {
@@ -49,10 +49,11 @@ func (writer *routedHIDWriter) WriteAbsoluteMouseReport(report []byte) error {
 	return hid.RoutePointerInput(writer.session, report)
 }
 
-func (r *Remote) releaseInput() {
+func (r *Remote) releaseInput() error {
 	if r.release != nil {
-		r.release()
+		return r.release()
 	}
+	return nil
 }
 
 func (r *Remote) TypeText(text string, delay time.Duration) ([]rune, error) {

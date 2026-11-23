@@ -98,6 +98,41 @@ func (output *fakeReleasingOutput) ReleaseAllInputs() error {
 	return output.err
 }
 
+func TestReliableVirtualAbsolutePointerReportsFailedMovement(t *testing.T) {
+	output := &fakeOutput{}
+	router := New(output, nil)
+	const session = 1
+	start := []byte{absoluteReportIDMouse, 0, 0, 0, 0, 0, 0}
+	end := []byte{absoluteReportIDMouse, 0, 0xff, 0x7f, 0xff, 0x7f, 0}
+	if err := router.RouteReliableVirtualPointerSession(session, start); err != nil {
+		t.Fatal(err)
+	}
+
+	output.err = os.ErrDeadlineExceeded
+	if err := router.RouteVirtualPointerSession(session, end); err != nil {
+		t.Fatalf("ordinary absolute movement should remain droppable: %v", err)
+	}
+	if err := router.RouteReliableVirtualPointerSession(session, end); !errors.Is(err, os.ErrDeadlineExceeded) {
+		t.Fatalf("reliable absolute movement error = %v, want deadline exceeded", err)
+	}
+	if got, want := len(output.writes), 2+criticalWriteAttempts; got != want {
+		t.Fatalf("write attempts = %d, want %d", got, want)
+	}
+	for _, report := range output.writes[2:] {
+		if !bytes.Equal(report, end) {
+			t.Fatalf("retried report = %v, want %v", report, end)
+		}
+	}
+
+	output.err = nil
+	if err := router.ReleaseInputSession(session, "drag failed"); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(output.report, start) {
+		t.Fatalf("release report = %v, want last successful position %v", output.report, start)
+	}
+}
+
 func TestDecodeRejectsInvalidFrames(t *testing.T) {
 	tests := [][]byte{
 		{},
