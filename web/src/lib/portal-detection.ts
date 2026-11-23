@@ -453,7 +453,7 @@ export class PortalDetectionTracker {
     // visible edges until content expands, changes geometry, or the source resets.
     if (
       this.lockedArea &&
-      (samePortalArea(this.lockedArea, area) || containsPortalArea(this.lockedArea, area))
+      (samePortalArea(this.lockedArea, area) || containsSameOrientationArea(this.lockedArea, area))
     ) {
       this.candidateArea = null;
       this.candidateConfirmations = 0;
@@ -528,11 +528,12 @@ function visibleContentFitsCrop(frame: PortalFrameDetection, area: ScreenCropSta
   );
 }
 
-function containsPortalArea(outer: ScreenCropState, inner: ScreenCropState) {
+function containsSameOrientationArea(outer: ScreenCropState, inner: ScreenCropState) {
   if (!outer.contentRect || !inner.contentRect) return false;
   const a = outer.contentRect;
   const b = inner.contentRect;
   return (
+    (a.width >= a.height) === (b.width >= b.height) &&
     b.left >= a.left &&
     b.top >= a.top &&
     b.left + b.width <= a.left + a.width &&

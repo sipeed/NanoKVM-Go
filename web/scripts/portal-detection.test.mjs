@@ -99,6 +99,15 @@ test('tracker preserves learned edges through dark margins and black frames', ()
   }
 });
 
+test('relearns a full-height landscape crop that rotates to portrait', () => {
+  const tracker = new portal.PortalDetectionTracker();
+  const landscape = { left: 24, top: 0, width: 144, height: 108 };
+  const portrait = { left: 65, top: 0, width: 62, height: 108 };
+  trackFrames(tracker, makeImage(192, 108, landscape), 8);
+  const update = trackFrames(tracker, makeImage(192, 108, portrait), 8);
+  assert.deepEqual({ ...update.area.contentRect }, portrait);
+});
+
 test('tracker accepts expansion, rotation, full desktop, and new source dimensions', () => {
   const tracker = new portal.PortalDetectionTracker();
   trackFrames(tracker, makeImage(192, 108, { left: 71, top: 0, width: 50, height: 108 }), 8);
