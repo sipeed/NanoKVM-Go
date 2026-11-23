@@ -23,7 +23,7 @@ test('detects portrait content with wide landscape side borders', () => {
 });
 
 test('detects content when symmetric borders exceed 40 percent', () => {
-  const image = makeImage(520, 218, { left: 210, top: 0, width: 100, height: 218 });
+  const image = makeImage(520, 218, { left: 214, top: 0, width: 92, height: 218 });
   const area = portal.detectPortalEffectiveAreaFromImageData(image, image.width, image.height);
 
   assert.ok(area.contentRect);
@@ -59,6 +59,114 @@ test('keeps black, dark, and asymmetric frames uncropped', () => {
     const area = portal.detectPortalEffectiveAreaFromImageData(image, image.width, image.height);
     assert.equal(area.contentRect, null);
   }
+});
+
+test('preserves measurable near-black content edges', () => {
+  const image = makeImage(192, 108, { left: 65, top: 0, width: 62, height: 108 });
+  paintRect(image, { left: 65, top: 0, width: 62, height: 108 }, 18);
+  paintRect(image, { left: 71, top: 0, width: 50, height: 108 }, 100);
+  const area = portal.detectPortalEffectiveAreaFromImageData(image, 192, 108);
+  assert.deepEqual({ ...area.contentRect }, { left: 65, top: 0, width: 62, height: 108 });
+});
+
+test('downsampled detection encloses visible edges', () => {
+  const expected = { left: 944, top: 0, width: 668, height: 1440 };
+  const image = makeImage(2560, 1440, expected);
+  const area = portal.detectPortalEffectiveAreaFromImageData(image, 2560, 1440);
+  assert.ok(area.contentRect.left <= expected.left);
+  assert.ok(area.contentRect.left + area.contentRect.width >= expected.left + expected.width);
+});
+
+test('downsampled detection includes faint interpolated edge pixels', () => {
+  const image = makeImage(520, 293, null);
+  paintRect(image, { left: 0, top: 0, width: 520, height: 293 }, 16);
+  paintRect(image, { left: 192, top: 0, width: 136, height: 293 }, 20);
+  paintRect(image, { left: 193, top: 0, width: 134, height: 293 }, 160);
+  const area = portal.detectPortalEffectiveAreaFromImageData(image, 520, 293);
+  assert.ok(area.contentRect.left <= 192);
+  assert.ok(area.contentRect.left + area.contentRect.width >= 328);
+});
+
+test('tracker preserves learned edges through dark margins and black frames', () => {
+  const tracker = new portal.PortalDetectionTracker();
+  const home = makeImage(192, 108, { left: 65, top: 0, width: 62, height: 108 });
+  const dark = makeImage(192, 108, { left: 71, top: 0, width: 50, height: 108 });
+  const homeArea = trackFrames(tracker, home, 8).area;
+  for (const image of [dark, makeImage(192, 108, null), dark, home]) {
+    const update = trackFrames(tracker, image, 12);
+    assert.equal(update.phase, 'active');
+    assert.deepEqual({ ...update.area.contentRect }, { ...homeArea.contentRect });
+  }
+});
+
+test('tracker accepts expansion, rotation, full desktop, and new source dimensions', () => {
+  const tracker = new portal.PortalDetectionTracker();
+  trackFrames(tracker, makeImage(192, 108, { left: 71, top: 0, width: 50, height: 108 }), 8);
+  const expanded = trackFrames(
+    tracker,
+    makeImage(192, 108, { left: 65, top: 0, width: 62, height: 108 }),
+    8
+  );
+  assert.equal(expanded.area.contentRect.width, 62);
+  const rotated = trackFrames(
+    tracker,
+    makeImage(192, 108, { left: 24, top: 14, width: 144, height: 80 }),
+    8
+  );
+  assert.deepEqual({ ...rotated.area.contentRect }, { left: 24, top: 14, width: 144, height: 80 });
+  const desktop = trackFrames(
+    tracker,
+    makeImage(192, 108, { left: 0, top: 0, width: 192, height: 108 }),
+    4
+  );
+  assert.equal(desktop.phase, 'idle');
+  assert.equal(desktop.area.contentRect, null);
+  const nextSource = trackFrames(
+    tracker,
+    makeImage(160, 100, { left: 20, top: 0, width: 120, height: 100 }),
+    8
+  );
+  assert.deepEqual(
+    { ...nextSource.area.contentRect },
+    { left: 20, top: 0, width: 120, height: 100 }
+  );
+});
+
+test('a cursor on a black screen does not erase learned bounds', () => {
+  const tracker = new portal.PortalDetectionTracker();
+  const home = makeImage(192, 108, { left: 65, top: 0, width: 62, height: 108 });
+  const learned = trackFrames(tracker, home, 8).area;
+  const blank = makeImage(192, 108, null);
+  paintRect(blank, { left: 90, top: 40, width: 3, height: 3 }, 180);
+  const update = trackFrames(tracker, blank, 8);
+  assert.equal(update.phase, 'active');
+  assert.deepEqual({ ...update.area.contentRect }, { ...learned.contentRect });
+});
+
+test('an explicit reset learns a narrower source at the same resolution', () => {
+  const tracker = new portal.PortalDetectionTracker();
+  trackFrames(tracker, makeImage(192, 108, { left: 65, top: 0, width: 62, height: 108 }), 8);
+  tracker.reset();
+  const update = trackFrames(
+    tracker,
+    makeImage(192, 108, { left: 71, top: 0, width: 50, height: 108 }),
+    8
+  );
+  assert.equal(update.phase, 'active');
+  assert.deepEqual({ ...update.area.contentRect }, { left: 71, top: 0, width: 50, height: 108 });
+});
+
+test('retains bounds when the measured video black level is above zero', () => {
+  const tracker = new portal.PortalDetectionTracker();
+  const image = makeImage(192, 108, null);
+  paintRect(image, { left: 0, top: 0, width: 192, height: 108 }, 16);
+  paintRect(image, { left: 65, top: 0, width: 62, height: 108 }, 160);
+  const learned = trackFrames(tracker, image, 8).area;
+  paintRect(image, { left: 65, top: 0, width: 62, height: 108 }, 16);
+  paintRect(image, { left: 90, top: 40, width: 3, height: 3 }, 180);
+  const update = trackFrames(tracker, image, 8);
+  assert.equal(update.phase, 'active');
+  assert.deepEqual({ ...update.area.contentRect }, { ...learned.contentRect });
 });
 
 test('tracker requires stable borders and changing content', () => {
@@ -109,7 +217,11 @@ test('tracker releases a locked crop after four full frames', () => {
     tracker.update(area, portal.getPortalContentSignature(image, area));
   }
 
-  const full = portal.detectPortalEffectiveAreaFromImageData(makeImage(192, 108, null), 192, 108);
+  const full = portal.detectPortalEffectiveAreaFromImageData(
+    makeImage(192, 108, { left: 0, top: 0, width: 192, height: 108 }),
+    192,
+    108
+  );
   assert.equal(tracker.update(full).phase, 'active');
   assert.equal(tracker.update(full).phase, 'active');
   assert.equal(tracker.update(full).phase, 'active');
@@ -200,6 +312,24 @@ function makeImage(width, height, contentRect, base = 120, changed = base) {
     }
   }
   return { width, height, data };
+}
+
+function paintRect(image, rect, value) {
+  for (let y = rect.top; y < rect.top + rect.height; y += 1) {
+    for (let x = rect.left; x < rect.left + rect.width; x += 1) {
+      const offset = (y * image.width + x) * 4;
+      image.data.fill(value, offset, offset + 3);
+    }
+  }
+}
+
+function trackFrames(tracker, image, count) {
+  let update;
+  for (let frame = 0; frame < count; frame += 1) {
+    const area = portal.detectPortalEffectiveAreaFromImageData(image, image.width, image.height);
+    update = tracker.update(area, portal.getPortalContentSignature(image, area));
+  }
+  return update;
 }
 
 function loadTypeScriptModule(relativePath) {
