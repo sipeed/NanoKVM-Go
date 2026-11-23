@@ -39,19 +39,24 @@ type normalizedPoint struct {
 // the full HID range, so on such a device the content coordinate is the HID
 // coordinate.
 func calibratedAbsolutePoint(area contentArea, x float64, y float64) (float64, float64) {
-	sourceX, sourceY := area.toSource(x, y)
+	return absolutePointMapper(area)(x, y)
+}
 
+func absolutePointMapper(area contentArea) func(float64, float64) (float64, float64) {
 	config, _, err := loadInputProfileConfig()
 	if err != nil || config == nil {
-		return sourceX, sourceY
+		return area.toSource
 	}
 
 	homography, ok := resolveProfileHomography(config, area)
 	if !ok {
-		return sourceX, sourceY
+		return area.toSource
 	}
 
-	return applyHomography(homography, normalizedPoint{x: sourceX, y: sourceY})
+	return func(x, y float64) (float64, float64) {
+		sourceX, sourceY := area.toSource(x, y)
+		return applyHomography(homography, normalizedPoint{x: sourceX, y: sourceY})
+	}
 }
 
 // resolveProfileHomography returns the projective calibration for absolute

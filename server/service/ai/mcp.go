@@ -53,6 +53,14 @@ type ClickMouseParams struct {
 	CoordinateSpace string  `json:"coordinateSpace,omitempty" jsonschema:"content (default, relative to the screenshot content area) or source (whole captured frame)"`
 }
 
+type DragMouseParams struct {
+	StartX     float64 `json:"startX" jsonschema:"start x in the full screenshot content area, 0.0 to 1.0"`
+	StartY     float64 `json:"startY" jsonschema:"start y in the full screenshot content area, 0.0 to 1.0"`
+	EndX       float64 `json:"endX" jsonschema:"end x in the full screenshot content area, 0.0 to 1.0"`
+	EndY       float64 `json:"endY" jsonschema:"end y in the full screenshot content area, 0.0 to 1.0"`
+	DurationMS *int    `json:"durationMs,omitempty" jsonschema:"movement duration in milliseconds, 100 to 1000, default 300"`
+}
+
 type ScrollMouseParams struct {
 	DeltaY int `json:"deltaY" jsonschema:"vertical wheel movement"`
 }
@@ -147,6 +155,7 @@ func registerTools(server *mcp.Server, remote *Remote, limiter *toolRateLimiter)
 	registerControlTool(names, server, &mcp.Tool{Name: "press_keys", Description: "Press one keyboard shortcut on the remote host"}, pressKeysHandler(remote, limiter))
 	registerControlTool(names, server, &mcp.Tool{Name: "move_mouse", Description: "Move the remote mouse pointer. Absolute x/y are normalized coordinates (0.0-1.0, never pixels) inside the screenshot content area, which is the de-letterboxed frame the screenshot tool returns."}, moveMouseHandler(remote, limiter))
 	registerControlTool(names, server, &mcp.Tool{Name: "click_mouse", Description: "Click a remote mouse button. Absolute x/y are normalized coordinates (0.0-1.0, never pixels) in the same content area as move_mouse and screenshot. If the target is an iPhone, must right-click once before the first click."}, clickMouseHandler(remote, limiter))
+	registerControlTool(names, server, &mcp.Tool{Name: "drag_mouse", Description: "Drag with the left mouse button using the Follow Mouse (absolute) pointer mode. Start and end are normalized coordinates (0.0-1.0, never pixels) in the full screenshot content area."}, dragMouseHandler(remote, limiter))
 	registerControlTool(names, server, &mcp.Tool{Name: "scroll_mouse", Description: "Scroll the remote mouse wheel"}, scrollMouseHandler(remote, limiter))
 	registerControlTool(names, server, &mcp.Tool{Name: "screenshot", Description: "Capture a JPEG screenshot from the remote display. The image is cropped to the effective content area, so black borders are removed whenever portal cropping is enabled; absolute mouse coordinates stay relative to that content area, not to the returned image."}, screenshotHandler(limiter))
 	registerControlTool(names, server, &mcp.Tool{Name: "media_session_help", Description: "Return the complete machine-readable NanoKVM WebRTC media protocol: control/data-plane boundary, signaling, track directions, exact Opus framing, lifecycle, pacing, interruption, recovery, and client examples. Call this before implementing a real-time media client."}, mediaSessionHelpHandler(limiter))
@@ -274,6 +283,40 @@ func clickMouseHandler(remote *Remote, limiter *toolRateLimiter) mcp.ToolHandler
 			return nil, ToolOKResult{}, err
 		}
 
+		return nil, ToolOKResult{OK: true}, nil
+	}
+}
+
+func dragMouseHandler(remote *Remote, limiter *toolRateLimiter) mcp.ToolHandlerFor[DragMouseParams, ToolOKResult] {
+	return func(ctx context.Context, _ *mcp.CallToolRequest, input DragMouseParams) (*mcp.CallToolResult, ToolOKResult, error) {
+		if err := checkRate(limiter, "drag_mouse"); err != nil {
+			return nil, ToolOKResult{}, err
+		}
+
+		for _, value := range []struct {
+			name  string
+			value float64
+		}{
+			{"startX", input.StartX}, {"startY", input.StartY},
+			{"endX", input.EndX}, {"endY", input.EndY},
+		} {
+			if !(0 <= value.value && value.value <= 1) {
+				return nil, ToolOKResult{}, fmt.Errorf("%s must be normalized to 0.0..1.0 in the screenshot content area", value.name)
+			}
+		}
+		durationMS := defaultDragDurationMS
+		if input.DurationMS != nil {
+			durationMS = *input.DurationMS
+		}
+		if durationMS < minDragDurationMS || durationMS > maxDragDurationMS {
+			return nil, ToolOKResult{}, fmt.Errorf("durationMs must be between %d and %d", minDragDurationMS, maxDragDurationMS)
+		}
+
+		start := normalizedPoint{x: input.StartX, y: input.StartY}
+		end := normalizedPoint{x: input.EndX, y: input.EndY}
+		if err := remote.dragAbsolute(ctx, start, end, time.Duration(durationMS)*time.Millisecond); err != nil {
+			return nil, ToolOKResult{}, err
+		}
 		return nil, ToolOKResult{OK: true}, nil
 	}
 }

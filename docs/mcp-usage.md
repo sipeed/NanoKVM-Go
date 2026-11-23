@@ -266,6 +266,34 @@ Result:
 }
 ```
 
+### `drag_mouse`
+
+Drag the left mouse button in absolute mouse mode. Supply a start and an end
+point in normalized screenshot content coordinates (0 to 1). For example,
+dragging a horizontal slider from a quarter to three quarters of the way across
+a full content screenshot at mid-height uses this request:
+
+```json
+{
+  "startX": 0.25,
+  "startY": 0.5,
+  "endX": 0.75,
+  "endY": 0.5,
+  "durationMs": 300
+}
+```
+
+All four coordinates are required. The optional duration is 100 to 1000 ms and
+defaults to 300 ms. The gesture uses the selected absolute calibration and the
+content bounds at its start. With Portal Off, those bounds include any black
+bars in the video frame. Express coordinates relative to the full content area
+even when inspecting a smaller screenshot region.
+
+The call moves to the start, holds the button while moving, and releases it at
+the end. Check the target application in a fresh screenshot after the call.
+This tool requires absolute mouse mode. It leaves the active mode and Portal
+settings alone.
+
 ### `scroll_mouse`
 
 Scrolls the remote mouse wheel vertically.
@@ -497,6 +525,7 @@ Expected tool names:
 
 ```text
 click_mouse
+drag_mouse
 move_mouse
 press_keys
 screenshot

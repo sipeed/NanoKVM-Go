@@ -171,10 +171,19 @@ func (router *Router) RouteVirtualKeyboardSession(session uint64, report []byte)
 		eventEpoch,
 		"internal-adapted",
 		"virtual keyboard HID report converted to input-router v1",
+		false,
 	)
 }
 
 func (router *Router) RouteVirtualPointerSession(session uint64, report []byte) error {
+	return router.routeVirtualPointerSession(session, report, false)
+}
+
+func (router *Router) RouteReliableVirtualPointerSession(session uint64, report []byte) error {
+	return router.routeVirtualPointerSession(session, report, true)
+}
+
+func (router *Router) routeVirtualPointerSession(session uint64, report []byte, reliable bool) error {
 	eventEpoch := router.routingEpoch.Load()
 	sequence := router.internalSequence.Add(1)
 	capturedAtMS := uint32(router.now().UnixMilli())
@@ -194,6 +203,7 @@ func (router *Router) RouteVirtualPointerSession(session uint64, report []byte) 
 		eventEpoch,
 		"internal-adapted",
 		"virtual pointer HID report converted to input-router v1",
+		reliable,
 	)
 }
 
@@ -217,6 +227,7 @@ func (router *Router) RouteVirtualTouchSession(session uint64, report []byte) er
 		eventEpoch,
 		"internal-adapted",
 		"virtual touchscreen HID report converted to input-router v1",
+		false,
 	)
 }
 
@@ -231,10 +242,10 @@ func (router *Router) ResetInputSessions(reason string) error {
 }
 
 func (router *Router) RouteSession(session SessionID, data []byte) error {
-	return router.routeSessionAtEpoch(session, data, router.routingEpoch.Load())
+	return router.routeSessionAtEpoch(session, data, router.routingEpoch.Load(), false)
 }
 
-func (router *Router) routeSessionAtEpoch(session SessionID, data []byte, eventEpoch uint64) error {
+func (router *Router) routeSessionAtEpoch(session SessionID, data []byte, eventEpoch uint64, reliable bool) error {
 	routerStarted := time.Now()
 	router.received.Add(1)
 	now := router.now().UnixMilli()
@@ -323,7 +334,7 @@ func (router *Router) routeSessionAtEpoch(session SessionID, data []byte, eventE
 		if err == nil {
 			var result routeWriteResult
 			writeStarted := time.Now()
-			result, err = writeRouteReport(route, router.sessionReport(event.Kind, session), report)
+			result, err = writeRouteReport(route, router.sessionReport(event.Kind, session), report, reliable)
 			record.HIDWriteUS = time.Since(writeStarted).Microseconds()
 			if result.report != nil {
 				report = result.report
@@ -605,7 +616,7 @@ type routeWriteResult struct {
 	dropped bool
 }
 
-func writeRouteReport(route RouteDefinition, previous, report []byte) (routeWriteResult, error) {
+func writeRouteReport(route RouteDefinition, previous, report []byte, reliable bool) (routeWriteResult, error) {
 	result := routeWriteResult{report: report}
 	err := route.Write(report)
 	if err == nil {
@@ -615,7 +626,17 @@ func writeRouteReport(route RouteDefinition, previous, report []byte) (routeWrit
 		return result, err
 	}
 
-	recovery := route.Recover(previous, report)
+	// A timed-out relative delta may already have reached the host. Replaying
+	// it would apply the movement or wheel tick twice.
+	if reliable && route.Kind == KindRelativePointer && len(report) == 4 &&
+		(report[1] != 0 || report[2] != 0 || report[3] != 0) {
+		return result, err
+	}
+
+	recovery := report
+	if !reliable {
+		recovery = route.Recover(previous, report)
+	}
 	if recovery == nil {
 		route.dropped.Add(1)
 		result.cause = err
