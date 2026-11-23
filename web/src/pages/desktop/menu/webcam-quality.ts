@@ -2,7 +2,8 @@ const minMbps = 2;
 const maxMbps = 10;
 const minFps = 15;
 const maxFps = 30;
-const startMbps = 5;
+const startMbps = 8;
+const startFps = 25;
 const warmupSeconds = 1;
 const evidenceSeconds = 2;
 export const startupSeconds = warmupSeconds + 5 * evidenceSeconds;
@@ -44,7 +45,7 @@ function delivery(samples: DeliverySample[]) {
 }
 
 export class WebcamQuality {
-  target: Target = { mbps: startMbps, fps: maxFps };
+  target: Target = { mbps: startMbps, fps: startFps };
   private hostFps = maxFps;
   private samples: DeliverySample[] = [];
   private startupSamples: DeliverySample[] = [];
@@ -141,10 +142,10 @@ export class WebcamQuality {
     }
     // Keep JPEGs larger on constrained links by lowering cadence more gently than bitrate.
     const fps =
-      next === minMbps && ((congested && mbps === minMbps) || this.target.fps === minFps)
-        ? minFps
-        : Math.round(maxFps * Math.sqrt(next / startMbps));
-    this.change(next, Math.min(fps, maxFps));
+      next <= startMbps
+        ? startFps * Math.sqrt(next / startMbps)
+        : startFps + ((maxFps - startFps) * (next - startMbps)) / (maxMbps - startMbps);
+    this.change(next, Math.round(fps));
   }
 
   finishStartup() {

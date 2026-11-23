@@ -12,7 +12,7 @@ Open the toolbar webcam menu, choose a local camera and click **Start**. Grant c
 
 ## How calibration works
 
-The browser starts at **5 Mbps and 30 fps**. It skips the first second and then measures **five two-second windows**, for 11 seconds total. On a healthy, sufficiently loaded link it tests the 10 Mbps ceiling. When a target is congested it bisects the remaining range between the working and failing rates. Lower targets also ease the frame cadence to preserve JPEG detail. The bounds are **2–10 Mbps** and **15–30 fps**. A quiet scene can use less than the target and provide too little evidence to raise it. If the remote computer opens the webcam early, the stream takes over immediately.
+The browser starts at **8 Mbps and 25 fps**. It skips the first second and then measures **five two-second windows**, for 11 seconds total. On a healthy, sufficiently loaded link it tests the 10 Mbps ceiling. When a target is congested it bisects the remaining range between the working and failing rates. Lower targets also ease the frame cadence to preserve JPEG detail. The bounds are **2–10 Mbps** and **15–30 fps**. A quiet scene can use less than the target and provide too little evidence to raise it. If the remote computer opens the webcam early, the stream takes over immediately.
 
 During streaming, the controller ordinarily assesses ten seconds of delivery. More than 10% missed upload opportunities triggers a rate cut. More than 25% over three seconds triggers a larger cut. It can also lower the capture cadence if smaller frames fail to improve delivery. Clean delivery permits gradual upward probes. A miss measures a frame the sender could have uploaded at its paced cadence. The displayed delay includes grant pacing and is different from a network ping.
 

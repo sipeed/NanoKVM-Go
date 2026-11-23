@@ -34,24 +34,24 @@ function samples(
 test('three bad seconds cut bitrate and a flat grant cycle with smaller JPEGs cuts fps', () => {
   const auto = new WebcamQuality();
   samples(auto, 2, { received: 12, missed: 13, ms: 80 });
-  assert.equal(auto.target.mbps, 5);
+  assert.equal(auto.target.mbps, 8);
   samples(auto, 1, { received: 12, missed: 13, ms: 80 }, 2000);
-  assert.deepEqual(auto.target, { mbps: 4, fps: 30 });
+  assert.deepEqual(auto.target, { mbps: 4, fps: 25 });
   samples(auto, 3, { received: 12, size: 20000, missed: 13, ms: 79 }, 3000);
-  assert.deepEqual(auto.target, { mbps: 2, fps: 15 });
+  assert.deepEqual(auto.target, { mbps: 2.4, fps: 15 });
   samples(auto, 10, { received: 15, size: 20000, ms: 60 }, 6000);
-  assert.deepEqual(auto.target, { mbps: 2, fps: 17 });
+  assert.deepEqual(auto.target, { mbps: 2.4, fps: 17 });
 });
 test('fresh ten-second windows hold at 10% and trim above 10%; improving delivery keeps fps', () => {
   const auto = new WebcamQuality();
   samples(auto, 10, { received: 18, missed: 2 });
-  assert.equal(auto.target.mbps, 5);
+  assert.equal(auto.target.mbps, 8);
   samples(auto, 10, { received: 21, missed: 4 }, 10000);
   assert.equal(auto.target.mbps, 4.5);
   const other = new WebcamQuality();
   samples(other, 3, { received: 12, missed: 13, ms: 80 });
   samples(other, 3, { received: 17, missed: 8, size: 20000, ms: 55 }, 3000);
-  assert.deepEqual(other.target, { mbps: 3.2, fps: 30 });
+  assert.deepEqual(other.target, { mbps: 3.2, fps: 25 });
 });
 test('failed probe restores last target, blocks probing for twenty seconds', () => {
   const auto = new WebcamQuality();
@@ -82,7 +82,7 @@ test('empty observations, idle camera and suspended timers never establish a los
       5000
     );
     samples(auto, 1, { received: 12, missed: 13 }, 6000);
-    assert.equal(auto.target.mbps, 5);
+    assert.equal(auto.target.mbps, 8);
     auto.observe(
       {
         elapsedMs: 1000,
@@ -148,15 +148,15 @@ test('clean windows reach the 10 Mbps and 30 fps ceilings', () => {
     samples(auto, n, { received: 20, size: 25000, ...overrides }, time);
     time += n * 1000;
   }
-  assert.deepEqual(auto.target, { mbps: 5, fps: 30 });
+  assert.deepEqual(auto.target, { mbps: 8, fps: 25 });
   tick(9);
   tick(1, { missed: 1 });
   tick(9);
-  assert.equal(auto.target.mbps, 5);
+  assert.equal(auto.target.mbps, 8);
   tick(1);
-  assert.equal(auto.target.mbps, 5.5);
+  assert.equal(auto.target.mbps, 8.8);
   tick(10);
-  assert.equal(auto.target.mbps, 6.05);
+  assert.equal(auto.target.mbps, 9.68);
   tick(60, { received: 30 });
   assert.deepEqual(auto.target, { mbps: 10, fps: 30 });
   auto.setHostFps(25);
@@ -195,20 +195,20 @@ test('warmup misses ignored, a loaded healthy link probes the actual ceiling', (
   const { probes, final } = calibrate((_, second) => (second === 1 ? 'bad' : 'good'));
   assert.deepEqual(
     probes.map((p) => p.mbps),
-    [5, 10, 10, 10, 10, 10]
+    [8, 10, 10, 10, 10, 10]
   );
   assert.deepEqual(final, { mbps: 10, fps: 30 });
 });
 test('mixed link bisects measured bounds, scales cadence and uses the final two seconds', () => {
   const trace = (limit) => calibrate((mbps) => (mbps > limit ? 'bad' : 'good'));
-  const { probes, final } = trace(4);
+  const { probes, final } = trace(6);
   assert.deepEqual(
     probes.map((p) => p.mbps),
-    [5, 3.5, 4.25, 3.88, 4.07, 4.07]
+    [8, 5, 6.5, 5.75, 6.13, 6.13]
   );
-  assert.deepEqual(final, { mbps: 3.88, fps: 26 });
-  assert.equal(probes[1].fps, 25);
-  assert.deepEqual(trace(4.1).final, { mbps: 4.07, fps: 27 });
+  assert.deepEqual(final, { mbps: 5.75, fps: 21 });
+  assert.equal(probes[1].fps, 20);
+  assert.deepEqual(trace(6.2).final, { mbps: 6.13, fps: 22 });
 });
 test('floor is tested with reduced cadence when all probes fail', () => {
   const { probes, final } = calibrate(() => 'bad');
@@ -216,7 +216,7 @@ test('floor is tested with reduced cadence when all probes fail', () => {
   assert.deepEqual(final, { mbps: 2, fps: 15 });
 });
 test('quiet or incomplete windows cannot confirm a higher target', () => {
-  assert.equal(calibrate(() => 'quiet').final.mbps, 5);
-  assert.equal(calibrate((_, s) => (s <= 3 ? 'good' : 'quiet')).final.mbps, 5);
-  assert.equal(calibrate((_, s) => (s === 3 ? 'skip' : 'good')).probes[1].mbps, 5);
+  assert.equal(calibrate(() => 'quiet').final.mbps, 8);
+  assert.equal(calibrate((_, s) => (s <= 3 ? 'good' : 'quiet')).final.mbps, 8);
+  assert.equal(calibrate((_, s) => (s === 3 ? 'skip' : 'good')).probes[1].mbps, 8);
 });
