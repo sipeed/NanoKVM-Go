@@ -71,7 +71,7 @@ func TestWebcamDemandAndRelease(t *testing.T) {
 			t.Fatalf("unexpected USB frame (%d bytes, %v)", n, err)
 		}
 	}
-	for i, name := range []string{"600p25", "600p30"} {
+	for i, name := range []string{"720p25", "720p30"} {
 		if i > 0 {
 			if err := os.Remove(flag); err != nil {
 				t.Fatal(err)
@@ -83,7 +83,7 @@ func TestWebcamDemandAndRelease(t *testing.T) {
 		if err := conn.WriteMessage(websocket.TextMessage, []byte("poll")); err != nil {
 			t.Fatal(err)
 		}
-		read("600p25")
+		read("720p25")
 		jpg.Reset()
 		if err := jpeg.Encode(&jpg, image.NewGray(image.Rect(0, 0, cameraFrameWidth, cameraFrameHeight)), nil); err != nil {
 			t.Fatal(err)
@@ -103,7 +103,7 @@ func TestWebcamDemandAndRelease(t *testing.T) {
 			t.Fatal(err)
 		}
 		receive(append([]byte{cameraFrameIndex}, payload...))
-		read("600p25")
+		read("720p25")
 	}
 	conn.Close()
 	receive([]byte{0})
@@ -200,7 +200,7 @@ func TestWebcamStartupCalibration(t *testing.T) {
 				}
 			}
 			var jpg bytes.Buffer
-			if err := jpeg.Encode(&jpg, image.NewGray(image.Rect(0, 0, 1024, 600)), nil); err != nil {
+			if err := jpeg.Encode(&jpg, image.NewGray(image.Rect(0, 0, 1280, 720)), nil); err != nil {
 				t.Fatal(err)
 			}
 			start := time.Now()
@@ -209,14 +209,14 @@ func TestWebcamStartupCalibration(t *testing.T) {
 			}
 			flag := filepath.Join(dir, "streaming")
 			if hostOpens {
-				if err := os.Symlink("600p30", flag); err != nil {
+				if err := os.Symlink("720p30", flag); err != nil {
 					t.Fatal(err)
 				}
 			}
 			send(websocket.BinaryMessage, jpg.Bytes())
 			cmd := read()
 			if hostOpens {
-				if cmd != "600p30" {
+				if cmd != "720p30" {
 					t.Fatalf("host waiting: %s", cmd)
 				}
 				if err := os.Remove(flag); err != nil {

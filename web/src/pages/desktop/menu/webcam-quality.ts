@@ -1,5 +1,5 @@
 const minMbps = 2;
-const maxMbps = 8;
+const maxMbps = 10;
 const minFps = 15;
 const maxFps = 30;
 const startMbps = 5;

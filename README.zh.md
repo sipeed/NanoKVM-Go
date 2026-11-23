@@ -23,11 +23,11 @@ NanoKVM-go-Nomad 是 Sipeed NanoKVM-Go 的分支，适用于 **NanoKVM Go 系列
 
 Go 系列还提供完善的 AI 集成：可选的 MCP Server 让兼容 MCP 的 AI 工具获取画面并发送键鼠操作；Go+ 额外配备端侧 NPU、记忆织网与屏幕延时回放，可从画面变化中提取可检索的文字与上下文。
 
-## NanoKVM-Go Nomad 0.2.7, build 1 的改动
+## NanoKVM-Go Nomad 0.2.7, build 2 的改动
 
-**Go+ 远程摄像头。** 浏览器所在电脑的摄像头可作为标准 USB 摄像头提供给被控电脑。USB 端采用 1024 × 600 MJPEG，帧率为 30 fps。安装支持 UVC 的 Nomad 内核后，通过 HTTPS 打开控制台，在 **Settings → Device → Webcam** 中启用摄像头。切换时 USB 设备会重新连接。标准更新包含摄像头内核、脚本和视频帧输出程序。在运行 v1.0.10 固件的 Go+ 上，通过控制台上传更新，内核更换后重启一次。[内核补丁](support/patches/maix_ax620e_sdk_kernel/README.md)
+**Go+ 远程摄像头。** 浏览器所在电脑的摄像头可作为标准 USB 摄像头提供给被控电脑。USB 端采用 1280 × 720 MJPEG，帧率为 30 fps。安装支持 UVC 的 Nomad 内核后，通过 HTTPS 打开控制台，在 **Settings → Device → Webcam** 中启用摄像头。切换时 USB 设备会重新连接。标准更新包含摄像头内核、脚本和视频帧输出程序。在运行 v1.0.10 固件的 Go+ 上，通过控制台上传更新，内核更换后重启一次。[内核补丁](support/patches/maix_ax620e_sdk_kernel/README.md)
 
-在摄像头菜单中选择本地摄像头并点击 **Start**。校准从 5 Mbps、30 fps 开始，先预热 1 秒，再连续采集五组、每组 2 秒的数据，通过二分搜索在 2–8 Mbps、15–30 fps 范围内调整。降低码率时也会适当降低帧率，以保留单帧细节。校准期间若被控电脑打开摄像头，画面会立即开始传输。传输期间若持续丢帧，控制器会调低目标值，传输稳定后再逐步提高。**Calibrating** 和 **Streaming** 显示接收码率、帧率和上传延迟。被控电脑空闲时，**Ready** 只显示校准后的目标码率和帧率。支持后台工作线程的浏览器可在线程中采集图像，Safari 等 WebKit 浏览器可通过视频元素采集。点击 **Stop** 会释放本地摄像头并使 USB 画面恢复为黑屏。麦克风单独控制。[摄像头使用与校准](docs/remote-webcam.md)
+在摄像头菜单中选择本地摄像头并点击 **Start**。校准从 5 Mbps、30 fps 开始，先预热 1 秒，再连续采集五组、每组 2 秒的数据，通过二分搜索在 2–10 Mbps、15–30 fps 范围内调整。降低码率时也会适当降低帧率，以保留单帧细节。校准期间若被控电脑打开摄像头，画面会立即开始传输。传输期间若持续丢帧，控制器会调低目标值，传输稳定后再逐步提高。**Calibrating** 和 **Streaming** 显示接收码率、帧率和上传延迟。被控电脑空闲时，**Ready** 只显示校准后的目标码率和帧率。支持后台工作线程的浏览器可在线程中采集图像，Safari 等 WebKit 浏览器可通过视频元素采集。点击 **Stop** 会释放本地摄像头并使 USB 画面恢复为黑屏。麦克风单独控制。[摄像头使用与校准](docs/remote-webcam.md)
 
 使用配套内核时，USB 摄像头默认使用驱动提供的通用名称。可在 **Settings → Device → Advanced → USB Webcam Name** 中修改被控电脑看到的名称，下次启用摄像头或重启 Go+ 时生效。
 

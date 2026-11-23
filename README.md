@@ -7,7 +7,7 @@ A NanoKVM Go+ fork for digital nomads. Use your laptop’s webcam in a call on t
 ## Nomad features
 
 - **Webcam as a USB device**
-  - **600p (1024 × 600), targeting 15–30 fps and 2–8 Mbps.** Nomad measures delivery during startup, then lowers quality when uploads fall behind and raises it as the link recovers. [Google Congestion Control background](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02)
+  - **720p (1280 × 720), targeting 15–30 fps and 2–10 Mbps.** Nomad measures delivery during startup, then lowers quality when uploads fall behind and raises it as the link recovers. [Google Congestion Control background](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02)
   - **Motion JPEG (MJPEG).** Your browser compresses each camera frame as a JPEG. The Go+ sends those frames to the remote computer as a standard USB webcam stream.
   - **Start a call.** Open the dashboard over HTTPS. Enable **Settings → Device → Webcam**, then choose your camera in the **Webcam** menu and click **Start**. Microphone sharing has its own control.
   - **Webcam name.** Change **Settings → Device → Advanced → USB Webcam Name** to set the name reported to the host.

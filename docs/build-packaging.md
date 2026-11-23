@@ -143,13 +143,13 @@ creates an unsigned bundle and prints a warning.
 
 Each numbered NanoKVM Go+ Nomad update includes the application and matching webcam kernel. On Go+ firmware v1.0.10, upload the tar.gz through the offline application updater and reboot if the kernel changed.
 
-For **NanoKVM-Go Nomad 0.2.7, build 1**, use the Git tag `v0.2.7-nomad.1`.
+For **NanoKVM-Go Nomad 0.2.7, build 2**, use the Git tag `v0.2.7-nomad.2`.
 
 To make the Normal update on Linux, start with the two original application Debian packages in `build/`. The packaging script checks the approved kernel digest and builds the numbered dashboard archive, its package metadata and the two release Debian packages.
 
 ```bash
-bash support/scripts/package_nomad_normal.sh 0.2.7 1 build \
-  build/kernel/NanoKVM-go-Nomad-4.19.125-uvc-name/kernel.img build/v0.2.7-nomad.1
+bash support/scripts/package_nomad_normal.sh 0.2.7 2 build \
+  build/kernel/NanoKVM-go-Nomad-4.19.125-uvc-name/kernel.img build/v0.2.7-nomad.2
 ```
 
 The installer checks the Go+ model, firmware and SD boot layout. When the kernel changes it keeps the previous image in `/boot/kernel.img.nomad-backup-<sha256>` and replaces the boot file atomically. Reinstalling the same kernel skips the boot write. Upgrades retain the existing Webcam setting.

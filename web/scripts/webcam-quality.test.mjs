@@ -141,7 +141,7 @@ test('an irregular 20 fps camera can use all available slots at a 25 fps target'
   }
 });
 
-test('clean windows reach the 8 Mbps and 30 fps ceilings', () => {
+test('clean windows reach the 10 Mbps and 30 fps ceilings', () => {
   const auto = new WebcamQuality();
   let time = 0;
   function tick(n, overrides = {}) {
@@ -158,10 +158,10 @@ test('clean windows reach the 8 Mbps and 30 fps ceilings', () => {
   tick(10);
   assert.equal(auto.target.mbps, 6.05);
   tick(60, { received: 30 });
-  assert.deepEqual(auto.target, { mbps: 8, fps: 30 });
+  assert.deepEqual(auto.target, { mbps: 10, fps: 30 });
   auto.setHostFps(25);
   tick(60, { received: 25 });
-  assert.deepEqual(auto.target, { mbps: 8, fps: 25 });
+  assert.deepEqual(auto.target, { mbps: 10, fps: 25 });
 });
 
 test('sustained congestion stops at 2 Mbps and 15 fps', () => {
@@ -195,9 +195,9 @@ test('warmup misses ignored, a loaded healthy link probes the actual ceiling', (
   const { probes, final } = calibrate((_, second) => (second === 1 ? 'bad' : 'good'));
   assert.deepEqual(
     probes.map((p) => p.mbps),
-    [5, 8, 8, 8, 8, 8]
+    [5, 10, 10, 10, 10, 10]
   );
-  assert.deepEqual(final, { mbps: 8, fps: 30 });
+  assert.deepEqual(final, { mbps: 10, fps: 30 });
 });
 test('mixed link bisects measured bounds, scales cadence and uses the final two seconds', () => {
   const trace = (limit) => calibrate((mbps) => (mbps > limit ? 'bad' : 'good'));

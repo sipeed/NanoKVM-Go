@@ -209,7 +209,7 @@ static void start_stream(struct camera *cam)
     if (cam->streaming)
         return;
     struct v4l2_format fmt = { .type = output, .fmt.pix = {
-        .width = 1024, .height = 600, .pixelformat = V4L2_PIX_FMT_MJPEG,
+        .width = 1280, .height = 720, .pixelformat = V4L2_PIX_FMT_MJPEG,
         .field = V4L2_FIELD_NONE, .sizeimage = MAX_FRAME } };
     if (xioctl(cam->fd, VIDIOC_S_FMT, &fmt) < 0)
         die("set MJPEG format");
@@ -237,7 +237,7 @@ static void start_stream(struct camera *cam)
     if (timerfd_settime(cam->timer, 0, &tick, NULL) < 0)
         die("start frame clock");
     cam->streaming = 1;
-    if (symlink("600p30", stream_flag) < 0) die("publish webcam demand");
+    if (symlink("720p30", stream_flag) < 0) die("publish webcam demand");
     fprintf(stderr, "Streaming %ux%u MJPEG at 30 fps\n", fmt.fmt.pix.width, fmt.fmt.pix.height);
 }
 
