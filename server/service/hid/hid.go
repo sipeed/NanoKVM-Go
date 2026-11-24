@@ -18,6 +18,7 @@ type Hid struct {
 	g2                           hidEndpoint
 	kbMutex                      sync.Mutex
 	mouseMutex                   sync.Mutex
+	cursor                       cursorEstimate // protected by mouseMutex
 	absolutePointerPositionMutex sync.Mutex
 	lastAbsolutePointerPosition  [4]byte
 	hasAbsolutePointerPosition   bool
@@ -238,9 +239,12 @@ func (h *Hid) WriteRelativeMouseReport(data []byte) error {
 	if len(data) != 4 {
 		return errors.New("invalid relative mouse report length")
 	}
-	if err := h.write(&h.g1, HID1, data, &h.mouseMutex); err != nil {
+	h.mouseMutex.Lock()
+	defer h.mouseMutex.Unlock()
+	if err := h.writeNoLock(&h.g1, HID1, data); err != nil {
 		return err
 	}
+	h.cursor.move(int8(data[1]), int8(data[2]))
 	pushHIDMouseState(data)
 	return nil
 }
@@ -261,6 +265,7 @@ func (h *Hid) WriteAbsoluteMouseReport(data []byte) error {
 		return err
 	}
 	h.storeAbsolutePointerPosition(data)
+	h.cursor.anchor(binary.LittleEndian.Uint16(data[2:4]), binary.LittleEndian.Uint16(data[4:6]))
 	pushHIDMouseState(data[1:])
 	return nil
 }
@@ -332,12 +337,40 @@ func touchScreenReleaseReport() []byte {
 	return report
 }
 
-// AbsoluteMousePosition returns the last position successfully sent to the host.
-func (h *Hid) AbsoluteMousePosition() (uint16, uint16, bool) {
-	h.absolutePointerPositionMutex.Lock()
-	defer h.absolutePointerPositionMutex.Unlock()
-	p := h.lastAbsolutePointerPosition
-	return binary.LittleEndian.Uint16(p[:2]), binary.LittleEndian.Uint16(p[2:]), h.hasAbsolutePointerPosition
+// EstimatedMousePosition returns pixel coordinates and the dimensions they use.
+func (h *Hid) EstimatedMousePosition(width, height uint16) (float64, float64, int, int) {
+	h.mouseMutex.Lock()
+	defer h.mouseMutex.Unlock()
+	if width > 1 && height > 1 {
+		h.cursor.width, h.cursor.height = int(width), int(height)
+	}
+	w, hgt := h.cursor.dimensions()
+	return (0.5 + h.cursor.x) * float64(w-1), (0.5 + h.cursor.y) * float64(hgt-1), w, hgt
+}
+
+// Offsets from the center in fractions of the captured screen. USB relative
+// reports are counts; treating one count as one pixel approximates host motion.
+type cursorEstimate struct {
+	x, y          float64
+	width, height int
+}
+
+func (c *cursorEstimate) dimensions() (int, int) {
+	if c.width <= 1 || c.height <= 1 {
+		return 1920, 1080
+	}
+	return c.width, c.height
+}
+
+func (c *cursorEstimate) anchor(x, y uint16) {
+	c.x = float64(min(x, 32767))/32767 - 0.5
+	c.y = float64(min(y, 32767))/32767 - 0.5
+}
+
+func (c *cursorEstimate) move(dx, dy int8) {
+	w, h := c.dimensions()
+	c.x = max(-0.5, min(0.5, c.x+float64(dx)/float64(w-1)))
+	c.y = max(-0.5, min(0.5, c.y+float64(dy)/float64(h-1)))
 }
 
 func (h *Hid) storeAbsolutePointerPosition(data []byte) {

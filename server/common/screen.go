@@ -85,6 +85,11 @@ func (s *Screen) Check() {
 	}
 }
 
+// HDMIInputSize reads the source dimensions independently of the stream's scaling.
+func HDMIInputSize() (uint16, uint16) {
+	return readSize(WidthPath), readSize(HeightPath)
+}
+
 func readSize(filePath string) uint16 {
 	data, err := os.ReadFile(filePath)
 	if err != nil {

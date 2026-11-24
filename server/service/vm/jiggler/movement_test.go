@@ -13,13 +13,16 @@ func TestCurveReports(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		for _, mode := range []string{"relative", "absolute"} {
 			x, y := []int{0, 16384, 32767}[i%3], []int{0, 16384, 32767}[(i/3)%3]
-			m := curveMovement(mode, x, y)
-			if m.duration < 2*time.Second || m.duration > 5*time.Second {
+			const width, height = 2560, 1440
+			startPx := point{float64(x) * (width - 1) / 32767, float64(y) * (height - 1) / 32767}
+			m := curveMovement(mode, startPx, width, height)
+			if m.duration < 5*time.Second || m.duration > 8*time.Second {
 				t.Fatal("duration", m.duration)
 			}
 			start := time.Now()
 			m.start = start
 			lastX, lastY := x, y
+			rel := startPx
 			length := 0.0
 			for k, r := range m.reports {
 				m.index = k
@@ -27,7 +30,13 @@ func TestCurveReports(t *testing.T) {
 					if len(r) != 4 || r[0] != 0 || r[3] != 0 {
 						t.Fatal("relative buttons or wheel", r)
 					}
-					length += math.Hypot(float64(int8(r[1])), float64(int8(r[2])))
+					dx, dy := int(int8(r[1])), int(int8(r[2]))
+					rel.x += float64(dx)
+					rel.y += float64(dy)
+					length += math.Hypot(float64(dx), float64(dy))
+					if rel.x < 0 || rel.x > width-1 || rel.y < 0 || rel.y > height-1 {
+						t.Fatal("relative curve moved beyond screen", rel)
+					}
 				} else {
 					if len(r) != 7 || r[0] != 1 || r[1] != 0 || r[6] != 0 {
 						t.Fatal("absolute buttons or wheel", r)
@@ -36,11 +45,11 @@ func TestCurveReports(t *testing.T) {
 					if px > 32767 || py > 32767 || (k == 0 && (px != x || py != y)) {
 						t.Fatal("absolute coordinates", px, py)
 					}
-					length += math.Hypot(float64(px-lastX), float64(py-lastY)) / 24
+					length += math.Hypot(float64(px-lastX)*(width-1)/32767, float64(py-lastY)*(height-1)/32767)
 					lastX, lastY = px, py
 				}
 			}
-			if length < 45 || !m.nextFrame().Equal(start.Add(m.duration)) {
+			if length < 210 || !m.nextFrame().Equal(start.Add(m.duration)) {
 				t.Fatal("path length or end time", length)
 			}
 		}
@@ -56,7 +65,7 @@ func TestDisconnectedMovementAndInterruption(t *testing.T) {
 			if !useCurve {
 				return nil
 			}
-			return curveMovement("relative", 0, 0)
+			return curveMovement("relative", point{}, 1920, 1080)
 		}, func() time.Duration { return 0 })
 		j.send = func([]byte) error { writes++; return nil }
 		j.release = func() { releases++ }

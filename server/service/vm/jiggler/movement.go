@@ -6,6 +6,7 @@ import (
 	"math/rand/v2"
 	"time"
 
+	"NanoKVM-Server/common"
 	"NanoKVM-Server/service/hid"
 )
 
@@ -38,46 +39,55 @@ func planMovement(mode string, curved bool) *movement {
 		}
 		return &movement{reports: reports, duration: 100 * time.Millisecond}
 	}
-	x, y := 16384, 16384
-	if mode == "absolute" {
-		if lastX, lastY, ok := hid.GetHid().AbsoluteMousePosition(); ok {
-			x, y = int(lastX), int(lastY)
-		}
-	}
-	return curveMovement(mode, x, y)
+	width, height := common.HDMIInputSize()
+	x, y, w, h := hid.GetHid().EstimatedMousePosition(width, height)
+	return curveMovement(mode, point{x, y}, w, h)
 }
 
 type point struct{ x, y float64 }
 
-func curveMovement(mode string, startX, startY int) *movement {
+// Give the center a mild preference in the interior. In the outer
+// quarter, always head inward so an edge cannot flatten the entire stroke.
+func curveDirection(position, span float64) float64 {
+	fraction := position / span
+	if fraction <= 0.25 {
+		return 1
+	}
+	if fraction >= 0.75 || rand.Float64() < fraction {
+		return -1
+	}
+	return 1
+}
+
+func curveMovement(mode string, start point, width, height int) *movement {
 	// One cubic, starting at (0,0). Vary how far the endpoint doubles back
 	// relative to the outer control point to produce both arcs and hooks.
-	scale := 140 + rand.Float64()*400
+	shortSide := float64(min(width-1, height-1))
+	scale := shortSide * (0.55 + 0.45*rand.Float64())
+	if mode == "relative" {
+		// Each per-frame HID delta must fit in a signed byte, including on very large displays.
+		scale = min(scale, 3200)
+	}
 	p1 := point{scale * (0.35 + rand.Float64()*0.6), scale * rand.Float64() * 0.12}
 	p2 := point{scale * (0.7 + rand.Float64()*0.75), scale * (0.12 + rand.Float64()*0.6)}
 	end := point{scale * rand.Float64(), scale * (0.4 + rand.Float64()*0.55)}
-	if mode == "absolute" {
-		// Aim into the larger free quadrant. Keeping every control point
-		// within the HID coordinate range keeps the whole curve on screen.
-		if rand.IntN(2) == 0 {
-			p1, p2, end = point{p1.y, p1.x}, point{p2.y, p2.x}, point{end.y, end.x}
-		}
-		roomX, roomY := max(startX, 32767-startX), max(startY, 32767-startY)
-		gain := min(24.0, float64(roomX)/max(p1.x, p2.x, end.x), float64(roomY)/max(p1.y, p2.y, end.y))
-		dx, dy := gain, gain
-		if startX >= 16384 {
-			dx = -dx
-		}
-		if startY >= 16384 {
-			dy = -dy
-		}
-		orient := func(p point) point { return point{p.x * dx, p.y * dy} }
-		p1, p2, end = orient(p1), orient(p2), orient(end)
-	} else {
-		sin, cos := math.Sincos(rand.Float64() * 2 * math.Pi)
-		orient := func(p point) point { return point{p.x*cos - p.y*sin, p.x*sin + p.y*cos} }
-		p1, p2, end = orient(p1), orient(p2), orient(end)
+	if rand.IntN(2) == 0 {
+		p1, p2, end = point{p1.y, p1.x}, point{p2.y, p2.x}, point{end.y, end.x}
 	}
+	screenX, screenY := float64(width-1), float64(height-1)
+	dx, dy := curveDirection(start.x, screenX), curveDirection(start.y, screenY)
+	roomX, roomY := start.x, start.y
+	if dx > 0 {
+		roomX = screenX - start.x
+	}
+	if dy > 0 {
+		roomY = screenY - start.y
+	}
+	// A cubic stays inside its control polygon. Leave a little space at
+	// the far edge, applying one scale factor to preserve the shape.
+	gain := min(1.0, 0.93*roomX/max(p1.x, p2.x, end.x), 0.93*roomY/max(p1.y, p2.y, end.y))
+	orient := func(p point) point { return point{p.x * gain * dx, p.y * gain * dy} }
+	p1, p2, end = orient(p1), orient(p2), orient(end)
 
 	at := func(t float64) point {
 		u := 1 - t
@@ -91,10 +101,8 @@ func curveMovement(mode string, startX, startY int) *movement {
 		length += math.Hypot(p.x-prev.x, p.y-prev.y)
 		prev = p
 	}
-	if mode == "absolute" {
-		length /= 24
-	}
-	seconds := min(5, max(2, 1.55+length/(150+100*rand.Float64())+0.45*rand.Float64()))
+	seconds := 5 + min(2.0, 2*length/shortSide) + rand.Float64()
+
 	m := &movement{duration: time.Duration(seconds * float64(time.Second))}
 	steps := int(math.Ceil(seconds * 40))
 	lastX, lastY := 0, 0
@@ -103,7 +111,7 @@ func curveMovement(mode string, startX, startY int) *movement {
 		p := at(t * t * (3 - 2*t)) // Accelerate into the bend and slow down at the endpoint.
 		x, y := int(math.Round(p.x)), int(math.Round(p.y))
 		if mode == "absolute" {
-			m.reports = append(m.reports, absoluteReport(startX+x, startY+y))
+			m.reports = append(m.reports, absoluteReport(int(math.Round((start.x+p.x)*32767/screenX)), int(math.Round((start.y+p.y)*32767/screenY))))
 		} else {
 			m.reports = append(m.reports, []byte{0, byte(int8(x - lastX)), byte(int8(y - lastY)), 0})
 		}
