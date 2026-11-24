@@ -21,7 +21,7 @@ function cameraError(err: unknown): string {
   return err instanceof Error ? err.message : 'Could not access the camera.';
 }
 
-export function useWebcamShare(visible: boolean) {
+export function useWebcamShare() {
   const [status, setStatus] = useState<Status>('off');
   const [diagnostics, setDiagnostics] = useState('');
   const [enabled, setEnabled] = useState(false);
@@ -44,7 +44,11 @@ export function useWebcamShare(visible: boolean) {
     };
     void refresh();
     const unsubscribe = client.onConnectionState((state) => {
-      if (state === 'closed') stop();
+      if (state === 'closed') {
+        ++version;
+        setEnabled(false);
+        stop();
+      }
       if (state === 'open') void refresh();
     });
     window.addEventListener(WEBCAM_CHANGED, refresh);
@@ -63,11 +67,11 @@ export function useWebcamShare(visible: boolean) {
   }, [stop]);
 
   useEffect(() => {
-    if (!enabled || !visible) stop();
-  }, [enabled, visible, stop]);
+    if (!enabled) stop();
+  }, [enabled, stop]);
 
-  async function start(deviceId: string) {
-    if (!enabled || !visible || finish.current) return;
+  async function start(deviceId: string, onError?: (reason: string) => void) {
+    if (!enabled || finish.current) return;
     let frames: ReturnType<typeof webcamFrames> | undefined;
     let media: MediaStream | undefined;
     let stopSender: (() => void) | undefined;
@@ -79,6 +83,7 @@ export function useWebcamShare(visible: boolean) {
       frames?.close();
       setStatus('off');
       setError(reason);
+      if (reason) onError?.(reason);
     }
 
     finish.current = end;

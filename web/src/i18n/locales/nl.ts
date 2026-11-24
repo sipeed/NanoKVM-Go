@@ -686,6 +686,9 @@ const nl = {
           modeAuto: 'Automatisch verbergen',
           modeAlways: 'Altijd zichtbaar',
           icons: 'Submenupictogrammen',
+          showIcon: 'Pictogram tonen',
+          activateOnConnect: 'Activeren bij verbinden',
+          stopSharing: 'Delen stoppen',
           iconsDesc: 'Submenupictogrammen weergeven in de menubalk'
         }
       },

@@ -663,6 +663,9 @@ const th = {
           modeAuto: 'ซ่อนอัตโนมัติ',
           modeAlways: 'มองเห็นได้เสมอ',
           icons: 'ไอคอนเมนูย่อย',
+          showIcon: 'แสดงไอคอน',
+          activateOnConnect: 'เปิดใช้งานเมื่อเชื่อมต่อ',
+          stopSharing: 'หยุดแชร์',
           iconsDesc: 'แสดงไอคอนเมนูย่อยในแถบเมนู'
         }
       },

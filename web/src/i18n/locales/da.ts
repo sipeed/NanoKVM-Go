@@ -678,6 +678,9 @@ const da = {
           modeAuto: 'Skjul automatisk',
           modeAlways: 'Altid synlig',
           icons: 'Undermenuikoner',
+          showIcon: 'Vis ikon',
+          activateOnConnect: 'Aktivér ved tilslutning',
+          stopSharing: 'Stop deling',
           iconsDesc: 'Vis undermenuikoner i menulinjen'
         }
       },

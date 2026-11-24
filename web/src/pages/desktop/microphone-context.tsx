@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode
 } from 'react';
+import { Modal } from 'antd';
 import { useAtom, useAtomValue } from 'jotai';
 import { useTranslation } from 'react-i18next';
 
@@ -15,6 +16,7 @@ import * as virtualDeviceApi from '@/api/virtual-device.ts';
 import { feedback } from '@/lib/feedback.tsx';
 import {
   getMicrophoneErrorTranslationKey,
+  hasAudioInputDevice,
   MicrophoneError,
   requestControlMicrophone,
   stopMediaStream
@@ -36,6 +38,8 @@ type EnableMicrophoneOptions = {
 type MicrophoneContextValue = {
   status: MicrophoneStatus;
   canEnable: boolean;
+  isChecking: boolean;
+  requestEnable: (beforeDialog?: () => void) => Promise<void>;
   enable: (options?: EnableMicrophoneOptions) => Promise<boolean>;
   disable: () => Promise<void>;
   registerAudioTransport: (connection: RTCPeerConnection, sender: RTCRtpSender) => () => void;
@@ -54,6 +58,9 @@ export const MicrophoneProvider = ({ children }: MicrophoneProviderProps) => {
   const [status, setStatus] = useAtom(microphoneStatusAtom);
   const [transportReady, setTransportReady] = useState(false);
 
+  const [dialog, setDialog] = useState<'mount' | 'missing' | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const checking = useRef(false);
   const mountedRef = useRef(true);
   const statusRef = useRef<MicrophoneStatus>(status);
   const generationRef = useRef(0);
@@ -111,6 +118,9 @@ export const MicrophoneProvider = ({ children }: MicrophoneProviderProps) => {
 
   const disable = useCallback(async () => {
     generationRef.current += 1;
+    checking.current = false;
+    setIsChecking(false);
+    setDialog(null);
     updateStatus('disabled');
 
     const stream = streamRef.current;
@@ -348,12 +358,74 @@ export const MicrophoneProvider = ({ children }: MicrophoneProviderProps) => {
     };
   }, [disable, updateStatus]);
 
+  const requestEnable = useCallback(async (beforeDialog?: () => void) => {
+    if (statusRef.current !== 'disabled' || checking.current || dialog) return;
+    if (!canEnable) {
+      notifyError(new MicrophoneError('microphone.enableFailed'));
+      return;
+    }
+    const generation = generationRef.current;
+    checking.current = true;
+    setIsChecking(true);
+    try {
+      const hasDevice = await hasAudioInputDevice();
+      if (generation !== generationRef.current) return;
+      if (!hasDevice) {
+        beforeDialog?.();
+        setDialog('missing');
+        return;
+      }
+      const rsp = await virtualDeviceApi.getVirtualDevice();
+      if (generation !== generationRef.current) return;
+      if (rsp.code !== 0 || !rsp.data) throw new MicrophoneError('microphone.enableFailed');
+      if (!rsp.data.isMicEnabled) {
+        beforeDialog?.();
+        setDialog('mount');
+        return;
+      }
+    } catch (error) {
+      if (generation === generationRef.current) notifyError(error);
+      return;
+    } finally {
+      if (generation === generationRef.current) {
+        checking.current = false;
+        setIsChecking(false);
+      }
+    }
+    await enable({ ensureVirtualMounted: true });
+  }, [canEnable, dialog, enable, notifyError]);
+
   const value = useMemo<MicrophoneContextValue>(
-    () => ({ status, canEnable, enable, disable, registerAudioTransport }),
-    [canEnable, disable, enable, registerAudioTransport, status]
+    () => ({ status, canEnable, isChecking, requestEnable, enable, disable, registerAudioTransport }),
+    [status, canEnable, isChecking, requestEnable, enable, disable, registerAudioTransport]
   );
 
-  return <MicrophoneContext.Provider value={value}>{children}</MicrophoneContext.Provider>;
+  return (
+    <MicrophoneContext.Provider value={value}>
+      {children}
+      <Modal
+        title={t(dialog === 'mount' ? 'microphone.notMounted' : 'microphone.title')}
+        open={dialog !== null}
+        onOk={() => {
+          if (dialog === 'mount') void enable({ ensureVirtualMounted: true });
+          setDialog(null);
+        }}
+        onCancel={() => setDialog(null)}
+        okText={t(dialog === 'mount' ? 'microphone.confirm' : 'auth.ok')}
+        cancelText={t('microphone.cancel')}
+        cancelButtonProps={dialog === 'missing' ? { style: { display: 'none' } } : undefined}
+      >
+        {dialog === 'mount' ? (
+          <div className="flex flex-col space-y-3 py-3">
+            <span>{t('microphone.tip1')}</span>
+            <span>{t('microphone.tip2')}</span>
+          </div>
+        ) : (
+          <div className="py-3">{t('microphone.noDevice')}</div>
+        )}
+      </Modal>
+    </MicrophoneContext.Provider>
+  );
 };
 
 // Keep the provider and its consumer hook together so they share one private context.

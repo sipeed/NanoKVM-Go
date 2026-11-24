@@ -627,6 +627,9 @@ const zh = {
           modeAuto: '自动隐藏',
           modeAlways: '始终显示',
           icons: '菜单图标',
+          showIcon: '显示图标',
+          activateOnConnect: '连接时启用',
+          stopSharing: '停止共享',
           iconsDesc: '是否在菜单栏中显示子菜单图标'
         }
       },

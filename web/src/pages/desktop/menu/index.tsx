@@ -24,6 +24,8 @@ import { useResponsiveDevice } from '@/hooks/useResponsiveDevice.ts';
 import { MobileMenuItemProvider } from '@/components/menu-item.tsx';
 import { ButtonBase } from '@/components/ui/button-base.tsx';
 
+import { useDesktopWebcam } from '../connect-features.tsx';
+
 import { FingerRobot } from './finger-robot';
 import { Fullscreen } from './fullscreen';
 import { Keyboard } from './keyboard';
@@ -40,7 +42,7 @@ import { ScreenTimelapse } from './settings/ai/screen-timelapse';
 import { Storage } from './storage';
 import { Terminal } from './terminal';
 import { Volume } from './volume';
-import { useWebcamShare, Webcam } from './webcam';
+import { Webcam } from './webcam';
 import { Wol } from './wol';
 
 const screenTimelapseServiceID = 'screenTimelapse';
@@ -88,7 +90,7 @@ export const Menu = () => {
 
   const videoMode = useAtomValue(videoModeAtom);
   const menuDisabledItems = useAtomValue(menuDisabledItemsAtom);
-  const webcam = useWebcamShare(!menuDisabledItems.includes('webcam'));
+  const webcam = useDesktopWebcam();
   const setMenuDisabledItems = useSetAtom(menuDisabledItemsAtom);
   const [isInitialized, setIsInitialized] = useAtom(menuConfigInitializedAtom);
   const [isScreenTimelapseEnabled, setIsScreenTimelapseEnabled] = useAtom(

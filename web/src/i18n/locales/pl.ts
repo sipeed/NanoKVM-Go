@@ -680,6 +680,9 @@ const pl = {
           modeAuto: 'Automatyczne ukrywanie',
           modeAlways: 'Zawsze widoczny',
           icons: 'Ikony podmenu',
+          showIcon: 'Pokaż ikonę',
+          activateOnConnect: 'Włącz przy połączeniu',
+          stopSharing: 'Zakończ udostępnianie',
           iconsDesc: 'Wyświetla ikony podmenu na pasku menu'
         }
       },

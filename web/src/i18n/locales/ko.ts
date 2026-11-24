@@ -664,6 +664,9 @@ const ko = {
           modeAuto: '자동 숨기기',
           modeAlways: '항상 보이기',
           icons: '하위 메뉴 아이콘',
+          showIcon: '아이콘 표시',
+          activateOnConnect: '연결 시 활성화',
+          stopSharing: '공유 중지',
           iconsDesc: '메뉴 바에 하위 메뉴 아이콘을 표시합니다'
         }
       },

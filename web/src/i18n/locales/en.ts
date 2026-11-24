@@ -671,6 +671,9 @@ const en = {
           modeAuto: 'Auto hide',
           modeAlways: 'Always visible',
           icons: 'Submenu Icons',
+          showIcon: 'Show icon',
+          activateOnConnect: 'Activate on Connect',
+          stopSharing: 'Stop sharing',
           iconsDesc: 'Display submenu icons in the menu bar'
         }
       },

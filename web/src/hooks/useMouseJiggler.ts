@@ -7,7 +7,7 @@ import { feedback } from '@/lib/feedback.tsx';
 
 type Mode = 'relative' | 'absolute';
 type Hours = { maxHours: number };
-type Command = 'refresh' | 'toggle' | 'disable' | Mode | Hours;
+type Command = 'refresh' | 'enable' | 'toggle' | 'disable' | Mode | Hours;
 type Config = {
   enabled: boolean;
   mode: Mode;
@@ -22,7 +22,7 @@ const writerAtom = atom<{ done: Promise<void> } | null>(null);
 const draftAtom = atom<Hours | null>(null);
 const requestAtom = atom(0);
 
-export function useMouseJiggler() {
+export function useMouseJiggler(observe = true) {
   const store = useStore();
   const config = useAtomValue(configAtom);
   const writer = useAtomValue(writerAtom);
@@ -52,7 +52,7 @@ export function useMouseJiggler() {
                     ? command
                     : command === 'relative' || command === 'absolute'
                       ? { enabled: true, mode: command }
-                      : { enabled: command === 'toggle' && !current?.enabled }
+                      : { enabled: command === 'enable' || (command === 'toggle' && !current?.enabled) }
                 );
           if (store.get(requestAtom) !== request) return;
           if (rsp.code !== 0 || typeof rsp.data?.enabled !== 'boolean') throw new Error(rsp.msg);
@@ -72,17 +72,18 @@ export function useMouseJiggler() {
   );
 
   useEffect(() => {
+    if (!observe) return;
     const refresh = () => void update('refresh');
     refresh();
     window.addEventListener('focus', refresh);
     return () => window.removeEventListener('focus', refresh);
-  }, [update]);
+  }, [observe, update]);
 
   useEffect(() => {
-    if (!config?.enabled || !config.maxHours) return;
+    if (!observe || !config?.enabled || !config.maxHours) return;
     const timer = window.setTimeout(() => void update('refresh'), Math.min(config.remainingMs + 100, 2_147_483_647));
     return () => window.clearTimeout(timer);
-  }, [config, update]);
+  }, [config, observe, update]);
 
   return { config, busy: !!writer, hours: draft?.maxHours ?? config?.maxHours, editingHours: draft !== null, update };
 }

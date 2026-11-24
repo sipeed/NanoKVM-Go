@@ -688,6 +688,9 @@ const hu = {
           modeAuto: 'Automatikus elrejtés',
           modeAlways: 'Mindig látható',
           icons: 'Almenü ikonok',
+          showIcon: 'Ikon megjelenítése',
+          activateOnConnect: 'Aktiválás csatlakozáskor',
+          stopSharing: 'Megosztás leállítása',
           iconsDesc: 'Almenüikonok megjelenítése a menüsorban'
         }
       },

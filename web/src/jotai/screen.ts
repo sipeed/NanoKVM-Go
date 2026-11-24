@@ -32,7 +32,7 @@ export const edidResolutionAtom = atom({ width: 1920, height: 1080 });
 
 export const screenViewportPanAtom = atom({ x: 0, y: 0 });
 
-export const videoVolumeAtom = atom(localstorage.getSavedVideoVolume() ?? 0);
+export const videoVolumeAtom = atom(0);
 
 export const remoteScreenAspectRatioAtom = atom(0);
 

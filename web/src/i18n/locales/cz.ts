@@ -678,6 +678,9 @@ const cz = {
           modeAuto: 'Automatické skrytí',
           modeAlways: 'Vždy viditelné',
           icons: 'Ikony podnabídky',
+          showIcon: 'Zobrazit ikonu',
+          activateOnConnect: 'Aktivovat při připojení',
+          stopSharing: 'Ukončit sdílení',
           iconsDesc: 'Zobrazení ikon podnabídky na liště nabídek'
         }
       },

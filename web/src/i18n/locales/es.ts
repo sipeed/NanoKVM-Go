@@ -687,6 +687,9 @@ const es = {
           modeAuto: 'Ocultar automáticamente',
           modeAlways: 'Siempre visible',
           icons: 'Iconos del submenú',
+          showIcon: 'Mostrar icono',
+          activateOnConnect: 'Activar al conectar',
+          stopSharing: 'Dejar de compartir',
           iconsDesc: 'Mostrar iconos de submenú en la barra de menú'
         }
       },

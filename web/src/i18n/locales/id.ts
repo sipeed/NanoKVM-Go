@@ -681,6 +681,9 @@ const id = {
           modeAuto: 'Sembunyikan otomatis',
           modeAlways: 'Selalu terlihat',
           icons: 'Ikon Submenu',
+          showIcon: 'Tampilkan ikon',
+          activateOnConnect: 'Aktifkan saat terhubung',
+          stopSharing: 'Hentikan berbagi',
           iconsDesc: 'Menampilkan ikon submenu di bilah menu'
         }
       },

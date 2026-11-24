@@ -682,6 +682,9 @@ const ja = {
           modeAuto: '自動非表示',
           modeAlways: '常に表示',
           icons: 'メニューアイコン',
+          showIcon: 'アイコンを表示',
+          activateOnConnect: '接続時に有効化',
+          stopSharing: '共有を停止',
           iconsDesc: 'メニューバーでのサブメニューアイコンの表示'
         }
       },

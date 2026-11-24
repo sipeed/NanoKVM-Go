@@ -682,6 +682,9 @@ const it = {
           modeAuto: 'Nascondi automaticamente',
           modeAlways: 'Sempre visibile',
           icons: 'Icone dei sottomenu',
+          showIcon: 'Mostra icona',
+          activateOnConnect: 'Attiva alla connessione',
+          stopSharing: 'Interrompi condivisione',
           iconsDesc: 'Visualizza le icone dei sottomenu nella barra dei menu'
         }
       },

@@ -1,6 +1,11 @@
 import { atom } from 'jotai';
 
-import { getDefaultMenuDisabledItems } from '@/lib/localstorage.ts';
+import {
+  getConnectPreferences,
+  getDefaultMenuDisabledItems,
+  setConnectPreferences,
+  type ConnectFeature
+} from '@/lib/localstorage.ts';
 
 export const settingTabIDs = [
   'about',
@@ -45,3 +50,13 @@ export const screenTimelapseEnabledAtom = atom(false);
 
 // menu display mode: 'off' | 'auto' | 'always'
 export const menuDisplayModeAtom = atom<string>('auto');
+
+const savedConnectPreferencesAtom = atom(getConnectPreferences());
+export const connectPreferencesAtom = atom(
+  (get) => get(savedConnectPreferencesAtom),
+  (get, set, feature: ConnectFeature, checked: boolean) => {
+    const next = { ...get(savedConnectPreferencesAtom), [feature]: checked };
+    setConnectPreferences(next);
+    set(savedConnectPreferencesAtom, next);
+  }
+);

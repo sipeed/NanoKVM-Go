@@ -668,6 +668,9 @@ const vi = {
           modeAuto: 'Tự động ẩn',
           modeAlways: 'Luôn hiển thị',
           icons: 'Biểu tượng menu con',
+          showIcon: 'Hiện biểu tượng',
+          activateOnConnect: 'Bật khi kết nối',
+          stopSharing: 'Dừng chia sẻ',
           iconsDesc: 'Hiển thị biểu tượng menu con trên thanh menu'
         }
       },

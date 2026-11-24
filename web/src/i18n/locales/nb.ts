@@ -682,6 +682,9 @@ const nb = {
           modeAuto: 'Skjul automatisk',
           modeAlways: 'Alltid synlig',
           icons: 'Undermenyikoner',
+          showIcon: 'Vis ikon',
+          activateOnConnect: 'Aktiver ved tilkobling',
+          stopSharing: 'Stopp deling',
           iconsDesc: 'Vis undermenyikoner i menylinjen'
         }
       },

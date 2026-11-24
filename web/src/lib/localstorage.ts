@@ -248,6 +248,40 @@ function readVolume(key: string): number | null {
   return Number.isFinite(volume) && volume >= 0 && volume <= 100 ? volume : null;
 }
 
+export const connectFeatures = ['volume', 'microphone', 'webcam', 'mouseJiggler'] as const;
+export type ConnectFeature = (typeof connectFeatures)[number];
+export type ConnectPreferences = Record<ConnectFeature, boolean>;
+const CONNECT_PREFERENCES_KEY = 'nano-kvm-activate-on-connect';
+
+export function getConnectPreferences(): ConnectPreferences {
+  const defaults = {
+    volume: false,
+    microphone: false,
+    webcam: false,
+    mouseJiggler: false
+  };
+  try {
+    defaults.volume = (getSavedVideoVolume() ?? 0) > 0;
+    const saved = localStorage.getItem(CONNECT_PREFERENCES_KEY);
+    if (saved === null) {
+      // Snapshot the legacy behavior before a toolbar volume change can affect it.
+      setConnectPreferences(defaults);
+      return defaults;
+    }
+    const values = JSON.parse(saved);
+    for (const feature of connectFeatures) {
+      if (typeof values?.[feature] === 'boolean') defaults[feature] = values[feature];
+    }
+  } catch {
+    // Older or malformed preferences fall back to the legacy audio setting.
+  }
+  return defaults;
+}
+
+export function setConnectPreferences(preferences: ConnectPreferences) {
+  localStorage.setItem(CONNECT_PREFERENCES_KEY, JSON.stringify(preferences));
+}
+
 export function getSavedVideoVolume(): number | null {
   return readVolume(VIDEO_VOLUME_KEY);
 }

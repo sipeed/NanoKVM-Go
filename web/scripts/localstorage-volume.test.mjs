@@ -76,3 +76,26 @@ test('mute restores the last audible level, including a level saved before the t
   assert.equal(localStorage.getUnmuteVolume(), 72);
   assert.equal(loadLocalStorageModule().localStorage.getUnmuteVolume(), 50);
 });
+
+test('connect preferences snapshot the old volume and remain independent of toolbar changes', () => {
+  const { localStorage } = loadLocalStorageModule([['nano-kvm-video-volume', '37']]);
+  const initial = localStorage.getConnectPreferences();
+  assert.deepEqual({ ...initial }, {
+    volume: true, microphone: false, webcam: false, mouseJiggler: false
+  });
+  localStorage.setSavedVideoVolume(0);
+  assert.equal(localStorage.getConnectPreferences().volume, true);
+  localStorage.setConnectPreferences({ ...initial, volume: false, microphone: true });
+  localStorage.setSavedVideoVolume(80);
+  const next = localStorage.getConnectPreferences();
+  assert.equal(next.volume, false);
+  assert.equal(next.microphone, true);
+});
+
+test('new browsers start with all four preferences off and invalid capture flags never opt in', () => {
+  const { localStorage, values } = loadLocalStorageModule();
+  assert.ok(Object.values(localStorage.getConnectPreferences()).every((value) => value === false));
+  values.set('nano-kvm-activate-on-connect', '{"webcam":"true","microphone":1}');
+  assert.equal(localStorage.getConnectPreferences().webcam, false);
+  assert.equal(localStorage.getConnectPreferences().microphone, false);
+});

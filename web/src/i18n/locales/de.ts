@@ -694,6 +694,9 @@ const de = {
           modeAuto: 'Automatisch ausblenden',
           modeAlways: 'Immer sichtbar',
           icons: 'Untermenüsymbole',
+          showIcon: 'Symbol anzeigen',
+          activateOnConnect: 'Beim Verbinden aktivieren',
+          stopSharing: 'Freigabe beenden',
           iconsDesc: 'Untermenüsymbole in der Menüleiste anzeigen'
         }
       },

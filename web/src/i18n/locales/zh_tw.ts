@@ -628,6 +628,9 @@ const zh_tw = {
           modeAuto: '自動隱藏',
           modeAlways: '始終顯示',
           icons: '選單圖示',
+          showIcon: '顯示圖示',
+          activateOnConnect: '連線時啟用',
+          stopSharing: '停止分享',
           iconsDesc: '是否在選單欄中顯示子選單圖示'
         }
       },
