@@ -107,7 +107,7 @@ test('default portrait rail yields welcome, rail, grouped steps, finish in order
   assert.deepEqual(stepByKey(steps, 'display'), {
     key: 'display',
     anchor: 'display',
-    items: ['screen', 'portal', 'pictureInPicture']
+    items: ['screen', 'pictureInPicture']
   });
   assert.deepEqual(stepByKey(steps, 'input'), {
     key: 'input',
@@ -263,7 +263,7 @@ test('everything disabled still yields the minimal portrait tour', () => {
     screenTimelapseEnabled: false
   });
   assert.deepEqual(keysOf(steps), ['welcome', 'rail', 'display', 'input', 'system', 'finish']);
-  assert.deepEqual(stepByKey(steps, 'display').items, ['screen', 'portal']);
+  assert.deepEqual(stepByKey(steps, 'display').items, ['screen']);
   assert.deepEqual(stepByKey(steps, 'system').items, ['settings']);
 });
 

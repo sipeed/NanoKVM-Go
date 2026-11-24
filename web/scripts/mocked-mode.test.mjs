@@ -18,7 +18,7 @@ const memoryFabricPanelSource = fs.readFileSync(
   'utf8'
 );
 const portalMenuSource = fs.readFileSync(
-  path.join(webRoot, 'src/pages/desktop/menu/portal/index.tsx'),
+  path.join(webRoot, 'src/pages/desktop/menu/screen/cropping.tsx'),
   'utf8'
 );
 const submenuCounterSource = fs.readFileSync(
@@ -31,7 +31,7 @@ const menuItemSource = fs.readFileSync(path.join(webRoot, 'src/components/menu-i
 const layeringConsumerSources = [
   'src/components/menu-item.tsx',
   'src/pages/desktop/menu/index.tsx',
-  'src/pages/desktop/menu/portal/index.tsx',
+  'src/pages/desktop/menu/screen/cropping.tsx',
   'src/pages/desktop/message.tsx',
   'src/pages/desktop/virtual-keyboard/index.tsx',
   'src/pages/desktop/keyboard/recorder.tsx',
@@ -395,15 +395,10 @@ test('AI settings keep one MCP endpoint and share gateway state with Memory Fabr
   assert.match(aiSettingsSource, /mcpEnabled=\{mcpEnabled}/);
 });
 
-test('Portal popover participates in the shared menu visibility lifecycle', () => {
-  assert.match(portalMenuSource, /useSubmenuOpenCounter\(\)/);
-  assert.match(portalMenuSource, /setPopoverVisibility\(open\)/);
-  assert.match(portalMenuSource, /onOpenChange=\{updatePopoverOpen\}/);
-  assert.match(portalMenuSource, /updatePopoverOpen\(!popoverOpen\)/);
-  assert.match(portalMenuSource, /onChange=\{updateMode\}/);
-  assert.match(portalMenuSource, /function startSelection\(\) \{\s*updatePopoverOpen\(false\)/);
-  assert.doesNotMatch(portalMenuSource, /function startSelection\(\) \{\s*setPopoverOpen\(false\)/);
-  assert.doesNotMatch(portalMenuSource, /setPopoverOpen\(false\)/);
+test('Cropping uses Screen’s submenu and dismisses the toolbar before area selection', () => {
+  assert.match(portalMenuSource, /<MenuSubmenu/);
+  assert.match(portalMenuSource, /onOpenChange: setOpen/);
+  assert.match(portalMenuSource, /function startSelection\(\) \{\s*dismissMenus\(\);\s*setSelecting\(true\)/);
 
   assert.match(submenuCounterSource, /if \(isOpenRef\.current === open\) \{\s*return;/);
   assert.match(
@@ -439,7 +434,6 @@ test('global layering scale is centralized in lib/layers.ts', () => {
     /export const desktopMenuPopoverZIndex = LAYER_DESKTOP_MENU_POPOVER;/
   );
   assert.match(menuItemSource, /export const mobileMenuPopoverZIndex = LAYER_MOBILE_MENU_POPOVER;/);
-  assert.match(portalMenuSource, /from '@\/lib\/layers\.ts'/);
 
   // Consumers reference constants instead of bare numbers (screen-local z-10/z-20
   // utilities and app.tsx token objects are intentionally out of this pattern).

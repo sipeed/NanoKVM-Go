@@ -159,12 +159,10 @@ test('the automation step names the finger-robot label the rail actually shows',
 //
 // Every step item line must name the exact label the rail shows in that
 // locale, quoted in the locale file's own convention. Labels resolve from the
-// canonical sources (locale module titles, the portal module, the
+// canonical sources (locale module titles, the
 // screen-timelapse service label, the finger-robot text module) — never from
 // a re-translation inside the onboarding module.
 
-const portalFile = path.join(webRoot, 'src/i18n/portal.ts');
-const portalMessages = loadTsModule(portalFile).default;
 
 function loadLocaleTranslation(language) {
   const mod = loadTsModule(path.join(webRoot, `src/i18n/locales/${language}.ts`));
@@ -198,7 +196,6 @@ const ONBOARDING_QUOTE_PAIRS = {
 
 const ONBOARDING_ITEM_LABELS = [
   ['display', 'screen', ({ t }) => t.screen.title],
-  ['display', 'portal', ({ portalTitle }) => portalTitle],
   ['display', 'pictureInPicture', ({ t }) => t.pictureInPicture.title],
   ['media', 'volume', ({ t }) => t.volume.title],
   ['media', 'microphone', ({ t }) => t.microphone.title],
@@ -243,7 +240,6 @@ test('every item line names the rail label as a quoted span', () => {
     const t = loadLocaleTranslation(language);
     const sources = {
       t,
-      portalTitle: portalMessages(language)?.title,
       robotTitle: fingerRobotText(language)?.title
     };
     const messages = onboardingMessages(language);

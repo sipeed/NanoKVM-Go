@@ -6,7 +6,7 @@ import type { SupportedLanguage } from './locale.ts';
  * carries one line per rail item so the tour engine can compose a step from
  * only the items actually visible (many items are gated by server config or
  * video mode). Item names mirror the translated menu labels in locales/, the
- * portal module, the screen-timelapse service label, and the finger-robot
+ * screen-timelapse service label, and the finger-robot
  * text module (the rail's "power" key renders the Finger Robot), so the tour
  * names what the user actually sees.
  */
@@ -26,7 +26,7 @@ export type OnboardingMessages = {
   steps: {
     display: {
       title: string;
-      items: { screen: string; portal: string; pictureInPicture: string };
+      items: { screen: string; pictureInPicture: string };
     };
     media: {
       title: string;
@@ -94,7 +94,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Display',
         items: {
           screen: '"Screen" — click to toggle view-only mode. Open its menu for display settings.',
-          portal: '"Portal" — crop the view to the area that matters.',
           pictureInPicture:
             '"Picture-in-Picture" — keep the desktop in a floating window while you use other apps.'
         }
@@ -198,7 +197,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: '画面',
         items: {
           screen: '「屏幕」调整分辨率、画质和帧率。',
-          portal: '「去黑边」把画面裁剪到需要的区域。',
           pictureInPicture: '「画中画」把远程桌面浮成小窗，可同时使用其他应用。'
         }
       },
@@ -300,7 +298,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: '畫面',
         items: {
           screen: '「螢幕」調整解析度、畫質與幀率。',
-          portal: '「去黑邊」把畫面裁剪到需要的區域。',
           pictureInPicture: '「子母畫面」讓遠端桌面浮成小窗，可同時使用其他應用程式。'
         }
       },
@@ -402,7 +399,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: '画面',
         items: {
           screen: '「画面」— 解像度・品質・フレームレートを調整します。',
-          portal: '「黒枠の除去」— 表示範囲を必要な領域に切り抜きます。',
           pictureInPicture:
             '「ピクチャー イン ピクチャー」— デスクトップを小窓に浮かべたまま他の作業ができます。'
         }
@@ -505,7 +501,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: '화면',
         items: {
           screen: '"화면" — 해상도, 화질, 프레임 레이트를 조정합니다.',
-          portal: '"검은 테두리 제거" — 보이는 영역을 필요한 부분으로 자릅니다.',
           pictureInPicture:
             '"그림 속 그림" — 원격 바탕화면을 작은 창으로 띄워 다른 작업과 병행합니다.'
         }
@@ -609,8 +604,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Anzeige',
         items: {
           screen: '„Bildschirm“ — Auflösung, Qualität und Bildrate einstellen.',
-          portal:
-            '„Schwarze Ränder entfernen“ — die Ansicht auf den relevanten Bereich zuschneiden.',
           pictureInPicture:
             '„Bild-im-Bild“ — den entfernten Desktop in einem kleinen schwebenden Fenster behalten, während Sie andere Anwendungen nutzen.'
         }
@@ -716,7 +709,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Écran',
         items: {
           screen: "« Écran » — règle la résolution, la qualité et la fréquence d'images.",
-          portal: "« Supprimer les bordures noires » — recadre l'affichage sur la zone utile.",
           pictureInPicture:
             "« Image dans l'image » — garde le bureau distant dans une petite fenêtre flottante pendant que vous utilisez d'autres applications."
         }
@@ -823,7 +815,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Pantalla',
         items: {
           screen: '«Pantalla» — ajusta resolución, calidad y frecuencia de imagen.',
-          portal: '«Recortar bordes negros» — recorta la vista al área importante.',
           pictureInPicture:
             '«Imagen en imagen» — mantiene el escritorio remoto en una ventana flotante mientras usas otras aplicaciones.'
         }
@@ -928,7 +919,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Schermo',
         items: {
           screen: '"Schermo" — regola risoluzione, qualità e frequenza dei fotogrammi.',
-          portal: '"Rimuovi bordi neri" — ritaglia la vista sull\'area che conta.',
           pictureInPicture:
             '"Modalità Picture in Picture" — mantiene il desktop remoto in una piccola finestra fluttuante mentre usi altre app.'
         }
@@ -1035,7 +1025,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Scherm',
         items: {
           screen: '"Scherm" — pas resolutie, kwaliteit en beeldfrequentie aan.',
-          portal: '"Zwarte balken verwijderen" — snijd de weergave bij tot het relevante gebied.',
           pictureInPicture:
             '"Beeld-in-beeld" — houd het externe bureaublad in een klein zwevend venster terwijl je andere apps gebruikt.'
         }
@@ -1139,7 +1128,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Ekran',
         items: {
           screen: '„Ekran” — ustawia rozdzielczość, jakość i liczbę klatek.',
-          portal: '„Przytnij czarne ramki” — kadruje obraz do istotnego obszaru.',
           pictureInPicture:
             '„Obraz w obrazie” — utrzymuje zdalny pulpit w małym pływającym oknie, gdy korzystasz z innych aplikacji.'
         }
@@ -1244,7 +1232,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Экран',
         items: {
           screen: '«Экран» — настраивает разрешение, качество и частоту кадров.',
-          portal: '«Удаление чёрных полос» — обрезает изображение до нужной области.',
           pictureInPicture:
             '«Картинка в картинке» — держит удалённый рабочий стол в небольшом плавающем окне, пока вы пользуетесь другими приложениями.'
         }
@@ -1349,7 +1336,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Екран',
         items: {
           screen: '«Екран» — налаштовує роздільну здатність, якість і частоту кадрів.',
-          portal: '«Видалення чорних смуг» — обрізає зображення до потрібної області.',
           pictureInPicture:
             '«Картинка в картинці» — тримає віддалений робочий стіл у маленькому плаваючому вікні, поки ви користуєтесь іншими програмами.'
         }
@@ -1455,7 +1441,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Obrazovka',
         items: {
           screen: '„Obrazovka“ — nastavuje rozlišení, kvalitu a snímkovou frekvenci.',
-          portal: '„Oříznout černé okraje“ — ořezává zobrazení na důležitou oblast.',
           pictureInPicture:
             '„Obraz v obraze“ — drží vzdálenou plochu v malém plovoucím okně, zatímco používáte jiné aplikace.'
         }
@@ -1560,7 +1545,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Skærm',
         items: {
           screen: '"Skærm" — juster opløsning, kvalitet og billedhastighed.',
-          portal: '"Fjern sorte kanter" — beskær visningen til det relevante område.',
           pictureInPicture:
             '"Billede-i-billede" — hold fjernskrivebordet i et lille flydende vindue, mens du bruger andre apps.'
         }
@@ -1665,7 +1649,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Képernyő',
         items: {
           screen: '„Képernyő” — beállítja a felbontást, a minőséget és a képkockasebességet.',
-          portal: '„Fekete sávok levágása” — a képet a lényeges területre vágja.',
           pictureInPicture:
             '„Kép a képben” — egy kis lebegő ablakban tartja a távoli asztalt, miközben más alkalmazásokat használ.'
         }
@@ -1771,7 +1754,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Layar',
         items: {
           screen: '"Layar" — mengatur resolusi, kualitas, dan kecepatan bingkai.',
-          portal: '"Hapus batas hitam" — memangkas tampilan ke area yang penting.',
           pictureInPicture:
             '"Gambar dalam gambar" — menjaga desktop jarak jauh tetap mengambang di jendela kecil saat Anda memakai aplikasi lain.'
         }
@@ -1876,7 +1858,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Skjerm',
         items: {
           screen: '«Skjerm» — juster oppløsning, kvalitet og bildefrekvens.',
-          portal: '«Fjern svarte kanter» — beskjær visningen til området som betyr noe.',
           pictureInPicture:
             '«Bilde i bilde» — hold fjernskrivebordet i et lite flytende vindu mens du bruker andre apper.'
         }
@@ -1981,7 +1962,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'หน้าจอ',
         items: {
           screen: '"หน้าจอ" — ปรับความละเอียด คุณภาพ และอัตราเฟรม',
-          portal: '"ตัดขอบดำ" — ครอบตัดมุมมองให้เหลือเฉพาะพื้นที่ที่สำคัญ',
           pictureInPicture:
             '"ภาพซ้อนภาพ" — เก็บเดสก์ท็อประยะไกลไว้ในหน้าต่างลอยขนาดเล็กขณะใช้งานแอปอื่น'
         }
@@ -2085,7 +2065,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Màn hình',
         items: {
           screen: '"Màn hình" — chỉnh độ phân giải, chất lượng và tốc độ khung hình.',
-          portal: '"Cắt viền đen" — cắt khung hình về vùng bạn quan tâm.',
           pictureInPicture:
             '"Ảnh trong ảnh" — giữ màn hình từ xa trong một cửa sổ nhỏ nổi trong khi bạn dùng ứng dụng khác.'
         }

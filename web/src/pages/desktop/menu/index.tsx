@@ -34,7 +34,6 @@ import { Mouse } from './mouse';
 import { MouseJigglerButton } from './mouse-jiggler.tsx';
 import { Collapse, Expand } from './operations';
 import { PictureInPicture } from './picture-in-picture';
-import { Portal } from './portal';
 import { Screen } from './screen';
 import { Script } from './script';
 import { Settings } from './settings';
@@ -307,8 +306,7 @@ export const Menu = () => {
       renderGroup(
         'display',
         <>
-          <Screen key="screen" />
-          <Portal key="portal" tooltipPlacement={tooltipPlacement} />
+          <Screen key="screen" dismissMenus={dismissMenus} />
           {isEnabled('pictureInPicture') && (
             <PictureInPicture key="picture-in-picture" tooltipPlacement={tooltipPlacement} />
           )}

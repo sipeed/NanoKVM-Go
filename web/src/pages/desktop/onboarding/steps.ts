@@ -32,11 +32,11 @@ export function deriveOnboardingSteps(input: OnboardingStepInput): OnboardingSte
 
   const steps: OnboardingStepDef[] = [{ key: 'welcome', items: [] }];
 
-  // display: Screen + Portal are unconditional; Picture-in-Picture is gated.
+  // display: Screen is unconditional; Picture-in-Picture is gated.
   steps.push({
     key: 'display',
     group: 'display',
-    items: ['screen', 'portal', ...(isEnabled('pictureInPicture') ? ['pictureInPicture'] : [])]
+    items: ['screen', ...(isEnabled('pictureInPicture') ? ['pictureInPicture'] : [])]
   });
 
   // media: Volume and Microphone only exist in WebRTC video modes.

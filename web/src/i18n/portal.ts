@@ -34,7 +34,7 @@ export type PortalMessages = {
 
 const messages: Record<SupportedLanguage, PortalMessages> = {
   nl: {
-    title: 'Zwarte balken verwijderen',
+    title: 'Bijsnijden',
     auto: 'Automatisch',
     manual: 'Handmatig',
     off: 'Uit',
@@ -66,7 +66,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Hoogte'
   },
   da: {
-    title: 'Fjern sorte kanter',
+    title: 'Beskæring',
     auto: 'Automatisk',
     manual: 'Manuel',
     off: 'Fra',
@@ -98,7 +98,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Højde'
   },
   de: {
-    title: 'Schwarze Ränder entfernen',
+    title: 'Zuschneiden',
     auto: 'Automatisch',
     manual: 'Manuell',
     off: 'Aus',
@@ -130,7 +130,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Höhe'
   },
   en: {
-    title: 'Portal',
+    title: 'Cropping',
     auto: 'Automatic',
     manual: 'Manual',
     off: 'Off',
@@ -152,7 +152,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     addResolution: 'Add resolution',
     invalidResolution: 'Enter a valid width and height.',
     duplicateResolution: 'This resolution already exists.',
-    saveFailed: 'Unable to save Portal settings.',
+    saveFailed: 'Unable to save cropping settings.',
     selectionHint:
       'Drag to select an area. Hold a resize handle for precision magnification. Press Esc to cancel.',
     confirm: 'Confirm',
@@ -162,7 +162,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Height'
   },
   es: {
-    title: 'Recortar bordes negros',
+    title: 'Recorte',
     auto: 'Automático',
     manual: 'Manual',
     off: 'Desactivado',
@@ -194,7 +194,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Alto'
   },
   fr: {
-    title: 'Supprimer les bordures noires',
+    title: 'Recadrage',
     auto: 'Automatique',
     manual: 'Manuel',
     off: 'Désactivé',
@@ -226,7 +226,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Hauteur'
   },
   id: {
-    title: 'Hapus batas hitam',
+    title: 'Pemangkasan',
     auto: 'Otomatis',
     manual: 'Manual',
     off: 'Mati',
@@ -258,7 +258,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Tinggi'
   },
   it: {
-    title: 'Rimuovi bordi neri',
+    title: 'Ritaglio',
     auto: 'Automatico',
     manual: 'Manuale',
     off: 'Disattivato',
@@ -290,7 +290,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Altezza'
   },
   pl: {
-    title: 'Przytnij czarne ramki',
+    title: 'Kadrowanie',
     auto: 'Automatyczny',
     manual: 'Ręczny',
     off: 'Wyłączone',
@@ -322,7 +322,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Wysokość'
   },
   ru: {
-    title: 'Удаление чёрных полос',
+    title: 'Кадрирование',
     auto: 'Автоматически',
     manual: 'Вручную',
     off: 'Отключено',
@@ -354,7 +354,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Высота'
   },
   ko: {
-    title: '검은 테두리 제거',
+    title: '자르기',
     auto: '자동',
     manual: '수동',
     off: '끄기',
@@ -386,7 +386,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: '높이'
   },
   zh: {
-    title: '去黑边',
+    title: '裁剪',
     auto: '自动',
     manual: '手动',
     off: '关闭',
@@ -417,7 +417,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: '高度'
   },
   zh_tw: {
-    title: '去黑邊',
+    title: '裁切',
     auto: '自動',
     manual: '手動',
     off: '關閉',
@@ -448,7 +448,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: '高度'
   },
   hu: {
-    title: 'Fekete sávok levágása',
+    title: 'Körülvágás',
     auto: 'Automatikus',
     manual: 'Kézi',
     off: 'Ki',
@@ -480,7 +480,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Magasság'
   },
   vi: {
-    title: 'Cắt viền đen',
+    title: 'Cắt khung hình',
     auto: 'Tự động',
     manual: 'Thủ công',
     off: 'Tắt',
@@ -512,7 +512,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Chiều cao'
   },
   ja: {
-    title: '黒枠の除去',
+    title: 'トリミング',
     auto: '自動',
     manual: '手動',
     off: 'オフ',
@@ -544,7 +544,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: '高さ'
   },
   cz: {
-    title: 'Oříznout černé okraje',
+    title: 'Oříznutí',
     auto: 'Automaticky',
     manual: 'Ručně',
     off: 'Vypnuto',
@@ -576,7 +576,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Výška'
   },
   uk: {
-    title: 'Видалення чорних смуг',
+    title: 'Кадрування',
     auto: 'Автоматично',
     manual: 'Вручну',
     off: 'Вимкнено',
@@ -608,7 +608,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Висота'
   },
   nb: {
-    title: 'Fjern svarte kanter',
+    title: 'Beskjæring',
     auto: 'Automatisk',
     manual: 'Manuell',
     off: 'Av',
@@ -640,7 +640,7 @@ const messages: Record<SupportedLanguage, PortalMessages> = {
     height: 'Høyde'
   },
   th: {
-    title: 'ตัดขอบดำ',
+    title: 'ครอบตัด',
     auto: 'อัตโนมัติ',
     manual: 'กำหนดเอง',
     off: 'ปิด',
