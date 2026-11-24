@@ -251,7 +251,7 @@ export function Webcam({ share }: { share: ReturnType<typeof useWebcamShare> }) 
           </div>
           <div className="flex items-center gap-2">
             <select
-              className="min-w-0 flex-1 rounded bg-neutral-800 p-1"
+              className="min-w-0 flex-1 rounded bg-neutral-800 p-1 text-white [color-scheme:dark] disabled:text-neutral-300 [&>option]:bg-neutral-800 [&>option]:text-white"
               aria-label={t('webcam.source', 'Camera')}
               value={deviceId}
               disabled={active || listing}
