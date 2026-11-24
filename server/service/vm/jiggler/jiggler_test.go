@@ -8,12 +8,16 @@ import (
 	"time"
 )
 
+func testLoad(path string, noteMove func(string), jitter func() time.Duration) *Jiggler {
+	return load(path, func(mode string, _ bool) *movement { noteMove(mode); return nil }, jitter)
+}
+
 func TestIdleAndRandomDelay(t *testing.T) {
 	for _, delay := range []time.Duration{0, 12 * time.Second, 30 * time.Second} {
 		t.Run(delay.String(), func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				var moves, draws int
-				j := load(filepath.Join(t.TempDir(), "jiggler"), func(string) { moves++ }, func() time.Duration { draws++; return delay })
+				j := testLoad(filepath.Join(t.TempDir(), "jiggler"), func(string) { moves++ }, func() time.Duration { draws++; return delay })
 				on := true
 				if _, err := j.Configure(&on, "", nil); err != nil {
 					t.Fatal(err)
@@ -54,7 +58,7 @@ func TestIdleAndRandomDelay(t *testing.T) {
 func TestActivityCancelsPendingMove(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		moves := 0
-		j := load(filepath.Join(t.TempDir(), "jiggler"), func(string) { moves++ }, func() time.Duration { return 12 * time.Second })
+		j := testLoad(filepath.Join(t.TempDir(), "jiggler"), func(string) { moves++ }, func() time.Duration { return 12 * time.Second })
 		on := true
 		if _, err := j.Configure(&on, "", nil); err != nil {
 			t.Fatal(err)
@@ -85,14 +89,14 @@ func TestRestoreExpiryAndUnlimited(t *testing.T) {
 			t.Fatal(err)
 		}
 		delay := func() time.Duration { return 12 * time.Second }
-		j := load(path, func(string) {}, delay)
+		j := testLoad(path, func(string) {}, delay)
 		if state := j.Status(); !state.Enabled || state.Mode != "absolute" || state.MaxHours != 8 {
 			t.Fatal(state)
 		}
 		time.Sleep(7 * time.Hour)
 		j.timer.Stop() // Simulate shutting down the service.
 		moves := 0
-		j = load(path, func(string) { moves++ }, delay)
+		j = testLoad(path, func(string) { moves++ }, delay)
 		if left := j.Status().RemainingMs; left != time.Hour.Milliseconds() {
 			t.Fatal("restored remaining ms", left)
 		}
@@ -120,7 +124,7 @@ func TestRestoreExpiryAndUnlimited(t *testing.T) {
 		}
 		time.Sleep(time.Hour)
 		synctest.Wait()
-		j = load(path, func(string) { t.Fatal("restarted expired run") }, delay)
+		j = testLoad(path, func(string) { t.Fatal("restarted expired run") }, delay)
 		if state := j.Status(); state.Enabled || state.MaxHours != 1 {
 			t.Fatal(state)
 		}
@@ -129,7 +133,7 @@ func TestRestoreExpiryAndUnlimited(t *testing.T) {
 
 func TestChangingLimitRestartsCountdown(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		j := load(filepath.Join(t.TempDir(), "jiggler"), func(string) {}, func() time.Duration { return 0 })
+		j := testLoad(filepath.Join(t.TempDir(), "jiggler"), func(string) {}, func() time.Duration { return 0 })
 		on := true
 		if _, err := j.Configure(&on, "", nil); err != nil {
 			t.Fatal(err)

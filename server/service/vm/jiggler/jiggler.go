@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
@@ -18,7 +19,7 @@ const idleInterval = 30 * time.Second
 const configFile = "/etc/kvm/mouse-jiggler"
 
 var GetJiggler = sync.OnceValue(func() *Jiggler {
-	return load(configFile, move, func() time.Duration {
+	return load(configFile, planMovement, func() time.Duration {
 		return time.Duration(rand.IntN(31)) * time.Second
 	})
 })
@@ -45,18 +46,26 @@ type Status struct {
 }
 
 type Jiggler struct {
-	mu        sync.Mutex
-	path      string
-	config    settings
-	timer     *time.Timer
-	idleSince time.Time
-	moveAt    time.Time
-	move      func(string)
-	jitter    func() time.Duration
+	mu             sync.Mutex
+	path           string
+	config         settings
+	timer          *time.Timer
+	idleSince      time.Time
+	moveAt         time.Time
+	move           func(string, bool) *movement
+	motion         *movement
+	disconnectedAt time.Time
+	preview        bool
+	send           func([]byte) error
+	release        func()
+	jitter         func() time.Duration
 }
 
-func load(path string, move func(string), jitter func() time.Duration) *Jiggler {
-	j := &Jiggler{path: path, config: settings{Mode: "relative", MaxHours: 8}, move: move, jitter: jitter}
+func load(path string, move func(string, bool) *movement, jitter func() time.Duration) *Jiggler {
+	j := &Jiggler{path: path, config: settings{Mode: "relative", MaxHours: 8}, move: move, jitter: jitter, disconnectedAt: time.Now(),
+		send:    func(report []byte) error { return hid.RoutePointerInput(hid.InternalInputSessionJiggler, report) },
+		release: func() { _ = hid.ReleaseInputSession(hid.InternalInputSessionJiggler, "mouse jiggler movement") },
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
@@ -114,6 +123,7 @@ func (j *Jiggler) save(cfg settings) error {
 func (j *Jiggler) expireLocked(now time.Time) {
 	if end := j.config.deadline(); !end.IsZero() && !now.Before(end) {
 		j.config.StartedAt = 0
+		j.stopMovementLocked()
 		if err := j.save(j.config); err != nil {
 			log.Warnf("expire mouse jiggler: %v", err)
 		}
@@ -172,6 +182,9 @@ func (j *Jiggler) Configure(enabled *bool, mode string, hours *int32) (Status, e
 			j.idleSince = now
 			j.moveAt = time.Time{}
 		}
+		if cfg.StartedAt == 0 || cfg.Mode != j.config.Mode {
+			j.stopMovementLocked()
+		}
 		j.config = cfg
 		j.scheduleLocked()
 	}
@@ -183,8 +196,75 @@ func (j *Jiggler) Update() {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	if j.config.StartedAt != 0 {
+		j.stopMovementLocked()
 		j.idleSince = time.Now()
 		j.moveAt = time.Time{}
+	}
+}
+
+// SetConnected receives transitions of the desktop control WebSocket registry.
+func (j *Jiggler) SetConnected(connected bool) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	if connected {
+		j.disconnectedAt = time.Time{}
+		j.stopMovementLocked()
+	} else if j.disconnectedAt.IsZero() {
+		j.disconnectedAt = time.Now()
+	}
+}
+
+func (j *Jiggler) stopMovementLocked() {
+	if j.motion != nil {
+		j.release()
+		j.motion = nil
+	}
+}
+
+func (j *Jiggler) advanceLocked(now time.Time) {
+	if j.motion == nil {
+		idleAt := j.idleSince.Add(idleInterval)
+		if now.Before(idleAt) {
+			return
+		}
+		if j.moveAt.IsZero() {
+			j.moveAt = idleAt.Add(j.jitter())
+		}
+		if now.Before(j.moveAt) {
+			return
+		}
+
+		_, err := os.Stat(curvePreviewFile)
+		j.preview = err == nil
+		curved := j.preview || (!j.disconnectedAt.IsZero() && now.Sub(j.disconnectedAt) > 5*time.Minute)
+		j.motion = j.move(j.config.Mode, curved)
+		j.idleSince = now
+		j.moveAt = time.Time{}
+		if j.motion == nil {
+			return
+		}
+		j.motion.start = now
+	}
+	m := j.motion
+	if now.Before(m.nextFrame()) {
+		return
+	}
+	if err := j.send(m.reports[m.index]); err != nil {
+		log.Debugf("mouse jiggler report: %v", err)
+		j.stopMovementLocked()
+		return
+	}
+	m.index++
+	if m.index == len(m.reports) {
+		if j.preview {
+			// Publish the last completed preview in RAM. Opening without O_CREATE
+			// lets the operator remove the override even during a stroke.
+			if f, err := os.OpenFile(curvePreviewFile, os.O_WRONLY|os.O_TRUNC, 0); err == nil {
+				_, _ = fmt.Fprintf(f, "%d reports in %v\n", m.index, now.Sub(m.start).Round(time.Millisecond))
+				_ = f.Close()
+			}
+		}
+		j.stopMovementLocked()
 	}
 }
 
@@ -201,6 +281,9 @@ func (j *Jiggler) scheduleLocked() {
 	if next.IsZero() {
 		next = j.idleSince.Add(idleInterval)
 	}
+	if j.motion != nil {
+		next = j.motion.nextFrame()
+	}
 	if end := j.config.deadline(); !end.IsZero() && end.Before(next) {
 		next = end
 	}
@@ -213,34 +296,9 @@ func (j *Jiggler) scheduleLocked() {
 		} // A stop or reconfiguration superseded this callback.
 		j.expireLocked(time.Now())
 		if j.config.StartedAt != 0 {
-			now := time.Now()
-			idleAt := j.idleSince.Add(idleInterval)
-			if j.moveAt.IsZero() && !now.Before(idleAt) {
-				j.moveAt = idleAt.Add(j.jitter())
-			}
-			if !j.moveAt.IsZero() && !now.Before(j.moveAt) {
-				j.move(j.config.Mode)
-				j.idleSince = now
-				j.moveAt = time.Time{}
-			}
+			j.advanceLocked(time.Now())
 		}
 		j.scheduleLocked()
 	})
 	j.timer = timer
-}
-
-func move(mode string) {
-	defer func() {
-		_ = hid.ReleaseInputSession(hid.InternalInputSessionJiggler, "mouse jiggler update")
-	}()
-
-	if mode == "absolute" {
-		_ = hid.RoutePointerInput(hid.InternalInputSessionJiggler, []byte{hid.AbsoluteReportIDMouse, 0x00, 0x00, 0x3f, 0x00, 0x3f, 0x00})
-		time.Sleep(100 * time.Millisecond)
-		_ = hid.RoutePointerInput(hid.InternalInputSessionJiggler, []byte{hid.AbsoluteReportIDMouse, 0x00, 0xff, 0x3f, 0xff, 0x3f, 0x00})
-	} else {
-		_ = hid.RoutePointerInput(hid.InternalInputSessionJiggler, []byte{0x00, 0xa, 0xa, 0x00})
-		time.Sleep(100 * time.Millisecond)
-		_ = hid.RoutePointerInput(hid.InternalInputSessionJiggler, []byte{0x00, 0xf6, 0xf6, 0x00})
-	}
 }

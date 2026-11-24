@@ -4,6 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"NanoKVM-Server/service/vm/jiggler"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -28,12 +30,18 @@ func (m *Manager) AddClient(ws *websocket.Conn, client *Client) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	m.clients[ws] = client
+	if len(m.clients) == 1 {
+		jiggler.GetJiggler().SetConnected(true)
+	}
 }
 
 func (m *Manager) RemoveClient(ws *websocket.Conn) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	delete(m.clients, ws)
+	if len(m.clients) == 0 {
+		jiggler.GetJiggler().SetConnected(false)
+	}
 }
 
 func (m *Manager) GetClients() []*Client {

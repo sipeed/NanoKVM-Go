@@ -1,6 +1,7 @@
 package hid
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -329,6 +330,14 @@ func touchScreenReleaseReport() []byte {
 	}
 	report[len(report)-1] = TouchScreenMaxContacts
 	return report
+}
+
+// AbsoluteMousePosition returns the last position successfully sent to the host.
+func (h *Hid) AbsoluteMousePosition() (uint16, uint16, bool) {
+	h.absolutePointerPositionMutex.Lock()
+	defer h.absolutePointerPositionMutex.Unlock()
+	p := h.lastAbsolutePointerPosition
+	return binary.LittleEndian.Uint16(p[:2]), binary.LittleEndian.Uint16(p[2:]), h.hasAbsolutePointerPosition
 }
 
 func (h *Hid) storeAbsolutePointerPosition(data []byte) {
