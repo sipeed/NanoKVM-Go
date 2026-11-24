@@ -90,7 +90,7 @@ func initialize() {
 	_ = common.GetScreen()
 
 	// run mouse jiggler
-	jiggler.GetJiggler().Run()
+	jiggler.GetJiggler()
 
 	// Register shutdown handling before PWM initialization, which may need to
 	// wait for device nodes or an external devmem command.

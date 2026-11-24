@@ -193,7 +193,7 @@ export type MockState = {
     sshEnabled: boolean;
     mdnsEnabled: boolean;
     hdmiCaptureEnabled: boolean;
-    mouseJiggler: { enabled: boolean; mode: string };
+    mouseJiggler: { enabled: boolean; mode: string; maxHours: number; startedAt: number };
     lowPowerEnabled: boolean;
     swapEnabled: boolean;
     timezone: string;
@@ -440,7 +440,7 @@ export function createMockState(): MockState {
       sshEnabled: true,
       mdnsEnabled: true,
       hdmiCaptureEnabled: true,
-      mouseJiggler: { enabled: false, mode: 'relative' },
+      mouseJiggler: { enabled: false, mode: 'relative', maxHours: 8, startedAt: 0 },
       lowPowerEnabled: false,
       swapEnabled: true,
       timezone: 'Asia/Hong_Kong',

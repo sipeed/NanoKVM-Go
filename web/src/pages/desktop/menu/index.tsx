@@ -333,7 +333,7 @@ export const Menu = () => {
         <>
           <Keyboard key="keyboard" />
           <Mouse key="mouse" />
-          {isEnabled('mouseJiggler') && <MouseJigglerButton tooltipPlacement={tooltipPlacement} />}
+          {isEnabled('mouseJiggler') && <MouseJigglerButton />}
         </>
       )
     );

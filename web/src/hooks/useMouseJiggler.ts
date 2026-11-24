@@ -6,63 +6,83 @@ import * as api from '@/api/vm.ts';
 import { feedback } from '@/lib/feedback.tsx';
 
 type Mode = 'relative' | 'absolute';
-type Command = 'refresh' | 'toggle' | 'disable' | Mode;
-type Config = { enabled: boolean; mode: Mode };
+type Hours = { maxHours: number };
+type Command = 'refresh' | 'toggle' | 'disable' | Mode | Hours;
+type Config = {
+  enabled: boolean;
+  mode: Mode;
+  maxHours: number;
+  remainingMs: number;
+  elapsedMs: number;
+  sampledAt: number;
+};
 
 const configAtom = atom<Config | null>(null);
-const busyAtom = atom(false);
+const writerAtom = atom<{ done: Promise<void> } | null>(null);
+const draftAtom = atom<Hours | null>(null);
+const requestAtom = atom(0);
 
 export function useMouseJiggler() {
   const store = useStore();
   const config = useAtomValue(configAtom);
-  const busy = useAtomValue(busyAtom);
+  const writer = useAtomValue(writerAtom);
+  const draft = useAtomValue(draftAtom);
   const { t } = useTranslation();
 
   const update = useCallback(
     async (command: Command) => {
-      if (store.get(busyAtom)) return;
-      store.set(busyAtom, true);
-
-      try {
-        let current = store.get(configAtom);
-        if (!current || command === 'refresh') {
-          const rsp = await api.getMouseJiggler();
-          if (rsp.code !== 0 || typeof rsp.data?.enabled !== 'boolean') {
-            throw new Error(rsp.msg);
-          }
-
-          // The device reports relative mode while idle. Keep the last active
-          // mode for a quick off/on cycle in this session.
-          current = {
-            enabled: rsp.data.enabled,
-            mode:
-              !rsp.data.enabled && current
-                ? current.mode
-                : rsp.data.mode === 'absolute'
-                  ? 'absolute'
-                  : 'relative'
-          };
-          store.set(configAtom, current);
-        }
+      const edit = typeof command === 'object' ? command : null;
+      if (edit) store.set(draftAtom, edit);
+      let previous;
+      while ((previous = store.get(writerAtom))) {
         if (command === 'refresh') return;
-
-        const enabled = command === 'toggle' ? !current.enabled : command !== 'disable';
-        const mode = command === 'absolute' || command === 'relative' ? command : current.mode;
-        const rsp = await api.setMouseJiggler(enabled, mode);
-        if (rsp.code !== 0) throw new Error(rsp.msg);
-        store.set(configAtom, { enabled, mode });
-      } catch {
-        feedback.error(t('error.title'), { key: 'mouse-jiggler' });
-      } finally {
-        store.set(busyAtom, false);
+        await previous.done;
       }
+      const request = store.get(requestAtom) + 1;
+      store.set(requestAtom, request);
+
+      async function send() {
+        try {
+          const current = store.get(configAtom);
+          const rsp =
+            command === 'refresh'
+              ? await api.getMouseJiggler()
+              : await api.setMouseJiggler(
+                  typeof command === 'object'
+                    ? command
+                    : command === 'relative' || command === 'absolute'
+                      ? { enabled: true, mode: command }
+                      : { enabled: command === 'toggle' && !current?.enabled }
+                );
+          if (store.get(requestAtom) !== request) return;
+          if (rsp.code !== 0 || typeof rsp.data?.enabled !== 'boolean') throw new Error(rsp.msg);
+          store.set(configAtom, { ...rsp.data, sampledAt: performance.now() });
+        } catch {
+          feedback.error(t('error.title'), { key: 'mouse-jiggler' });
+        } finally {
+          if (edit && store.get(draftAtom) === edit) store.set(draftAtom, null);
+          if (command !== 'refresh') store.set(writerAtom, null);
+        }
+      }
+      const done = Promise.resolve().then(send);
+      if (command !== 'refresh') store.set(writerAtom, { done });
+      await done;
     },
     [store, t]
   );
 
   useEffect(() => {
-    void update('refresh');
+    const refresh = () => void update('refresh');
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
   }, [update]);
 
-  return { config, busy, update };
+  useEffect(() => {
+    if (!config?.enabled || !config.maxHours) return;
+    const timer = window.setTimeout(() => void update('refresh'), Math.min(config.remainingMs + 100, 2_147_483_647));
+    return () => window.clearTimeout(timer);
+  }, [config, update]);
+
+  return { config, busy: !!writer, hours: draft?.maxHours ?? config?.maxHours, editingHours: draft !== null, update };
 }

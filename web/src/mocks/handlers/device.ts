@@ -293,6 +293,15 @@ const fingerRobotDebugTestFields = new Set([
 ]);
 
 export function createDeviceHandlers(origin: string, state: MockState) {
+  function jigglerStatus() {
+    const config = state.vm.mouseJiggler;
+    const remainingMs = config.enabled && config.maxHours > 0
+      ? Math.max(0, config.startedAt + config.maxHours * 3600000 - Date.now())
+      : 0;
+    if (config.maxHours > 0 && !remainingMs) config.enabled = false;
+    return { ...config, remainingMs, elapsedMs: config.enabled ? Date.now() - config.startedAt : 0 };
+  }
+
   return [
     http.get(`${origin}/api/vm/info`, () =>
       ok({
@@ -581,14 +590,22 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       state.vm.mdnsEnabled = false;
       return ok({ enabled: false });
     }),
-    http.get(`${origin}/api/vm/mouse-jiggler`, () => ok(state.vm.mouseJiggler)),
+    http.get(`${origin}/api/vm/mouse-jiggler`, () => ok(jigglerStatus())),
     http.post(`${origin}/api/vm/mouse-jiggler`, async ({ request }) => {
       const body = await readJsonObject(request);
       const enabled = readBoolean(body, 'enabled');
       const mode = readString(body, 'mode');
-      if (enabled !== null) state.vm.mouseJiggler.enabled = enabled;
-      if (mode) state.vm.mouseJiggler.mode = mode;
-      return ok(state.vm.mouseJiggler);
+      const hours = readNumber(body, 'maxHours');
+      const config = state.vm.mouseJiggler;
+      jigglerStatus();
+      if (enabled === true && !config.enabled) config.startedAt = Date.now();
+      if (enabled !== null) config.enabled = enabled;
+      if (mode) config.mode = mode;
+      if (hours !== null && hours !== config.maxHours) {
+        config.maxHours = hours;
+        if (config.enabled) config.startedAt = Date.now();
+      }
+      return ok(jigglerStatus());
     }),
     http.get(`${origin}/api/vm/hostname`, () => ok({ hostname: state.vm.hostname })),
     http.post(`${origin}/api/vm/hostname`, async ({ request }) => {

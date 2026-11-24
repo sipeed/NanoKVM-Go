@@ -32,7 +32,7 @@ export const MouseJiggler = () => {
           onChange={(value: 'relative' | 'absolute' | 'disable') => void update(value)}
         />
       ) : (
-        <Switch checked={false} loading={busy} onChange={() => void update('toggle')} />
+        <Switch disabled={!config} checked={false} loading={busy} onChange={() => void update('toggle')} />
       )}
     </div>
   );

@@ -189,14 +189,10 @@ type GetSSHStateRsp struct {
 	Enabled bool `json:"enabled"`
 }
 
-type GetMouseJigglerRsp struct {
-	Enabled bool   `json:"enabled"`
-	Mode    string `json:"mode"`
-}
-
 type SetMouseJigglerReq struct {
-	Enabled bool   `validate:"omitempty"`
-	Mode    string `validate:"omitempty"`
+	Enabled  *bool  `json:"enabled" form:"enabled"`
+	Mode     string `json:"mode" form:"mode" validate:"omitempty,oneof=relative absolute"`
+	MaxHours *int32 `json:"maxHours" form:"maxHours" validate:"omitempty,gte=0"`
 }
 
 type GetMdnsStateRsp struct {

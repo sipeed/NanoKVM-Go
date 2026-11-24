@@ -11,7 +11,7 @@ A NanoKVM Go+ fork for digital nomads. Use your laptop’s webcam in a call on t
   - **Motion JPEG (MJPEG).** Your browser compresses each camera frame as a JPEG. The Go+ sends those frames to the remote computer as a standard USB webcam stream.
   - **Start a call.** Open the dashboard over HTTPS. Enable **Settings → Device → Webcam**, then click the **Webcam** icon to start sharing. Hover over it or tap its menu arrow to choose a camera. Microphone sharing has its own control.
   - **Webcam name.** Change **Settings → Device → Advanced → USB Webcam Name** to set the name reported to the host.
-- **Mouse Jiggler in the menu bar.** Hidden by default. Enable the shortcut under **Settings → Appearance**, then click it to toggle movement using your last mode.
+- **Mouse Jiggler in the menu bar.** Hidden by default. Enable the shortcut under **Settings → Appearance**, then click it to toggle movement using your last mode. Set **max runtime** in whole hours in the jiggler menu. The default is 8 hours. Set it to **0** to run indefinitely. Changing the limit while the jiggler is on starts a fresh countdown for the selected number of hours.
 - **Activity indicators.** The menu bar shows when the microphone, webcam or jiggler is active.
 
 **Defaults**

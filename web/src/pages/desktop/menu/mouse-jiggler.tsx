@@ -1,37 +1,72 @@
-import { Tooltip } from 'antd';
-import { LoaderCircleIcon, MousePointerClickIcon } from 'lucide-react';
+import { useEffect, useReducer, useState } from 'react';
+import { InputNumber } from 'antd';
+import { MousePointerClickIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { useMouseJiggler } from '@/hooks/useMouseJiggler.ts';
-import { ButtonBase } from '@/components/ui/button-base.tsx';
+import { MenuItem } from '@/components/menu-item.tsx';
 
-export function MouseJigglerButton({
-  tooltipPlacement
-}: {
-  tooltipPlacement: 'bottom' | 'left' | 'right';
-}) {
+function remainingTime(hours: number, elapsedMs: number) {
+  if (hours === 0) return '∞';
+  const seconds = Math.max(0, Math.ceil(hours * 3600 - elapsedMs / 1000));
+  return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
+    .map((n) => String(n).padStart(2, '0'))
+    .join(':');
+}
+
+export function MouseJigglerButton() {
   const { t } = useTranslation();
-  const { config, busy, update } = useMouseJiggler();
-  const title = t('settings.device.mouseJiggler.title');
+  const { config, busy, hours, editingHours, update } = useMouseJiggler();
+  const [open, setOpen] = useState(false);
+  const [, tick] = useReducer((value: number) => value + 1, 0);
+  const active = !!config?.enabled;
+  useEffect(() => {
+    if (!open || !active || !hours) return;
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [open, active, hours]);
 
+  const elapsed = config?.enabled && !editingHours ? config.elapsedMs + performance.now() - config.sampledAt : 0;
   return (
-    <Tooltip title={title} placement={tooltipPlacement} mouseEnterDelay={0.6}>
-      <ButtonBase
-        className="flex size-[30px] items-center justify-center rounded text-neutral-300 hover:bg-neutral-700/80 hover:text-white"
-        aria-label={title}
-        aria-pressed={config?.enabled}
-        disabled={busy}
-        onClick={() => void update('toggle')}
-      >
-        {busy ? (
-          <LoaderCircleIcon size={18} className="animate-spin" />
-        ) : (
-          <MousePointerClickIcon
-            size={18}
-            className={config?.enabled ? 'text-green-400' : undefined}
-          />
-        )}
-      </ButtonBase>
-    </Tooltip>
+    <MenuItem
+      title={t('settings.device.mouseJiggler.title')}
+      icon={<MousePointerClickIcon size={18} className={active ? 'text-green-400' : undefined} />}
+      action={{ pressed: active, disabled: busy || !config, toggle: () => void update('toggle') }}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) void update('refresh');
+      }}
+      content={
+        <div
+          className="flex flex-col gap-1"
+          onKeyDown={(event) => event.stopPropagation()}
+          onKeyUp={(event) => event.stopPropagation()}
+        >
+          <label className="flex items-center gap-2 whitespace-nowrap">
+            {t('settings.device.mouseJiggler.maxRuntime', 'max runtime:')}
+            <InputNumber
+              size="small"
+              aria-label={t('settings.device.mouseJiggler.runtimeHours', 'Max runtime in hours')}
+              min={0}
+              max={2_147_483_647}
+              step={1}
+              precision={0}
+              value={hours}
+              disabled={!config}
+              onChange={(value) => {
+                if (value != null && Number.isInteger(value) && value >= 0 && value <= 2_147_483_647 && value !== hours) {
+                  void update({ maxHours: value });
+                }
+              }}
+            />
+          </label>
+          {hours != null && (
+            <span role="timer" className="text-xs tabular-nums text-neutral-400">
+              {t('settings.device.mouseJiggler.remaining', '{{time}} remaining', { time: remainingTime(hours, elapsed) })}
+            </span>
+          )}
+        </div>
+      }
+    />
   );
 }
