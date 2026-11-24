@@ -22,15 +22,18 @@ export function requestPointerModeSync() {
 export function normalizePointerModeStatus(
   response: api.PointerModeStatusResponse | null | undefined
 ): PointerModeDeviceStatus {
-  const mode = isPointerMode(response?.mode) ? response.mode : 'unknown';
+  const mode = response?.singleEndpoint && response.mode === 'relative'
+    ? 'relative'
+    : isPointerMode(response?.mode) ? response.mode : 'unknown';
   const switching = Boolean(response?.switching);
   const degraded = Boolean(response?.degraded) || mode === 'unknown';
   const error = typeof response?.error === 'string' ? response.error : '';
   return {
     mode,
+    ...(response?.singleEndpoint ? { singleEndpoint: true } : {}),
     switching,
     degraded,
-    ready: isPointerMode(mode) && !switching && !degraded,
+    ready: mode !== 'unknown' && !switching && !degraded,
     error
   };
 }
@@ -50,6 +53,7 @@ export function resolveAuthoritativeMouseMode(
   browserMode: MouseMode,
   deviceStatus: PointerModeDeviceStatus
 ): MouseMode {
+  if (deviceStatus.singleEndpoint && deviceStatus.ready && deviceStatus.mode && deviceStatus.mode !== 'unknown') return deviceStatus.mode;
   if (browserMode === 'relative') return browserMode;
   return deviceStatus.ready && isPointerMode(deviceStatus.mode) ? deviceStatus.mode : browserMode;
 }
@@ -105,7 +109,7 @@ export type PointerModeSelectionActions = {
   setInputEnabled: (enabled: boolean) => void;
   ensureConnected: () => void;
   reconnectRelative: () => void;
-  postPointerMode: (mode: PointerMode) => Promise<{ code: number; msg: string }>;
+  postPointerMode: (mode: MouseMode, singleEndpoint: boolean) => Promise<{ code: number; msg: string }>;
   pollStatus: (
     publish: (status: PointerModeDeviceStatus) => void
   ) => Promise<PointerModeDeviceStatus | null>;
@@ -118,11 +122,12 @@ export async function performPointerModeSelection(
   currentMode: MouseMode,
   currentStatus: PointerModeDeviceStatus,
   targetMode: MouseMode,
-  actions: PointerModeSelectionActions
+  actions: PointerModeSelectionActions,
+  singleEndpoint = !!currentStatus.singleEndpoint
 ): Promise<boolean> {
   if (currentStatus.switching) return false;
 
-  if (targetMode === 'relative') {
+  if (targetMode === 'relative' && !singleEndpoint && !currentStatus.singleEndpoint) {
     actions.applyMouseMode('relative');
     actions.reconnectRelative();
     return true;
@@ -134,7 +139,8 @@ export async function performPointerModeSelection(
     return false;
   }
 
-  if (currentStatus.mode === targetMode && !currentStatus.degraded) {
+  const deviceTarget = targetMode === 'relative' && !singleEndpoint ? 'absolute' : targetMode;
+  if (currentStatus.mode === deviceTarget && !!currentStatus.singleEndpoint === singleEndpoint && !currentStatus.degraded) {
     actions.applyMouseMode(targetMode);
     return true;
   }
@@ -151,7 +157,7 @@ export async function performPointerModeSelection(
   try {
     let postError = '';
     try {
-      const response = await actions.postPointerMode(targetMode);
+      const response = await actions.postPointerMode(deviceTarget, singleEndpoint);
       if (response.code !== 0) postError = response.msg;
     } catch (error) {
       // The response may be lost with USB network re-enumeration.
@@ -162,15 +168,15 @@ export async function performPointerModeSelection(
       actions.publishStatus({ ...status, ready: false });
     });
 
-    if (finalStatus && finalStatus.mode === targetMode && finalStatus.ready) {
+    if (finalStatus && finalStatus.mode === deviceTarget && !!finalStatus.singleEndpoint === singleEndpoint && finalStatus.ready) {
       actions.publishStatus(finalStatus);
       actions.applyMouseMode(targetMode);
       return true;
     }
 
-    if (finalStatus && isPointerMode(finalStatus.mode) && !finalStatus.degraded) {
+    if (finalStatus?.ready && finalStatus.mode && finalStatus.mode !== 'unknown') {
       actions.publishStatus(finalStatus);
-      actions.applyMouseMode(currentMode === 'relative' ? 'relative' : finalStatus.mode);
+      actions.applyMouseMode(resolveAuthoritativeMouseMode(currentMode, finalStatus));
       actions.reportError(finalStatus.error || postError || actions.fallbackError);
       return false;
     }

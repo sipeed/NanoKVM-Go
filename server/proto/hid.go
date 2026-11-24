@@ -9,14 +9,16 @@ type SetHidModeReq struct {
 }
 
 type GetPointerModeRsp struct {
-	Mode      string `json:"mode"`
-	Switching bool   `json:"switching"`
-	Degraded  bool   `json:"degraded,omitempty"`
-	Error     string `json:"error,omitempty"`
+	SingleEndpoint bool   `json:"singleEndpoint"`
+	Mode           string `json:"mode"`
+	Switching      bool   `json:"switching"`
+	Degraded       bool   `json:"degraded,omitempty"`
+	Error          string `json:"error,omitempty"`
 }
 
 type SetPointerModeReq struct {
-	Mode string `json:"mode"`
+	SingleEndpoint bool   `json:"singleEndpoint"`
+	Mode           string `json:"mode"`
 }
 
 type ShortcutKey struct {

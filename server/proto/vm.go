@@ -154,15 +154,17 @@ type DeleteScriptReq struct {
 }
 
 type GetVirtualDeviceRsp struct {
-	IsWebcamEnabled  bool   `json:"isWebcamEnabled"`
-	IsNetworkEnabled bool   `json:"isNetworkEnabled"`
-	IsDiskEnabled    bool   `json:"isDiskEnabled"`
-	DiskMinSizeMiB   int64  `json:"diskMinSizeMiB"`
-	DiskMaxSizeMiB   int64  `json:"diskMaxSizeMiB"`
-	IsMicEnabled     bool   `json:"isMicEnabled"`
-	IsSpeakerEnabled bool   `json:"isSpeakerEnabled"`
-	AudioMode        string `json:"audioMode"`
-	IsSdCardExist    bool   `json:"isSdCardExist"`
+	USBInEndpointsUsed  *int   `json:"usbInEndpointsUsed"`
+	USBInEndpointsTotal int    `json:"usbInEndpointsTotal"`
+	IsWebcamEnabled     bool   `json:"isWebcamEnabled"`
+	IsNetworkEnabled    bool   `json:"isNetworkEnabled"`
+	IsDiskEnabled       bool   `json:"isDiskEnabled"`
+	DiskMinSizeMiB      int64  `json:"diskMinSizeMiB"`
+	DiskMaxSizeMiB      int64  `json:"diskMaxSizeMiB"`
+	IsMicEnabled        bool   `json:"isMicEnabled"`
+	IsSpeakerEnabled    bool   `json:"isSpeakerEnabled"`
+	AudioMode           string `json:"audioMode"`
+	IsSdCardExist       bool   `json:"isSdCardExist"`
 }
 
 type UpdateVirtualDeviceReq struct {

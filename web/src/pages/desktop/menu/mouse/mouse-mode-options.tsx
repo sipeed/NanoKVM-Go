@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Switch } from 'antd';
 import { useAtomValue } from 'jotai';
 import { CheckIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +21,7 @@ export const MouseModeOptions = ({
 }: MouseModeOptionsProps) => {
   const { t } = useTranslation();
   const mouseMode = useAtomValue(mouseModeAtom);
-  const { selectMode, switching } = usePointerModeSelection();
+  const { selectMode, switching, deviceStatus } = usePointerModeSelection();
 
   useEffect(() => {
     // Opening this submenu is also an explicit resynchronization point for
@@ -49,6 +50,17 @@ export const MouseModeOptions = ({
 
   return (
     <>
+      <label className="flex items-center justify-between gap-3 border-b border-neutral-700 px-2 py-2">
+        <span className="flex flex-col">
+          {t('mouse.singleEndpoint', 'Use one USB pointer endpoint')}
+          <span className="text-xs text-neutral-400">
+            {t('mouse.singleEndpointHint', 'Changing modes reconnects USB for all viewers.')}
+          </span>
+        </span>
+        <Switch size="small" checked={!!deviceStatus.singleEndpoint}
+          disabled={switching || !deviceStatus.ready}
+          onChange={(enabled) => void selectMode(mouseMode, enabled)} />
+      </label>
       {mouseModes.map((mode) => (
         <div
           key={mode.value}

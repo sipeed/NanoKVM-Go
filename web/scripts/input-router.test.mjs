@@ -265,15 +265,71 @@ test('absolute pointer preserves mode transitions and hover movement', () => {
   assert.match(source, /handleMouseEvent\(\{ type: 'move', x, y \}, event\.source\)/);
 });
 
-test('stylus wheel is ignored instead of reaching either HID route', () => {
-  const source = fs.readFileSync(
-    path.resolve(import.meta.dirname, '../src/pages/desktop/mouse/absolute.tsx'),
-    'utf8'
-  );
-  const wheelCase = source.match(/case 'wheel':[\s\S]*?\n\s*return;/)?.[0] ?? '';
-  assert.notEqual(wheelCase, '');
-  assert.match(wheelCase, /if \(!stylus\) \{[\s\S]*?sendRelativePointerProxy/);
-  assert.doesNotMatch(wheelCase, /sendPointerState/);
+test('Follow Mouse routes clicks, drags and wheel events through an exposed endpoint', () => {
+  function loadSource(file, dependencies = {}) {
+    const filename = path.resolve(import.meta.dirname, '../src', file);
+    const { outputText } = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+      fileName: filename
+    });
+    const exports = {};
+    vm.runInNewContext(outputText, {
+      exports,
+      require(name) {
+        if (name.startsWith('@/jotai/')) return atoms;
+        if (name in dependencies) return dependencies[name];
+        throw new Error('Unexpected import ' + name);
+      }
+    }, { filename });
+    return exports;
+  }
+
+  const atoms = {
+    mouseModeAtom: 'absolute',
+    scrollDirectionAtom: 1,
+    scrollIntervalAtom: 0,
+    effectiveScreenAreaAtom: {}
+  };
+  const target = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }) };
+  for (const [mode, singleEndpoint] of [
+    ['absolute', true], ['absolute', false], ['digitizer-stylus', true]
+  ]) {
+    atoms.mouseModeAtom = mode;
+    const router = loadInputRouter();
+    let onEvent;
+    const { Absolute } = loadSource('pages/desktop/mouse/absolute.tsx', {
+      react: { useEffect: fn => fn(), useLayoutEffect: fn => fn(), useRef: current => ({ current }) },
+      jotai: { useAtomValue: value => value, useSetAtom: () => () => {} },
+      '@/lib/input-profile.ts': loadSource('lib/input-profile.ts'),
+      '@/lib/input-viewport.ts': loadSource('lib/input-viewport.ts'),
+      '@/lib/input-router.ts': router,
+      './pointer-events-cap.ts': { subscribePointerEvents: handler => { onEvent = handler; } }
+    });
+    Absolute({ singleEndpoint });
+    const emit = (type, button, buttons, x = 10) => onEvent({
+      type, source: router.InputSource.BrowserPointer, pointerType: 'mouse', pointerId: 1,
+      button, buttons, clientX: x, clientY: 20, deltaY: 1, target
+    });
+    emit('pointerdown', 0, 1);
+    emit('pointermove', -1, 1, 50);
+    emit('pointerup', 0, 0, 50);
+    emit('wheel', -1, 0, 50);
+    emit('pointerdown', 2, 2, 50);
+    emit('pointerup', 2, 0, 50);
+    const { RelativePointer: rel, AbsolutePointer: abs, Stylus: pen } = router.InputKind;
+    const reports = router.frames.map(frame => [header(frame).kind, frame[13]]);
+    if (mode === 'digitizer-stylus') {
+      assert.deepEqual(reports, [[pen, 3], [pen, 3], [pen, 2], [pen, 3], [pen, 2]]);
+    } else if (singleEndpoint) {
+      assert.deepEqual(reports, [[abs, 1], [abs, 1], [abs, 0], [abs, 0], [abs, 2], [abs, 0]]);
+      const drag = router.frames[1];
+      assert.equal(new DataView(drag.buffer).getUint16(14, true), Math.round(50 / 99 * 65535));
+      assert.equal(router.frames[3][18], 1);
+    } else {
+      assert.deepEqual(reports, [[rel, 1], [abs, 0], [rel, 0], [rel, 0], [rel, 2], [rel, 0]]);
+      assert.equal(router.frames[3][18], 1);
+    }
+  }
 });
 
 test('absolute movement does not synthesize an idle trailing report', () => {
@@ -449,7 +505,7 @@ test('hybrid mouse releases do not emit redundant absolute positioning frames', 
   assert.match(source, /if \(wasStylus && lastPosRef\.current\)/);
   const releaseCase = source.match(/default:[\s\S]*?return;/)?.[0] ?? '';
   assert.notEqual(releaseCase, '');
-  assert.match(releaseCase, /if \(stylus && lastPosRef\.current\)[\s\S]*?sendPointerState/);
+  assert.match(releaseCase, /if \(\(stylus \|\| releaseOnAbsolute\) && lastPosRef\.current\)[\s\S]*?sendPointerState/);
 
   const pointerLeaveRelease = source.match(
     /function releaseAbsolutePointer\(\) \{[\s\S]*?\n  \}/

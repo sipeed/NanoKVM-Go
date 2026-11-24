@@ -39,7 +39,9 @@ Curves send pointer movement only, with no clicks or scrolling. They ease into a
 
 ## USB limits
 
-The Go+ has **7 USB IN endpoints**. The keyboard and two pointer interfaces use **1 each**, leaving **4** for optional devices.
+The Go+ has **7 USB IN endpoints**. **Settings → Device** shows the used and free counts above Webcam. By default, the keyboard and two pointer interfaces use **1 each**, leaving **4** for optional devices.
+
+**Mouse → Mouse mode → Use one USB pointer endpoint** frees one more endpoint. Choose **Follow Mouse** for absolute positioning or **Exclusive Mouse** for relative movement. The Android stylus and multi-touch options also work as single-endpoint profiles. Changing the active profile briefly reconnects USB for all viewers. Free an endpoint before restoring both pointers if the counter reads 7 of 7.
 
 | Feature | IN endpoints |
 | --- | ---: |
@@ -49,8 +51,8 @@ The Go+ has **7 USB IN endpoints**. The keyboard and two pointer interfaces use 
 | Virtual Disk or mounted image | 1 per USB drive |
 | USB serial (ACM) | 2 |
 
-- **Webcam + Network** fills all 7. Adding Audio or Disk exceeds the limit.
-- **Webcam + Audio** uses 6. One disk fits the software check. Using all three together still needs a host test.
+- **Webcam + Network** fills all 7 with both pointers. With one pointer, the budget also fits Virtual Audio.
+- **Webcam + Audio** uses 6 with both pointers. One disk fits the software check. Using all three together still needs a host test.
 - **Switching devices.** Eject and detach mounted media before changing Webcam. Turn **Settings → Device → Webcam** off to free its endpoints. Click the toolbar webcam icon again to stop sharing.
 
 ## Install build

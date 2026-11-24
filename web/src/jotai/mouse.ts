@@ -5,7 +5,8 @@ export type MouseMode = 'absolute' | 'digitizer-stylus' | 'touch-screen' | 'rela
 export type PointerMode = Exclude<MouseMode, 'relative'>;
 
 export type PointerModeDeviceStatus = {
-  mode: PointerMode | 'unknown' | null;
+  mode: MouseMode | 'unknown' | null;
+  singleEndpoint?: boolean;
   switching: boolean;
   degraded: boolean;
   ready: boolean;

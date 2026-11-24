@@ -40,6 +40,10 @@ function getVirtualDeviceResponse(state: MockState) {
       : 'mic';
 
   return {
+    usbInEndpointsTotal: 7,
+    usbInEndpointsUsed: (state.hid.pointerMode.singleEndpoint ? 2 : 3)
+      + 2 * Number(state.virtualDevice.isWebcamEnabled) + 2 * Number(state.virtualDevice.isNetworkEnabled)
+      + Number(state.virtualDevice.isMicEnabled) + Number(state.virtualDevice.isDiskEnabled),
     isWebcamEnabled: state.virtualDevice.isWebcamEnabled,
     isNetworkEnabled: state.virtualDevice.isNetworkEnabled,
     isDiskEnabled: state.virtualDevice.isDiskEnabled,
@@ -785,12 +789,15 @@ export function createDeviceHandlers(origin: string, state: MockState) {
     }),
     http.get(`${origin}/api/hid/pointer-mode`, () => ok(state.hid.pointerMode)),
     http.post(`${origin}/api/hid/pointer-mode`, async ({ request }) => {
-      const mode = readString(await readJsonObject(request), 'mode');
-      if (mode !== 'absolute' && mode !== 'digitizer-stylus' && mode !== 'touch-screen') {
+      const body = await readJsonObject(request);
+      const mode = readString(body, 'mode');
+      const singleEndpoint = body.singleEndpoint === true;
+      if (!(singleEndpoint && mode === 'relative') && mode !== 'absolute' && mode !== 'digitizer-stylus' && mode !== 'touch-screen') {
         return fail(-1, 'invalid pointer mode', state.hid.pointerMode);
       }
       state.hid.pointerMode = {
         mode,
+        singleEndpoint,
         switching: false,
         degraded: false,
         error: ''

@@ -22,6 +22,10 @@ const (
 	PointerModeDigitizerStylus PointerMode = "digitizer-stylus"
 	PointerModeTouchScreen     PointerMode = "touch-screen"
 	PointerModeUnknown         PointerMode = "unknown"
+	PointerModeSingleRelative  PointerMode = "single-relative"
+	PointerModeSingleAbsolute  PointerMode = "single-absolute"
+	PointerModeSingleStylus    PointerMode = "single-digitizer-stylus"
+	PointerModeSingleTouch     PointerMode = "single-touch-screen"
 
 	PointerModeFile = "/boot/usb.hid2_mode"
 )
@@ -80,9 +84,19 @@ func (manager *pointerModeManager) status() PointerModeStatus {
 	}
 }
 
+// The persisted profile encodes the layout and descriptor in one atomic marker.
+func (mode PointerMode) SingleEndpoint() bool { return strings.HasPrefix(string(mode), "single-") }
+func (mode PointerMode) method() PointerMode {
+	return PointerMode(strings.TrimPrefix(string(mode), "single-"))
+}
+func (mode PointerMode) SupportsRelative() bool {
+	return !mode.SingleEndpoint() || mode == PointerModeSingleRelative
+}
+
 func isKnownPointerMode(mode PointerMode) bool {
 	switch mode {
-	case PointerModeAbsolute, PointerModeDigitizerStylus, PointerModeTouchScreen:
+	case PointerModeAbsolute, PointerModeDigitizerStylus, PointerModeTouchScreen,
+		PointerModeSingleAbsolute, PointerModeSingleStylus, PointerModeSingleTouch, PointerModeSingleRelative:
 		return true
 	default:
 		return false
@@ -162,18 +176,17 @@ func (manager *pointerModeManager) statusLocked() PointerModeStatus {
 
 func parsePointerMode(value string) (PointerMode, bool) {
 	mode := PointerMode(value)
-	switch mode {
-	case PointerModeAbsolute, PointerModeDigitizerStylus, PointerModeTouchScreen:
-		return mode, true
-	case legacyPointerModeAbsoluteAndroid:
+	if mode == legacyPointerModeAbsoluteAndroid {
 		return PointerModeDigitizerStylus, true
-	default:
-		return PointerModeAbsolute, false
 	}
+	if isKnownPointerMode(mode) {
+		return mode, true
+	}
+	return PointerModeAbsolute, false
 }
 
 func pointerModeReportID(mode PointerMode) (byte, bool) {
-	switch mode {
+	switch mode.method() {
 	case PointerModeAbsolute:
 		return AbsoluteReportIDMouse, true
 	case PointerModeDigitizerStylus:
@@ -231,11 +244,6 @@ func (service *Service) GetPointerMode(c *gin.Context) {
 	status := manager.status()
 
 	var rsp proto.Response
-	rsp.OkRspWithData(c, &proto.GetPointerModeRsp{
-		Mode:      string(status.Mode),
-		Switching: status.Switching,
-		Degraded:  status.Degraded,
-		Error:     status.Error,
-	})
+	rsp.OkRspWithData(c, pointerModeStatusResponse(status))
 	log.Debugf("get pointer mode: %s (switching: %t, degraded: %t)", status.Mode, status.Switching, status.Degraded)
 }

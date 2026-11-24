@@ -271,3 +271,15 @@ func TestPointerModeAPIErrorMappingPreservesStage(t *testing.T) {
 		}
 	}
 }
+
+func TestSinglePointerAPICommitsRelativeAndAbsoluteLayouts(t *testing.T) {
+	marker := "absolute\n"
+	harness := newPointerModeTransactionHarness(t, PointerModeAbsolute, &marker, ModeNormal)
+	service := serviceForPointerModeAPI(harness)
+	for _, method := range []string{"relative", "absolute", "digitizer-stylus", "touch-screen"} {
+		response := performSetPointerModeRequest(t, service, `{"singleEndpoint":true,"mode":"`+method+`"}`)
+		if response.Code != 0 || response.Data.Mode != method || !response.Data.SingleEndpoint {
+			t.Fatalf("%s: %+v", method, response)
+		}
+	}
+}

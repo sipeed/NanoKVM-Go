@@ -366,10 +366,10 @@ const en = {
     mouse: {
       title: 'Mouse',
       mode: 'Mouse mode',
-      absolute: 'Follow Mouse',
+      absolute: 'Follow Mouse (absolute mode)',
       absoluteAndroid: 'Follow Mouse (Better Android Compatibility)',
       touchScreen: 'Multi-touch Screen',
-      relative: 'Exclusive Mouse',
+      relative: 'Exclusive Mouse (relative mode)',
       direction: 'Wheel direction',
       scrollUp: 'Scroll up',
       scrollDown: 'Scroll down',

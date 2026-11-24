@@ -240,7 +240,8 @@ export type MockState = {
   hid: {
     mode: string;
     pointerMode: {
-      mode: 'absolute' | 'digitizer-stylus' | 'touch-screen' | 'unknown';
+      mode: 'absolute' | 'digitizer-stylus' | 'touch-screen' | 'relative' | 'unknown';
+      singleEndpoint?: boolean;
       switching: boolean;
       degraded: boolean;
       error: string;

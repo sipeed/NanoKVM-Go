@@ -388,7 +388,7 @@ test('browser mode selection keeps relative local and HID2 modes device-authorit
 
   assert.match(controller, /fetchPointerModeStatus\(\)/);
   assert.match(apiSource, /getPointerMode\(\)/);
-  assert.match(apiSource, /setPointerMode\(mode: PointerMode\)/);
+  assert.match(apiSource, /setPointerMode\(mode: MouseMode, singleEndpoint/);
   assert.match(apiSource, /\/api\/hid\/pointer-mode/);
   assert.match(controller, /resolveAuthoritativeMouseMode/);
   assert.match(controller, /client\.onConnectionState/);
@@ -417,4 +417,15 @@ test('browser mode selection keeps relative local and HID2 modes device-authorit
       `${locale} unexpectedly adds a pointerMode translation block`
     );
   }
+});
+
+test('single-pointer selection switches the device and overrides browser-local relative mode', async () => {
+  const { performPointerModeSelection, resolveAuthoritativeMouseMode } = loadPointerMode();
+  const absolute = { ...pointerStatus('absolute'), singleEndpoint: true };
+  const relative = { ...pointerStatus('relative'), singleEndpoint: true };
+  assert.equal(resolveAuthoritativeMouseMode('relative', absolute), 'absolute');
+  const { actions, state } = pointerSelectionActions({ finalStatus: relative });
+  assert.equal(await performPointerModeSelection('absolute', absolute, 'relative', actions), true);
+  assert.deepEqual(state.postModes, ['relative']);
+  assert.deepEqual(state.appliedModes, ['relative']);
 });

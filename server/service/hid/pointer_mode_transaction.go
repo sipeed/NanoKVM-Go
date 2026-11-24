@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"NanoKVM-Server/storageguard"
+	"NanoKVM-Server/usbgadget"
 
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
@@ -30,6 +31,7 @@ const (
 )
 
 var (
+	ErrPointerEndpointCapacity      = errors.New("Cannot restore both pointers. Disable another USB device to free an IN endpoint.")
 	ErrPointerModeSwitchInvalidMode = errors.New("invalid pointer mode")
 	ErrPointerModeSwitchInProgress  = errors.New("pointer mode switch already in progress")
 	ErrPointerModeSwitchLock        = errors.New("failed to acquire USB gadget mutation lock")
@@ -242,7 +244,9 @@ func pointerModeFromMarkerSnapshot(snapshot pointerModeMarkerSnapshot) PointerMo
 }
 
 func pointerModeReportLength(mode PointerMode) (int, bool) {
-	switch mode {
+	switch mode.method() {
+	case "relative":
+		return 4, true
 	case PointerModeAbsolute:
 		return 7, true
 	case PointerModeDigitizerStylus:
@@ -317,7 +321,20 @@ func (verifier pointerModeGadgetVerifier) check(mode PointerMode) error {
 		return errors.New("gadget is not bound to a UDC")
 	}
 
-	reportLengthData, err := os.ReadFile(filepath.Join(verifier.gadgetRoot, "functions", "hid.GS2", "report_length"))
+	function, path := "hid.GS2", verifier.hid2Path
+	if mode == PointerModeSingleRelative {
+		function, path = "hid.GS1", HID1
+	}
+	for link, want := range map[string]bool{"hid.GS1": mode.SupportsRelative(), "hid.GS2": mode != PointerModeSingleRelative} {
+		info, err := os.Lstat(filepath.Join(verifier.gadgetRoot, "configs", "c.1", link))
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		if (info != nil && info.Mode()&os.ModeSymlink != 0) != want {
+			return fmt.Errorf("unexpected pointer layout for %s", link)
+		}
+	}
+	reportLengthData, err := os.ReadFile(filepath.Join(verifier.gadgetRoot, "functions", function, "report_length"))
 	if err != nil {
 		return fmt.Errorf("read HID2 report_length: %w", err)
 	}
@@ -333,8 +350,8 @@ func (verifier pointerModeGadgetVerifier) check(mode PointerMode) error {
 	if openHID2 == nil {
 		openHID2 = probeHID2Endpoint
 	}
-	if err := openHID2(verifier.hid2Path); err != nil {
-		return fmt.Errorf("probe %s: %w", verifier.hid2Path, err)
+	if err := openHID2(path); err != nil {
+		return fmt.Errorf("probe %s: %w", path, err)
 	}
 	return nil
 }
@@ -615,6 +632,15 @@ func (transaction *pointerModeTransaction) runUSBLocked(ctx context.Context, req
 	}
 	if noChange {
 		return oldStatus, nil
+	}
+
+	// Restoring the second pointer must not evict another function during rebuild.
+	if oldStatus.Mode.SingleEndpoint() && !requested.SingleEndpoint() {
+		used, err := usbgadget.INEndpoints(filepath.Join(transaction.opts.gadgetRoot, "configs", "c.1"), "hid.GS1", "hid.GS2")
+		if err != nil || used > usbgadget.INEndpointLimit {
+			transaction.manager.abortSwitch()
+			return transaction.manager.status(), ErrPointerEndpointCapacity
+		}
 	}
 
 	// Reject active file transfers before quiescing input or closing endpoints.

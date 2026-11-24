@@ -106,7 +106,12 @@ func (h *Hid) openEndpointsNoLock() error {
 		{endpoint: &h.g1, path: HID1},
 		{endpoint: &h.g2, path: HID2},
 	}
+	// During a rebuild the new marker is installed before the manager commits.
+	mode := readPointerModeFile(PointerModeFile)
 	for _, item := range endpoints {
+		if (item.path == HID1 && !mode.SupportsRelative()) || (item.path == HID2 && mode == PointerModeSingleRelative) {
+			continue
+		}
 		if err := h.openEndpointNoLock(item.endpoint, item.path); err != nil {
 			log.Errorf("open %s failed: %s", item.path, err)
 			openErrors = append(openErrors, fmt.Errorf("open %s: %w", item.path, err))
@@ -241,6 +246,9 @@ func (h *Hid) WriteRelativeMouseReport(data []byte) error {
 	}
 	h.mouseMutex.Lock()
 	defer h.mouseMutex.Unlock()
+	if !h.currentPointerModeStatus().Mode.SupportsRelative() {
+		return fmt.Errorf("%w: relative pointer is disabled", ErrPointerModeMismatch)
+	}
 	if err := h.writeNoLock(&h.g1, HID1, data); err != nil {
 		return err
 	}
@@ -256,11 +264,11 @@ func (h *Hid) WriteAbsoluteMouseReport(data []byte) error {
 	if data[0] != AbsoluteReportIDMouse && data[0] != AbsoluteReportIDStylus {
 		return errors.New("invalid absolute pointer report id")
 	}
+	h.mouseMutex.Lock()
+	defer h.mouseMutex.Unlock()
 	if err := ValidatePointerModeReportID(h.currentPointerModeStatus().Mode, data[0]); err != nil {
 		return err
 	}
-	h.mouseMutex.Lock()
-	defer h.mouseMutex.Unlock()
 	if err := h.writeNoLock(&h.g2, HID2, data); err != nil {
 		return err
 	}
@@ -280,10 +288,12 @@ func (h *Hid) WriteTouchScreenReport(data []byte) error {
 	if data[len(data)-1] > TouchScreenMaxContacts {
 		return errors.New("invalid touch screen contact count")
 	}
+	h.mouseMutex.Lock()
+	defer h.mouseMutex.Unlock()
 	if err := ValidatePointerModeReportID(h.currentPointerModeStatus().Mode, data[0]); err != nil {
 		return err
 	}
-	if err := h.write(&h.g2, HID2, data, &h.mouseMutex); err != nil {
+	if err := h.writeNoLock(&h.g2, HID2, data); err != nil {
 		return err
 	}
 	pushHIDMouseState(data[len(data)-1:])
@@ -306,6 +316,9 @@ func (h *Hid) ReleaseAllInputs() error {
 func (h *Hid) releaseMouseButtons() error {
 	var releaseErrors []error
 	mode := h.currentPointerModeStatus().Mode
+	if mode == PointerModeSingleRelative {
+		return h.WriteRelativeMouseReport([]byte{0, 0, 0, 0})
+	}
 	reportID, ok := pointerModeReportID(mode)
 	if !ok {
 		releaseErrors = append(releaseErrors, fmt.Errorf("release %s: %w", HID2, ValidatePointerModeReportID(mode, 0)))
@@ -321,6 +334,9 @@ func (h *Hid) releaseMouseButtons() error {
 		}
 	}
 
+	if !mode.SupportsRelative() {
+		return errors.Join(releaseErrors...)
+	}
 	if err := h.WriteRelativeMouseReport([]byte{0, 0, 0, 0}); err != nil {
 		releaseErrors = append(releaseErrors, fmt.Errorf("release %s relative pointer: %w", HID1, err))
 	}

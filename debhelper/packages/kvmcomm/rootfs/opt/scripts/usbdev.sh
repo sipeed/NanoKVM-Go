@@ -301,7 +301,7 @@ read_hid2_mode() {
     fi
 
     case "$mode" in
-        absolute|digitizer-stylus|touch-screen)
+        absolute|digitizer-stylus|touch-screen|single-absolute|single-digitizer-stylus|single-touch-screen|single-relative)
             echo "$mode"
             ;;
         absolute-android)
@@ -324,13 +324,14 @@ configure_hid2() {
 
     hid2_mode=$(read_hid2_mode "$mode_file")
 
+    [[ "$hid2_mode" != single-relative ]] || return 0
     mkdir functions/hid.GS2
     echo 1 > functions/hid.GS2/no_out_endpoint
     enable_hid_wakeup_on_write "hid.GS2"
     echo 0 > functions/hid.GS2/protocol
     echo 0 > functions/hid.GS2/subclass
 
-    case "$hid2_mode" in
+    case "${hid2_mode#single-}" in
         absolute)
             echo 7 > functions/hid.GS2/report_length
             report_desc=05010902a10185010901a10005091901290515002501750195058102750395018103050109300931150026ff7f75109502810209381581257f750895018106c0c0
@@ -472,7 +473,11 @@ hid_start() {
     echo 1 > functions/hid.GS1/subclass
     echo 4 > functions/hid.GS1/report_length
     echo -ne \\x5\\x1\\x9\\x2\\xa1\\x1\\x9\\x1\\xa1\\x0\\x5\\x9\\x19\\x1\\x29\\x3\\x15\\x0\\x25\\x1\\x95\\x3\\x75\\x1\\x81\\x2\\x95\\x1\\x75\\x5\\x81\\x3\\x5\\x1\\x9\\x30\\x9\\x31\\x9\\x38\\x15\\x81\\x25\\x7f\\x75\\x8\\x95\\x3\\x81\\x6\\xc0\\xc0 > functions/hid.GS1/report_desc
-    ln -s functions/hid.GS1 configs/c.1
+    # Create GS1 even when unlinked so GS2 retains its HID minor number.
+    case "$(read_hid2_mode)" in
+        single-absolute|single-digitizer-stylus|single-touch-screen) ;;
+        *) ln -s functions/hid.GS1 configs/c.1 || return 1 ;;
+    esac
 
     configure_hid2
 
@@ -652,7 +657,11 @@ hid_only_start() {
     echo 1 > functions/hid.GS1/subclass
     echo 4 > functions/hid.GS1/report_length
     echo -ne \\x5\\x1\\x9\\x2\\xa1\\x1\\x9\\x1\\xa1\\x0\\x5\\x9\\x19\\x1\\x29\\x3\\x15\\x0\\x25\\x1\\x95\\x3\\x75\\x1\\x81\\x2\\x95\\x1\\x75\\x5\\x81\\x3\\x5\\x1\\x9\\x30\\x9\\x31\\x9\\x38\\x15\\x81\\x25\\x7f\\x75\\x8\\x95\\x3\\x81\\x6\\xc0\\xc0 > functions/hid.GS1/report_desc
-    ln -s functions/hid.GS1 configs/c.1
+    # Create GS1 even when unlinked so GS2 retains its HID minor number.
+    case "$(read_hid2_mode)" in
+        single-absolute|single-digitizer-stylus|single-touch-screen) ;;
+        *) ln -s functions/hid.GS1 configs/c.1 || return 1 ;;
+    esac
 
     configure_hid2
 

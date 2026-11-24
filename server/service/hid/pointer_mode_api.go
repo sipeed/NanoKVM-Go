@@ -29,8 +29,11 @@ func (service *Service) SetPointerMode(c *gin.Context) {
 		return
 	}
 
-	requested, ok := parsePointerMode(req.Mode)
-	if !ok || requested != PointerMode(req.Mode) {
+	requested := PointerMode(req.Mode)
+	if req.SingleEndpoint {
+		requested = PointerMode("single-" + req.Mode)
+	}
+	if strings.HasPrefix(req.Mode, "single-") || !isKnownPointerMode(requested) {
 		response.ErrRsp(c, pointerModeAPIInvalidArgumentsCode, "invalid pointer mode")
 		return
 	}
@@ -98,10 +101,11 @@ func decodeSetPointerModeRequest(c *gin.Context) (proto.SetPointerModeReq, error
 
 func pointerModeStatusResponse(status PointerModeStatus) *proto.GetPointerModeRsp {
 	return &proto.GetPointerModeRsp{
-		Mode:      string(status.Mode),
-		Switching: status.Switching,
-		Degraded:  status.Degraded,
-		Error:     status.Error,
+		Mode:           string(status.Mode.method()),
+		SingleEndpoint: status.Mode.SingleEndpoint(),
+		Switching:      status.Switching,
+		Degraded:       status.Degraded,
+		Error:          status.Error,
 	}
 }
 
@@ -118,6 +122,9 @@ const (
 )
 
 func pointerModeAPIError(err error, status PointerModeStatus) (int, string) {
+	if errors.Is(err, ErrPointerEndpointCapacity) {
+		return pointerModeAPIFailureCode, err.Error()
+	}
 	if errors.Is(err, ErrPointerModeSwitchInvalidMode) {
 		return pointerModeAPIInvalidArgumentsCode, "invalid pointer mode"
 	}
