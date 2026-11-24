@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"math"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -58,17 +59,16 @@ func TestCurveReports(t *testing.T) {
 
 func TestDisconnectedMovementAndInterruption(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		var curved []bool
-		var writes, releases int
+		var curves, writes, releases atomic.Int64
 		j := load(filepath.Join(t.TempDir(), "settings"), func(_ string, useCurve bool) *movement {
-			curved = append(curved, useCurve)
 			if !useCurve {
 				return nil
 			}
+			curves.Add(1)
 			return curveMovement("relative", point{}, 1920, 1080)
 		}, func() time.Duration { return 0 })
-		j.send = func([]byte) error { writes++; return nil }
-		j.release = func() { releases++ }
+		j.send = func([]byte) error { writes.Add(1); return nil }
+		j.release = func() { releases.Add(1) }
 		on := true
 		if _, err := j.Configure(&on, "", nil); err != nil {
 			t.Fatal(err)
@@ -79,35 +79,33 @@ func TestDisconnectedMovementAndInterruption(t *testing.T) {
 		j.SetConnected(false)
 		time.Sleep(5 * time.Minute)
 		synctest.Wait()
-		for _, v := range curved {
-			if v {
-				t.Fatal("curve before disconnect grace period elapsed")
-			}
+		if curves.Load() != 0 {
+			t.Fatal("curve before disconnect grace period elapsed")
 		}
 		time.Sleep(30*time.Second + 200*time.Millisecond)
 		synctest.Wait()
-		if !curved[len(curved)-1] || writes < 2 {
-			t.Fatal("missing curve", writes)
+		if curves.Load() != 1 || writes.Load() < 2 {
+			t.Fatal("missing curve", writes.Load())
 		}
 		j.SetConnected(true)
-		if releases != 1 {
+		if releases.Load() != 1 {
 			t.Fatal("reconnect did not release movement")
 		}
-		n := writes
+		n := writes.Load()
 		time.Sleep(5 * time.Second)
-		if n != writes {
+		if n != writes.Load() {
 			t.Fatal("curve continued after reconnect")
 		}
 		j.SetConnected(false)
 		time.Sleep(5*time.Minute + 25*time.Second + 200*time.Millisecond)
 		synctest.Wait()
-		if writes <= n {
+		if curves.Load() != 2 || writes.Load() <= n {
 			t.Fatal("second curve missing")
 		}
 		j.Update()
-		n = writes
+		n = writes.Load()
 		time.Sleep(5 * time.Second)
-		if n != writes {
+		if n != writes.Load() {
 			t.Fatal("curve continued after input")
 		}
 		on = false

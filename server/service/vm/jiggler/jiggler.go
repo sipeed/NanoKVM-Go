@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/rand/v2"
 	"os"
 	"path/filepath"
@@ -55,7 +54,6 @@ type Jiggler struct {
 	move           func(string, bool) *movement
 	motion         *movement
 	disconnectedAt time.Time
-	preview        bool
 	send           func([]byte) error
 	release        func()
 	jitter         func() time.Duration
@@ -234,9 +232,7 @@ func (j *Jiggler) advanceLocked(now time.Time) {
 			return
 		}
 
-		_, err := os.Stat(curvePreviewFile)
-		j.preview = err == nil
-		curved := j.preview || (!j.disconnectedAt.IsZero() && now.Sub(j.disconnectedAt) > 5*time.Minute)
+		curved := !j.disconnectedAt.IsZero() && now.Sub(j.disconnectedAt) > 5*time.Minute
 		j.motion = j.move(j.config.Mode, curved)
 		j.idleSince = now
 		j.moveAt = time.Time{}
@@ -256,14 +252,6 @@ func (j *Jiggler) advanceLocked(now time.Time) {
 	}
 	m.index++
 	if m.index == len(m.reports) {
-		if j.preview {
-			// Publish the last completed preview in RAM. Opening without O_CREATE
-			// lets the operator remove the override even during a stroke.
-			if f, err := os.OpenFile(curvePreviewFile, os.O_WRONLY|os.O_TRUNC, 0); err == nil {
-				_, _ = fmt.Fprintf(f, "%d reports in %v\n", m.index, now.Sub(m.start).Round(time.Millisecond))
-				_ = f.Close()
-			}
-		}
 		j.stopMovementLocked()
 	}
 }

@@ -10,9 +10,6 @@ import (
 	"NanoKVM-Server/service/hid"
 )
 
-// The volatile appliance-side override permits watching curves with a viewer connected.
-const curvePreviewFile = "/run/nanokvm-jiggler-curve-preview"
-
 type movement struct {
 	reports  [][]byte
 	duration time.Duration
@@ -113,8 +110,11 @@ func curveMovement(mode string, start point, width, height int) *movement {
 	}
 	seconds := 5 + min(2.0, 2*length/shortSide) + rand.Float64()
 
-	m := &movement{duration: time.Duration(seconds * float64(time.Second))}
 	steps := int(math.Ceil(seconds * 40))
+	m := &movement{
+		duration: time.Duration(seconds * float64(time.Second)),
+		reports:  make([][]byte, steps+1),
+	}
 	// Scale the sampled stroke after choosing its duration, so the larger
 	// movement also travels faster. Fit the actual path into the available room.
 	points := make([]point, steps+1)
@@ -136,7 +136,7 @@ func curveMovement(mode string, start point, width, height int) *movement {
 	}
 
 	lastX, lastY := 0, 0
-	for _, p := range points {
+	for i, p := range points {
 		if turn {
 			p = point{math.Copysign(p.y, dx), math.Copysign(p.x, dy)}
 		}
@@ -144,9 +144,9 @@ func curveMovement(mode string, start point, width, height int) *movement {
 		p.y *= stretch
 		x, y := int(math.Round(p.x)), int(math.Round(p.y))
 		if mode == "absolute" {
-			m.reports = append(m.reports, absoluteReport(int(math.Round((start.x+p.x)*32767/screenX)), int(math.Round((start.y+p.y)*32767/screenY))))
+			m.reports[i] = absoluteReport(int(math.Round((start.x+p.x)*32767/screenX)), int(math.Round((start.y+p.y)*32767/screenY)))
 		} else {
-			m.reports = append(m.reports, []byte{0, byte(int8(x - lastX)), byte(int8(y - lastY)), 0})
+			m.reports[i] = []byte{0, byte(int8(x - lastX)), byte(int8(y - lastY)), 0}
 		}
 		lastX, lastY = x, y
 	}

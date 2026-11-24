@@ -3,6 +3,7 @@ package jiggler
 import (
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -16,34 +17,34 @@ func TestIdleAndRandomDelay(t *testing.T) {
 	for _, delay := range []time.Duration{0, 12 * time.Second, 30 * time.Second} {
 		t.Run(delay.String(), func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				var moves, draws int
-				j := testLoad(filepath.Join(t.TempDir(), "jiggler"), func(string) { moves++ }, func() time.Duration { draws++; return delay })
+				var moves, draws atomic.Int64
+				j := testLoad(filepath.Join(t.TempDir(), "jiggler"), func(string) { moves.Add(1) }, func() time.Duration { draws.Add(1); return delay })
 				on := true
 				if _, err := j.Configure(&on, "", nil); err != nil {
 					t.Fatal(err)
 				}
-				for cycle := 1; cycle <= 2; cycle++ {
+				for cycle := int64(1); cycle <= 2; cycle++ {
 					time.Sleep(idleInterval - time.Millisecond)
 					synctest.Wait()
-					if draws != cycle-1 || moves != cycle-1 {
-						t.Fatal("early draw or movement", draws, moves)
+					if draws.Load() != cycle-1 || moves.Load() != cycle-1 {
+						t.Fatal("early draw or movement", draws.Load(), moves.Load())
 					}
 					time.Sleep(time.Millisecond)
 					synctest.Wait()
-					if draws != cycle {
-						t.Fatal("missing idle check", draws)
+					if draws.Load() != cycle {
+						t.Fatal("missing idle check", draws.Load())
 					}
 					if delay != 0 {
 						time.Sleep(delay - time.Millisecond)
 						synctest.Wait()
-						if moves != cycle-1 {
-							t.Fatal("early movement", moves)
+						if moves.Load() != cycle-1 {
+							t.Fatal("early movement", moves.Load())
 						}
 						time.Sleep(time.Millisecond)
 						synctest.Wait()
 					}
-					if moves != cycle {
-						t.Fatal("missing movement", moves)
+					if moves.Load() != cycle {
+						t.Fatal("missing movement", moves.Load())
 					}
 				}
 				on = false
@@ -57,8 +58,8 @@ func TestIdleAndRandomDelay(t *testing.T) {
 
 func TestActivityCancelsPendingMove(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		moves := 0
-		j := testLoad(filepath.Join(t.TempDir(), "jiggler"), func(string) { moves++ }, func() time.Duration { return 12 * time.Second })
+		var moves atomic.Int64
+		j := testLoad(filepath.Join(t.TempDir(), "jiggler"), func(string) { moves.Add(1) }, func() time.Duration { return 12 * time.Second })
 		on := true
 		if _, err := j.Configure(&on, "", nil); err != nil {
 			t.Fatal(err)
@@ -67,12 +68,12 @@ func TestActivityCancelsPendingMove(t *testing.T) {
 		j.Update()
 		time.Sleep(42*time.Second - time.Millisecond)
 		synctest.Wait()
-		if moves != 0 {
+		if moves.Load() != 0 {
 			t.Fatal("old countdown fired")
 		}
 		time.Sleep(time.Millisecond)
 		synctest.Wait()
-		if moves != 1 {
+		if moves.Load() != 1 {
 			t.Fatal("missing move after renewed idle period")
 		}
 		on = false
@@ -94,9 +95,12 @@ func TestRestoreExpiryAndUnlimited(t *testing.T) {
 			t.Fatal(state)
 		}
 		time.Sleep(7 * time.Hour)
+		j.mu.Lock()
 		j.timer.Stop() // Simulate shutting down the service.
-		moves := 0
-		j = testLoad(path, func(string) { moves++ }, delay)
+		j.timer = nil
+		j.mu.Unlock()
+		var moves atomic.Int64
+		j = testLoad(path, func(string) { moves.Add(1) }, delay)
 		if left := j.Status().RemainingMs; left != time.Hour.Milliseconds() {
 			t.Fatal("restored remaining ms", left)
 		}
@@ -105,9 +109,9 @@ func TestRestoreExpiryAndUnlimited(t *testing.T) {
 		if j.Status().Enabled {
 			t.Fatal("deadline did not stop restored run")
 		}
-		before := moves
+		before := moves.Load()
 		time.Sleep(time.Minute)
-		if moves != before {
+		if moves.Load() != before {
 			t.Fatal("moved after expiry")
 		}
 		zero, on := int32(0), true
@@ -124,7 +128,7 @@ func TestRestoreExpiryAndUnlimited(t *testing.T) {
 		}
 		time.Sleep(time.Hour)
 		synctest.Wait()
-		j = testLoad(path, func(string) { t.Fatal("restarted expired run") }, delay)
+		j = testLoad(path, func(string) { t.Error("restarted expired run") }, delay)
 		if state := j.Status(); state.Enabled || state.MaxHours != 1 {
 			t.Fatal(state)
 		}

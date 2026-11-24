@@ -31,16 +31,11 @@ type AudioTransport = {
   unregister: () => void;
 };
 
-type EnableMicrophoneOptions = {
-  ensureVirtualMounted?: boolean;
-};
-
 type MicrophoneContextValue = {
   status: MicrophoneStatus;
   canEnable: boolean;
   isChecking: boolean;
   requestEnable: (beforeDialog?: () => void) => Promise<void>;
-  enable: (options?: EnableMicrophoneOptions) => Promise<boolean>;
   disable: () => Promise<void>;
   registerAudioTransport: (connection: RTCPeerConnection, sender: RTCRtpSender) => () => void;
 };
@@ -167,7 +162,7 @@ export const MicrophoneProvider = ({ children }: MicrophoneProviderProps) => {
   }, []);
 
   const enable = useCallback(
-    async (options: EnableMicrophoneOptions = {}) => {
+    async () => {
       if (statusRef.current === 'enabled') return true;
       if (statusRef.current === 'enabling') return false;
 
@@ -211,18 +206,8 @@ export const MicrophoneProvider = ({ children }: MicrophoneProviderProps) => {
           notifyDisconnected();
         };
 
-        if (options.ensureVirtualMounted) {
-          const mounted = await ensureVirtualMicrophoneMounted(isCurrent);
-          if (!mounted) {
-            clearCapture(stream, track);
-            if (generationRef.current === generation) {
-              updateStatus('disabled');
-            }
-            return false;
-          }
-        }
-
-        if (!isCurrent()) {
+        const mounted = await ensureVirtualMicrophoneMounted(isCurrent);
+        if (!mounted || !isCurrent()) {
           clearCapture(stream, track);
           if (generationRef.current === generation) {
             updateStatus('disabled');
@@ -392,12 +377,12 @@ export const MicrophoneProvider = ({ children }: MicrophoneProviderProps) => {
         setIsChecking(false);
       }
     }
-    await enable({ ensureVirtualMounted: true });
+    await enable();
   }, [canEnable, dialog, enable, notifyError]);
 
   const value = useMemo<MicrophoneContextValue>(
-    () => ({ status, canEnable, isChecking, requestEnable, enable, disable, registerAudioTransport }),
-    [status, canEnable, isChecking, requestEnable, enable, disable, registerAudioTransport]
+    () => ({ status, canEnable, isChecking, requestEnable, disable, registerAudioTransport }),
+    [status, canEnable, isChecking, requestEnable, disable, registerAudioTransport]
   );
 
   return (
@@ -407,7 +392,7 @@ export const MicrophoneProvider = ({ children }: MicrophoneProviderProps) => {
         title={t(dialog === 'mount' ? 'microphone.notMounted' : 'microphone.title')}
         open={dialog !== null}
         onOk={() => {
-          if (dialog === 'mount') void enable({ ensureVirtualMounted: true });
+          if (dialog === 'mount') void enable();
           setDialog(null);
         }}
         onCancel={() => setDialog(null)}

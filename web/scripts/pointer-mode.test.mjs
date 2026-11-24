@@ -5,6 +5,8 @@ import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
 
+import { createHookHarness } from './hook-harness.mjs';
+
 const pointerModeFile = path.resolve(import.meta.dirname, '../src/lib/pointer-mode.ts');
 const controllerFile = path.resolve(
   import.meta.dirname,
@@ -428,4 +430,56 @@ test('single-pointer selection switches the device and overrides browser-local r
   assert.equal(await performPointerModeSelection('absolute', absolute, 'relative', actions), true);
   assert.deepEqual(state.postModes, ['relative']);
   assert.deepEqual(state.appliedModes, ['relative']);
+});
+
+test('a second viewer resumes input after a dual-to-single absolute switch', async () => {
+  const pointer = loadPointerMode();
+  const component = createHookHarness();
+  const events = new EventTarget();
+  const atoms = {
+    mouseModeAtom: 'mouse', pointerModeDeviceStatusAtom: 'status', pointerModeOperationAtom: 'busy',
+    normalizeMouseMode: (mode) => mode
+  };
+  const state = { mouse: 'relative', status: pointerStatus(null, { ready: false }), busy: false };
+  const setters = Object.fromEntries(
+    Object.keys(state).map((key) => [key, (value) => { state[key] = value; }])
+  );
+  let device = pointerStatus('absolute');
+  let enabled;
+  const modules = {
+    react: component.hooks,
+    jotai: { useAtomValue: (key) => state[key], useSetAtom: (key) => setters[key] },
+    '@/jotai/mouse.ts': atoms,
+    '@/lib/localstorage.ts': { getMouseMode: () => 'relative', setMouseMode() {} },
+    '@/lib/pointer-mode.ts': { ...pointer, fetchPointerModeStatus: async () => device },
+    '@/lib/input-suspension.ts': { setBaseInputEnabled: (value) => { enabled = value; } },
+    '@/lib/websocket.ts': { client: { onConnectionState: () => () => {} } }
+  };
+  const { outputText } = ts.transpileModule(fs.readFileSync(controllerFile, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
+  });
+  const exports = {};
+  vm.runInNewContext(outputText, {
+    exports, require: (id) => modules[id], document: new EventTarget(),
+    window: Object.assign(events, { setInterval() {}, clearInterval() {} })
+  });
+  const render = () => component.render(exports.PointerModeController);
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  try {
+    render();
+    await settle();
+    render();
+    assert.equal(state.mouse, 'relative');
+    assert.equal(enabled, true);
+
+    device = pointerStatus('absolute', { singleEndpoint: true });
+    events.dispatchEvent(new Event(pointer.POINTER_MODE_SYNC_EVENT));
+    await settle();
+    assert.equal(enabled, false, 'pause while the viewer adopts the new profile');
+    render();
+    assert.equal(state.mouse, 'absolute');
+    assert.equal(enabled, true, 'resume after the new pointer is mounted');
+  } finally {
+    component.cleanup();
+  }
 });

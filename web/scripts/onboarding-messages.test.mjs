@@ -202,7 +202,6 @@ const ONBOARDING_ITEM_LABELS = [
   ['input', 'mouseJiggler', ({ t }) => t.settings.device.mouseJiggler.title],
   ['input', 'keyboard', ({ t }) => t.keyboard.title],
   ['input', 'mouse', ({ t }) => t.mouse.title],
-  ['input', 'preview', ({ t }) => t.preview.title],
   ['tools', 'image', ({ t }) => t.image.title],
   ['tools', 'script', ({ t }) => t.script.title],
   ['tools', 'terminal', ({ t }) => t.terminal.title],

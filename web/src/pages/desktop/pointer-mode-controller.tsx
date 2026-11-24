@@ -49,9 +49,8 @@ export const PointerModeController = () => {
       deviceStatusRef.current = status;
       setDeviceStatus(status);
 
-      // Relative remains browser-local. Every HID2 mode is corrected to the
-      // backend-authoritative profile without posting a browser preference.
-      if (nextLocalMode !== activeLocalMode) {
+      // With a single endpoint, every viewer must follow the device profile.
+      if (profileChanged) {
         mouseModeRef.current = nextLocalMode;
         setMouseMode(nextLocalMode);
         ls.setMouseMode(nextLocalMode);
@@ -98,16 +97,13 @@ export const PointerModeController = () => {
   }, [setMouseMode]);
 
   useEffect(() => {
+    // A remote layout change can replace the local pointer while the device
+    // stays ready and keeps reporting the same HID2 mode.
     setBaseInputEnabled(
-      deviceStatus.ready && !deviceStatus.switching && !deviceStatus.degraded && !localOperation
+      deviceStatus.ready && !deviceStatus.switching && !deviceStatus.degraded && !localOperation &&
+      mouseMode === resolveAuthoritativeMouseMode(mouseMode, deviceStatus)
     );
-  }, [
-    deviceStatus.degraded,
-    deviceStatus.mode,
-    deviceStatus.ready,
-    deviceStatus.switching,
-    localOperation
-  ]);
+  }, [deviceStatus, localOperation, mouseMode]);
 
   useEffect(() => {
     disposedRef.current = false;

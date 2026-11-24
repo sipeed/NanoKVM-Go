@@ -7,12 +7,15 @@ A NanoKVM Go+ fork for digital nomads. Use your laptop’s webcam in a call on t
 ## Nomad features
 
 - **Webcam as a USB device**
-  - **720p (1280 × 720), targeting 15–30 fps and 2–10 Mbps.** Nomad measures delivery during startup, then lowers quality when uploads fall behind and raises it as the link recovers. [Google Congestion Control background](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02)
+  - **720p (1280 × 720), targeting 15–30 fps and 2–10 Mbps.** Calibration starts at 8 Mbps and 25 fps. During a call, Nomad lowers bitrate and frame rate together when uploads fall behind and raises them as the link recovers. [Google Congestion Control background](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02)
   - **Motion JPEG (MJPEG).** Your browser compresses each camera frame as a JPEG. The Go+ sends those frames to the remote computer as a standard USB webcam stream.
   - **Start a call.** Open the dashboard over HTTPS. Enable **Settings → Device → Webcam**, then click the **Webcam** icon to start sharing. Hover over it or tap its menu arrow to choose a camera. Microphone sharing has its own control.
   - **Webcam name.** Change **Settings → Device → Advanced → USB Webcam Name** to set the name reported to the host.
 - **Mouse Jiggler.** The Go+ can keep the remote host awake with timed USB mouse movements, even after you close the browser. [Controls and movement patterns](#mouse-jiggler)
-- **Activity indicators.** The menu bar shows when the microphone, webcam or jiggler is active.
+- **Toolbar shortcuts.** Click **Screen** to toggle view-only mode, **Volume** to mute or restore the last audible level, and **Terminal** to open a new tab. Open **Screen → Cropping** to detect borders automatically, select an area manually, or turn cropping off. Hover over a toolbar menu for its controls or use its arrow on a touchscreen.
+- **Activate on Connect.** Under **Settings → Appearance**, choose whether this browser starts volume, microphone, webcam or Mouse Jiggler when it connects or reconnects. Each preference works even if its toolbar icon is hidden. The webcam must be enabled on the Go+. Volume and microphone use WebRTC, and the browser still controls capture permissions.
+- **USB endpoint usage.** See how many of the seven USB IN endpoints are free and switch to one USB pointer to make room for another device. [Endpoint costs and combinations](#usb-limits)
+- **Activity indicators.** Visible toolbar icons show when the microphone, webcam or jiggler is active. If a sharing icon is hidden, use **Stop sharing** in Appearance.
 
 **Defaults**
 
@@ -33,15 +36,13 @@ A NanoKVM Go+ fork for digital nomads. Use your laptop’s webcam in a call on t
 | All viewers have disconnected within the last five minutes | The same quick nudge. |
 | All viewers have been disconnected for more than five minutes | A random, smooth arc or hook lasting **5–8 seconds**. Reconnecting interrupts the curve. |
 
-Curves send pointer movement only, with no clicks or scrolling. They ease into and out of each bend and scale to the HDMI display size. The latest build #2 adjustment gives about **50% more travel and 50% higher average speed** than the preceding curve implementation over the same duration. In the outer quarter of either screen axis, the path steers inward on that axis. The Go+ estimates the cursor position from the absolute coordinates and relative movements it sends. Host pointer acceleration and a mouse connected directly to the host can make that estimate drift.
-
-**Preview curves while connected.** With the jiggler on, run `touch /run/nanokvm-jiggler-curve-preview` in an administrator shell on the **Go+ appliance**. Keep the viewer open and leave the controls idle for 30–60 seconds to see a curve. After a curve finishes, `cat /run/nanokvm-jiggler-curve-preview` shows its pointer report count and duration. Run `rm /run/nanokvm-jiggler-curve-preview` to restore the five-minute rule. Rebooting the Go+ also clears the preview.
+Curves send pointer movement only, with no clicks or scrolling. They ease into and out of each bend and scale to the HDMI display size. In the outer quarter of either screen axis, the path steers inward on that axis. The Go+ estimates the cursor position from the absolute coordinates and relative movements it sends. Host pointer acceleration and a mouse connected directly to the host can make that estimate drift.
 
 ## USB limits
 
 The Go+ has **7 USB IN endpoints**. **Settings → Device** shows the used and free counts above Webcam. By default, the keyboard and two pointer interfaces use **1 each**, leaving **4** for optional devices.
 
-**Mouse → Mouse mode → Use one USB pointer endpoint** frees one more endpoint. Choose **Follow Mouse** for absolute positioning or **Exclusive Mouse** for relative movement. The Android stylus and multi-touch options also work as single-endpoint profiles. Changing the active profile briefly reconnects USB for all viewers. Free an endpoint before restoring both pointers if the counter reads 7 of 7.
+**Mouse → Mouse mode → Use one USB pointer endpoint** frees one more endpoint. Choose **Follow Mouse** for absolute positioning or **Exclusive Mouse** for relative movement. The jiggler uses whichever mouse endpoint is available. With the single-endpoint Android stylus or multi-touch profile, it pauses movement until a mouse endpoint is available again. Changing the active profile briefly reconnects USB for all viewers. Free an endpoint before restoring both pointers if the counter reads 7 of 7.
 
 | Feature | IN endpoints |
 | --- | ---: |
