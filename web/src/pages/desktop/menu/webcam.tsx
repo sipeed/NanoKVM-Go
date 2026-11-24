@@ -218,8 +218,17 @@ export function Webcam({ share }: { share: ReturnType<typeof useWebcamShare> }) 
     <MenuItem
       title={t('webcam.title', 'Webcam')}
       icon={
-        hasCapture ? <VideoIcon size={18} className="text-green-400" /> : <VideoOffIcon size={18} />
+        active ? <VideoIcon size={18} className="text-green-400" /> : <VideoOffIcon size={18} />
       }
+      action={{
+        pressed: active,
+        disabled: listing,
+        toggle: () => {
+          setListError('');
+          if (active) share.stop();
+          else void share.start(deviceId);
+        }
+      }}
       onOpenChange={setOpen}
       content={
         <div className="flex w-60 flex-col gap-2">
@@ -250,17 +259,6 @@ export function Webcam({ share }: { share: ReturnType<typeof useWebcamShare> }) 
                 </option>
               ))}
             </select>
-            <Button
-              className="shrink-0"
-              disabled={listing}
-              onClick={() => {
-                setListError('');
-                if (active) share.stop();
-                else void share.start(deviceId);
-              }}
-            >
-              {active ? t('webcam.stop', 'Stop') : t('webcam.start', 'Start')}
-            </Button>
           </div>
           <div aria-live="polite" className="text-xs text-neutral-400 empty:hidden">
             {listError || share.error || statusText}

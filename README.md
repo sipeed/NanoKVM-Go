@@ -9,7 +9,7 @@ A NanoKVM Go+ fork for digital nomads. Use your laptop’s webcam in a call on t
 - **Webcam as a USB device**
   - **720p (1280 × 720), targeting 15–30 fps and 2–10 Mbps.** Nomad measures delivery during startup, then lowers quality when uploads fall behind and raises it as the link recovers. [Google Congestion Control background](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02)
   - **Motion JPEG (MJPEG).** Your browser compresses each camera frame as a JPEG. The Go+ sends those frames to the remote computer as a standard USB webcam stream.
-  - **Start a call.** Open the dashboard over HTTPS. Enable **Settings → Device → Webcam**, then choose your camera in the **Webcam** menu and click **Start**. Microphone sharing has its own control.
+  - **Start a call.** Open the dashboard over HTTPS. Enable **Settings → Device → Webcam**, then click the **Webcam** icon to start sharing. Hover over it or tap its menu arrow to choose a camera. Microphone sharing has its own control.
   - **Webcam name.** Change **Settings → Device → Advanced → USB Webcam Name** to set the name reported to the host.
 - **Mouse Jiggler in the menu bar.** Hidden by default. Enable the shortcut under **Settings → Appearance**, then click it to toggle movement using your last mode.
 - **Activity indicators.** The menu bar shows when the microphone, webcam or jiggler is active.
@@ -33,7 +33,7 @@ The Go+ has **7 USB IN endpoints**. The keyboard and two pointer interfaces use 
 
 - **Webcam + Network** fills all 7. Adding Audio or Disk exceeds the limit.
 - **Webcam + Audio** uses 6. One disk fits the software check. Using all three together still needs a host test.
-- **Switching devices.** Eject and detach mounted media before changing Webcam. Turn **Settings → Device → Webcam** off to free its endpoints. **Stop** in the menu bar only stops sharing.
+- **Switching devices.** Eject and detach mounted media before changing Webcam. Turn **Settings → Device → Webcam** off to free its endpoints. Click the toolbar webcam icon again to stop sharing.
 
 ## Install build
 

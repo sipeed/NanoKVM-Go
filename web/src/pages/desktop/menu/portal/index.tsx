@@ -15,6 +15,7 @@ import clsx from 'clsx';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { ScanSearchIcon, SmartphoneIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useMediaQuery } from 'react-responsive';
 
 import { setPortalConfig } from '@/api/vm.ts';
 import { feedback } from '@/lib/feedback.tsx';
@@ -34,6 +35,7 @@ type PortalProps = {
 export const Portal = ({ tooltipPlacement = 'bottom' }: PortalProps) => {
   const { t } = useTranslation();
   const [config, setConfig] = useAtom(portalConfigAtom);
+  const canHover = useMediaQuery({ query: '(hover: hover)' });
   const phase = useAtomValue(portalDetectionPhaseAtom);
   const setSelecting = useSetAtom(portalSelectingAtom);
   const setKeyboardEnabled = useSetAtom(isKeyboardEnableAtom);
@@ -282,7 +284,9 @@ export const Portal = ({ tooltipPlacement = 'bottom' }: PortalProps) => {
   return (
     <>
       <Popover
-        trigger="click"
+        trigger={canHover ? ['hover', 'click'] : 'click'}
+        mouseEnterDelay={0.18}
+        mouseLeaveDelay={0.3}
         arrow={false}
         placement={
           tooltipPlacement === 'left'

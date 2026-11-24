@@ -65,3 +65,14 @@ test('ignores invalid saved and requested volume values', () => {
     assert.equal(values.get('nano-kvm-video-volume'), '37');
   }
 });
+
+test('mute restores the last audible level, including a level saved before the toolbar update', () => {
+  const { localStorage } = loadLocalStorageModule([['nano-kvm-video-volume', '37']]);
+  localStorage.setSavedVideoVolume(0);
+  assert.equal(localStorage.getUnmuteVolume(), 37);
+  localStorage.setSavedVideoVolume(72);
+  localStorage.setSavedVideoVolume(0);
+  localStorage.setSavedVideoVolume(0);
+  assert.equal(localStorage.getUnmuteVolume(), 72);
+  assert.equal(loadLocalStorageModule().localStorage.getUnmuteVolume(), 50);
+});

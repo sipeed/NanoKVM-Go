@@ -16,6 +16,7 @@ const MENU_DISABLED_ITEMS_KEY = 'nano-kvm-menu-disabled-items';
 const MENU_AUTO_HIDE_KEY = 'nano-kvm-menu-auto-hide';
 const POWER_CONFIRM_KEY = 'nano-kvm-power-confirm';
 const VIDEO_VOLUME_KEY = 'nano-kvm-video-volume';
+const LAST_AUDIBLE_VOLUME_KEY = 'nano-kvm-last-audible-volume';
 const PORTAL_MODE_KEY = 'nano-kvm-portal-mode';
 const WIFI_PORTAL_VIEW_MODE_KEY = 'nanokvm-wifi-view-mode';
 const PORTAL_BORDER_ENABLED_KEY = 'nano-kvm-portal-border-enabled';
@@ -239,17 +240,28 @@ export function setPowerConfirm(enabled: boolean) {
   localStorage.setItem(POWER_CONFIRM_KEY, String(enabled));
 }
 
-export function getSavedVideoVolume(): number | null {
-  const stored = localStorage.getItem(VIDEO_VOLUME_KEY);
+function readVolume(key: string): number | null {
+  const stored = localStorage.getItem(key);
   if (!stored?.trim()) return null;
 
   const volume = Number(stored);
   return Number.isFinite(volume) && volume >= 0 && volume <= 100 ? volume : null;
 }
 
+export function getSavedVideoVolume(): number | null {
+  return readVolume(VIDEO_VOLUME_KEY);
+}
+
+export function getUnmuteVolume(): number {
+  return readVolume(LAST_AUDIBLE_VOLUME_KEY) || 50;
+}
+
 export function setSavedVideoVolume(volume: number) {
   if (!Number.isFinite(volume) || volume < 0 || volume > 100) return;
 
+  // Remember the previous level when muting a volume saved by an older build.
+  const audible = volume || getSavedVideoVolume();
+  if (audible) localStorage.setItem(LAST_AUDIBLE_VOLUME_KEY, String(audible));
   localStorage.setItem(VIDEO_VOLUME_KEY, String(volume));
 }
 

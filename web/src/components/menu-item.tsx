@@ -14,8 +14,7 @@ import {
 } from 'react';
 import { Popover, Tooltip, type PopoverProps } from 'antd';
 import clsx from 'clsx';
-import { useSetAtom } from 'jotai';
-import { ChevronLeftIcon, XIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronLeftIcon, XIcon } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useMediaQuery } from 'react-responsive';
@@ -24,7 +23,6 @@ import {
   LAYER_DESKTOP_MENU_POPOVER,
   LAYER_MOBILE_MENU_POPOVER
 } from '@/lib/layers.ts';
-import { submenuOpenCountAtom } from '@/jotai/settings.ts';
 import { useSubmenuOpenCounter } from '@/hooks/useSubmenuOpenCounter.ts';
 
 import {
@@ -70,6 +68,7 @@ type MenuItemProps = {
   className?: string;
   disabled?: boolean;
   fresh?: boolean;
+  action?: { label?: string; pressed: boolean; disabled?: boolean; toggle: () => void };
   mobilePlacement?: 'left' | 'right';
   mobilePopoverClassName?: string;
   onOpenChange?: (open: boolean) => void;
@@ -349,12 +348,16 @@ export const MenuItem = ({
   className,
   disabled = false,
   fresh,
+  action,
   mobilePlacement,
   mobilePopoverClassName,
   onOpenChange
 }: MenuItemProps) => {
+  const { t } = useTranslation();
   const isBigScreen = useMediaQuery({ minWidth: 640 });
-  const setSubmenuOpenCount = useSetAtom(submenuOpenCountAtom);
+  const canHover = useMediaQuery({ query: '(hover: hover)' });
+  const hasTouch = useMediaQuery({ query: '(any-pointer: coarse)' });
+  const { setOpen: countOpen } = useSubmenuOpenCounter();
   const mobileMenuItemContext = useContext(MobileMenuItemContext);
 
   const effectiveMobilePlacement = mobilePlacement ?? mobileMenuItemContext.mobilePlacement;
@@ -363,6 +366,7 @@ export const MenuItem = ({
   const dismissMenuKey = mobileMenuItemContext.dismissMenuKey;
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const previousDismissMenuKey = useRef(dismissMenuKey);
 
@@ -373,9 +377,10 @@ export const MenuItem = ({
 
     setIsTooltipOpen(false);
     setIsPopoverOpen(false);
-    setSubmenuOpenCount((count) => Math.max(0, count - 1));
+    setIsPinned(false);
+    countOpen(false);
     onOpenChange?.(false);
-  }, [isPopoverOpen, onOpenChange, setSubmenuOpenCount]);
+  }, [isPopoverOpen, onOpenChange, countOpen]);
 
   useEffect(() => {
     if (!disabled) {
@@ -397,9 +402,9 @@ export const MenuItem = ({
   function togglePopover(open: boolean) {
     setIsTooltipOpen(false);
     setIsPopoverOpen(open);
+    if (!open) setIsPinned(false);
 
-    // Update global submenu count
-    setSubmenuOpenCount((count) => (open ? count + 1 : Math.max(0, count - 1)));
+    countOpen(open);
 
     if (onOpenChange) {
       onOpenChange(open);
@@ -433,6 +438,12 @@ export const MenuItem = ({
     content
   );
 
+  const buttonClassName = clsx(
+    'flex size-[30px] items-center justify-center rounded text-neutral-300',
+    disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-neutral-700/80 hover:text-white',
+    className
+  );
+
   const trigger = (
     <Tooltip
       title={title}
@@ -443,16 +454,43 @@ export const MenuItem = ({
       onOpenChange={disabled ? undefined : toggleTooltip}
     >
       <div
-        aria-disabled={disabled}
-        className={clsx(
-          'flex h-[30px] w-[30px] items-center justify-center rounded text-neutral-300',
-          disabled
-            ? 'cursor-not-allowed text-neutral-600 opacity-45'
-            : 'cursor-pointer hover:bg-neutral-700/80 hover:text-white',
-          className
-        )}
+        className="flex items-center"
+        onKeyDown={(event) => event.stopPropagation()}
+        onKeyUp={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.preventDefault()}
       >
-        {icon}
+        <ButtonBase
+          className={buttonClassName}
+          disabled={disabled || action?.disabled}
+          aria-label={action?.label ?? title}
+          aria-pressed={action?.pressed}
+          aria-expanded={action ? undefined : isPopoverOpen}
+          onClick={(event) => {
+            if (action) {
+              event.stopPropagation();
+              action.toggle();
+            } else if (canHover && !isPinned) {
+              event.stopPropagation();
+              setIsPinned(true);
+              if (!isPopoverOpen) togglePopover(true);
+            }
+          }}
+        >
+          {icon}
+        </ButtonBase>
+        {action && (
+          <ButtonBase
+            aria-label={`${title} · ${t('settings.title')}`}
+            aria-expanded={isPopoverOpen}
+            aria-haspopup="dialog"
+            className={clsx(
+              'flex h-[30px] w-5 items-center justify-center rounded text-neutral-300 hover:bg-neutral-700/80',
+              canHover && !hasTouch && 'sr-only focus-visible:not-sr-only'
+            )}
+          >
+            <ChevronDownIcon size={14} />
+          </ButtonBase>
+        )}
       </div>
     </Tooltip>
   );
@@ -465,7 +503,9 @@ export const MenuItem = ({
     <Popover
       content={popoverContent}
       arrow={false}
-      trigger="click"
+      trigger={canHover && !isPinned ? ['hover', 'click'] : 'click'}
+      mouseEnterDelay={0.18}
+      mouseLeaveDelay={0.3}
       zIndex={effectiveMobilePlacement ? mobileMenuPopoverZIndex : desktopMenuPopoverZIndex}
       placement={popoverPlacement}
       overlayClassName={effectiveMobilePopoverClassName}

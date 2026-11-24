@@ -93,7 +93,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       display: {
         title: 'Display',
         items: {
-          screen: '"Screen" — adjust resolution, quality, and frame rate.',
+          screen: '"Screen" — click to toggle view-only mode. Open its menu for display settings.',
           portal: '"Portal" — crop the view to the area that matters.',
           pictureInPicture:
             '"Picture-in-Picture" — keep the desktop in a floating window while you use other apps.'

@@ -272,7 +272,6 @@ test('tour steps type-check against the i18n module shape', () => {
     'mouseJiggler',
     'keyboard',
     'mouse',
-    'preview',
     'image',
     'script',
     'terminal',

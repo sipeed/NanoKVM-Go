@@ -112,7 +112,7 @@ test('default portrait rail yields welcome, rail, grouped steps, finish in order
   assert.deepEqual(stepByKey(steps, 'input'), {
     key: 'input',
     anchor: 'input',
-    items: ['keyboard', 'mouse', 'preview', 'mouseJiggler']
+    items: ['keyboard', 'mouse', 'mouseJiggler']
   });
   assert.deepEqual(stepByKey(steps, 'tools'), {
     key: 'tools',

@@ -4,6 +4,7 @@ Notable changes to NanoKVM-Go, with the newest version first.
 
 ## NanoKVM-Go Nomad 0.2.7, build 2 (unreleased)
 
+- Hover over toolbar menus to see their controls. Click Webcam to start or stop sharing, Volume to mute or restore the previous level, and Screen to toggle view-only mode. Terminal opens directly.
 - Switch the USB webcam to 1280 × 720 MJPEG and raise the adaptive bitrate ceiling to 10 Mbps. Auto starts at 8 Mbps and 25 fps, with a range of 2–10 Mbps and 15–30 fps.
 
 ## NanoKVM-Go Nomad 0.2.7, build 1

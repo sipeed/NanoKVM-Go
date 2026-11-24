@@ -48,11 +48,11 @@ export function deriveOnboardingSteps(input: OnboardingStepInput): OnboardingSte
     steps.push({ key: 'media', group: 'media', items: mediaItems });
   }
 
-  // input: Keyboard, Mouse, and Preview are unconditional.
+  // input: Keyboard and Mouse are unconditional.
   steps.push({
     key: 'input',
     group: 'input',
-    items: ['keyboard', 'mouse', 'preview', ...(isEnabled('mouseJiggler') ? ['mouseJiggler'] : [])]
+    items: ['keyboard', 'mouse', ...(isEnabled('mouseJiggler') ? ['mouseJiggler'] : [])]
   });
 
   // tools: each tool is gated individually; the step exists when any shows.

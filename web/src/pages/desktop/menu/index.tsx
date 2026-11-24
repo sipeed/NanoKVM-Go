@@ -33,7 +33,6 @@ import { MouseJigglerButton } from './mouse-jiggler.tsx';
 import { Collapse, Expand } from './operations';
 import { PictureInPicture } from './picture-in-picture';
 import { Portal } from './portal';
-import { Preview } from './preview';
 import { Screen } from './screen';
 import { Script } from './script';
 import { Settings } from './settings';
@@ -334,7 +333,6 @@ export const Menu = () => {
         <>
           <Keyboard key="keyboard" />
           <Mouse key="mouse" />
-          <Preview key="preview" />
           {isEnabled('mouseJiggler') && <MouseJigglerButton tooltipPlacement={tooltipPlacement} />}
         </>
       )
@@ -348,7 +346,7 @@ export const Menu = () => {
           <>
             {isEnabled('image') && <Storage key="image" />}
             {isEnabled('script') && <Script key="script" />}
-            {isEnabled('terminal') && <Terminal key="terminal" />}
+            {isEnabled('terminal') && <Terminal key="terminal" tooltipPlacement={tooltipPlacement} />}
             {isEnabled('wol') && <Wol key="wol" />}
           </>
         )
