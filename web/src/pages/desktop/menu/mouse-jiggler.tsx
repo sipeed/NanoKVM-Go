@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from 'react';
-import { InputNumber } from 'antd';
+import { ConfigProvider, InputNumber } from 'antd';
 import { MousePointerClickIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -44,21 +44,25 @@ export function MouseJigglerButton() {
         >
           <label className="flex items-center gap-2 whitespace-nowrap">
             {t('settings.device.mouseJiggler.maxRuntime', 'max runtime:')}
-            <InputNumber
-              size="small"
-              aria-label={t('settings.device.mouseJiggler.runtimeHours', 'Max runtime in hours')}
-              min={0}
-              max={2_147_483_647}
-              step={1}
-              precision={0}
-              value={hours}
-              disabled={!config}
-              onChange={(value) => {
-                if (value != null && Number.isInteger(value) && value >= 0 && value <= 2_147_483_647 && value !== hours) {
-                  void update({ maxHours: value });
-                }
-              }}
-            />
+            <ConfigProvider theme={{ components: { InputNumber: { controlWidth: 54, handleVisible: true } } }}>
+              <InputNumber
+                size="small"
+                className="[&_.ant-input-number-input-wrap]:me-[22px]"
+                aria-label={t('settings.device.mouseJiggler.runtimeHours', 'Max runtime in hours')}
+                min={0}
+                max={2_147_483_647}
+                step={1}
+                precision={0}
+                value={hours}
+                disabled={!config}
+                onChange={(value) => {
+                  if (value != null && Number.isInteger(value) && value >= 0 && value <= 2_147_483_647 && value !== hours) {
+                    void update({ maxHours: value });
+                  }
+                }}
+              />
+            </ConfigProvider>
+            <span>{t('settings.device.mouseJiggler.hoursUnit', 'hour(s).')}</span>
           </label>
           {hours != null && (
             <span role="timer" className="text-xs tabular-nums text-neutral-400">
