@@ -105,10 +105,33 @@ func curveMovement(mode string, start point, width, height int) *movement {
 
 	m := &movement{duration: time.Duration(seconds * float64(time.Second))}
 	steps := int(math.Ceil(seconds * 40))
-	lastX, lastY := 0, 0
-	for i := 0; i <= steps; i++ {
+	// Scale the sampled stroke after choosing its duration, so the larger
+	// movement also travels faster. Fit the actual path into the available room.
+	points := make([]point, steps+1)
+	var reach point
+	for i := range points {
 		t := float64(i) / float64(steps)
-		p := at(t * t * (3 - 2*t)) // Accelerate into the bend and slow down at the endpoint.
+		p := at(t * t * (3 - 2*t))
+		points[i] = p
+		reach.x = max(reach.x, math.Abs(p.x))
+		reach.y = max(reach.y, math.Abs(p.y))
+	}
+	// Some strokes are edge-limited. This ceiling gives about 1.5x mean travel after fitting.
+	fit := func(x, y float64) float64 { return min(1.88, 0.93*roomX/x, 0.93*roomY/y) }
+	stretch := fit(reach.x, reach.y)
+	turned := fit(reach.y, reach.x)
+	turn := turned > stretch
+	if turn {
+		stretch = turned
+	}
+
+	lastX, lastY := 0, 0
+	for _, p := range points {
+		if turn {
+			p = point{math.Copysign(p.y, dx), math.Copysign(p.x, dy)}
+		}
+		p.x *= stretch
+		p.y *= stretch
 		x, y := int(math.Round(p.x)), int(math.Round(p.y))
 		if mode == "absolute" {
 			m.reports = append(m.reports, absoluteReport(int(math.Round((start.x+p.x)*32767/screenX)), int(math.Round((start.y+p.y)*32767/screenY))))
