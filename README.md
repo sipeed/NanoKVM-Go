@@ -11,13 +11,31 @@ A NanoKVM Go+ fork for digital nomads. Use your laptop’s webcam in a call on t
   - **Motion JPEG (MJPEG).** Your browser compresses each camera frame as a JPEG. The Go+ sends those frames to the remote computer as a standard USB webcam stream.
   - **Start a call.** Open the dashboard over HTTPS. Enable **Settings → Device → Webcam**, then click the **Webcam** icon to start sharing. Hover over it or tap its menu arrow to choose a camera. Microphone sharing has its own control.
   - **Webcam name.** Change **Settings → Device → Advanced → USB Webcam Name** to set the name reported to the host.
-- **Mouse Jiggler in the menu bar.** Hidden by default. Enable the shortcut under **Settings → Appearance**, then click it to toggle movement using your last mode. Set **max runtime** in whole hours in the jiggler menu. The default is 8 hours. Set it to **0** to run indefinitely. Changing the limit while the jiggler is on starts a fresh countdown for the selected number of hours. After all desktop viewers have been disconnected for more than five minutes, each idle movement follows a random curve for 5–8 seconds. The curves scale with the display and turn inward near estimated screen edges. Relative mode estimates the cursor from the movements NanoKVM sends. Reconnecting or sending keyboard or mouse input interrupts the curve.
+- **Mouse Jiggler.** The Go+ can keep the remote host awake with timed USB mouse movements, even after you close the browser. [Controls and movement patterns](#mouse-jiggler)
 - **Activity indicators.** The menu bar shows when the microphone, webcam or jiggler is active.
 
 **Defaults**
 
 - A stock Go+ starts with keyboard, mouse, absolute pointer and USB networking enabled. Webcam, Virtual Disk and USB audio are optional.
 - Upgrades preserve your monitor EDID, timezone, USB identity, Webcam setting and saved toolbar layout.
+
+## Mouse Jiggler
+
+**Start or stop.** The jiggler is off by default. Turn it on under **Settings → Device → Mouse Jiggler**. **Relative Mode** (the default) sends mouse displacements. **Absolute Mode** sends screen coordinates. To add the shortcut, enable **Mouse Jiggler** under **Settings → Appearance**. Click its icon to toggle the jiggler using the last selected mode. A green icon means it is running.
+
+**Set the runtime.** Hover over the toolbar icon or tap its menu arrow on a touchscreen. Type a whole number of hours into **max runtime** or use the arrows. Edits save automatically. The default is **8 hours**. Set **0** for an unlimited run. The menu shows `HH:mm:ss remaining` or `∞ remaining`. Changing a running timer to **6** immediately starts a fresh six-hour countdown. Turning the jiggler off and back on also starts a fresh run. Closing the browser leaves it running. After a device restart, a timed run resumes only for the time left before its saved deadline.
+
+**When the mouse moves.** After 30 seconds without keyboard or mouse input through the Go+, the jiggler picks a fresh delay of 0–30 seconds. Movement therefore starts after **30–60 seconds of inactivity**. New remote input interrupts a movement or cancels a pending one and starts the idle wait again. The maximum runtime continues counting down throughout.
+
+| Desktop viewer connections | Movement at the next idle trigger |
+| --- | --- |
+| Any desktop viewer is connected, including a background tab | A quick nudge. Relative mode moves out and back. Absolute mode sends two nearby positions near the screen center. |
+| All viewers have disconnected within the last five minutes | The same quick nudge. |
+| All viewers have been disconnected for more than five minutes | A random, smooth arc or hook lasting **5–8 seconds**. Reconnecting interrupts the curve. |
+
+Curves send pointer movement only, with no clicks or scrolling. They ease into and out of each bend and scale to the HDMI display size. The latest build #2 adjustment gives about **50% more travel and 50% higher average speed** than the preceding curve implementation over the same duration. In the outer quarter of either screen axis, the path steers inward on that axis. The Go+ estimates the cursor position from the absolute coordinates and relative movements it sends. Host pointer acceleration and a mouse connected directly to the host can make that estimate drift.
+
+**Preview curves while connected.** With the jiggler on, run `touch /run/nanokvm-jiggler-curve-preview` in an administrator shell on the **Go+ appliance**. Keep the viewer open and leave the controls idle for 30–60 seconds to see a curve. After a curve finishes, `cat /run/nanokvm-jiggler-curve-preview` shows its pointer report count and duration. Run `rm /run/nanokvm-jiggler-curve-preview` to restore the five-minute rule. Rebooting the Go+ also clears the preview.
 
 ## USB limits
 
