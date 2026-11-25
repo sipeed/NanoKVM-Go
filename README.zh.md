@@ -23,7 +23,7 @@ NanoKVM-go-Nomad 是 Sipeed NanoKVM-Go 的分支，适用于 **NanoKVM Go 系列
 
 Go 系列还提供完善的 AI 集成：可选的 MCP Server 让兼容 MCP 的 AI 工具获取画面并发送键鼠操作；Go+ 额外配备端侧 NPU、记忆织网与屏幕延时回放，可从画面变化中提取可检索的文字与上下文。
 
-## NanoKVM-Go Nomad 0.2.7, build 2 的改动
+## Nomad 功能
 
 **Go+ 远程摄像头。** 浏览器所在电脑的摄像头可作为标准 USB 摄像头提供给被控电脑。USB 端采用 1280 × 720 MJPEG，帧率为 30 fps。安装支持 UVC 的 Nomad 内核后，通过 HTTPS 打开控制台，在 **Settings → Device → Webcam** 中启用摄像头。切换时 USB 设备会重新连接。标准更新包含摄像头内核、脚本和视频帧输出程序。在运行 v1.0.10 固件的 Go+ 上，通过控制台上传更新，内核更换后重启一次。[内核补丁](support/patches/maix_ax620e_sdk_kernel/README.md)
 
@@ -31,7 +31,7 @@ Go 系列还提供完善的 AI 集成：可选的 MCP Server 让兼容 MCP 的 A
 
 使用配套内核时，USB 摄像头默认使用驱动提供的通用名称。可在 **Settings → Device → Advanced → USB Webcam Name** 中修改被控电脑看到的名称，下次启用摄像头或重启 Go+ 时生效。
 
-**EDID 配置文件。** Build 2 更新了五个内置显示配置文件。在 **Settings → Screen → EDID** 中选择配置后，Go+ 会向被控电脑报告该配置中记录的显示器名称和支持的显示模式，切换时两者始终对应。为简化设置，Build 2 移除了单独的 **Monitor Name** 选项。
+在 **Settings → Screen → EDID** 中选择配置即可同时设置显示器名称和显示模式，无需单独设置 **Monitor Name**。
 
 **菜单栏。** 初始工具栏沿用上游默认设置，鼠标抖动器快捷入口默认隐藏，可在外观设置中启用。启用 USB 摄像头后会显示摄像头快捷入口。音量未静音、摄像头已开启或鼠标抖动器已启用时，相应图标显示绿色。点击鼠标抖动器图标即可按上次选用的模式启动或停止。点击 **Screen** 可切换只读模式，在 **Screen → Cropping** 中可选择自动裁剪、手动选区或关闭裁剪。点击音量图标可静音或恢复之前的音量，点击终端图标可在新标签页中打开终端。
 
