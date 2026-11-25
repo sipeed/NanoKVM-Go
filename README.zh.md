@@ -4,6 +4,7 @@
 
 ## 控制台
 
+- **菜单栏。** 点击 **Screen** 切换只读模式，点击 **Volume** 静音或恢复音量，点击 **Terminal** 在新标签页打开终端。将指针悬停在图标上或轻点旁边的箭头，可查看更多选项。
 - **摄像头。** 通过 HTTPS 打开控制台，在 **Settings → Device → Webcam** 中启用摄像头，再点击工具栏的 **Webcam** 开始共享。视频流会根据上行带宽自动调整。[摄像头指南](docs/remote-webcam.md)
 - **显示器。** 在 **Settings → Screen → EDID** 中选择配置，即可同时设置显示器名称和支持的显示模式，无需单独设置 **Monitor Name**。
 - **鼠标抖动器。** 在 **Settings → Device** 中启用 **Mouse Jiggler**，关闭浏览器后仍可保持远程电脑唤醒。默认运行 8 小时。

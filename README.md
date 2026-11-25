@@ -4,6 +4,7 @@ Nomad lets you use your laptop’s webcam in calls on a remote computer connecte
 
 ## Dashboard controls
 
+- **Menu bar.** Click **Screen** to toggle view-only mode, **Volume** to mute or unmute, or **Terminal** to open a new tab. Hover over an icon or tap its arrow for more options.
 - **Webcam.** Open the dashboard over HTTPS, enable **Settings → Device → Webcam**, then click **Webcam** on the toolbar to share. The stream adapts to your upload speed. [Webcam guide](docs/remote-webcam.md)
 - **Display.** Choose a profile under **Settings → Screen → EDID**. It sets the monitor name and supported display modes together, so there’s no separate **Monitor Name** setting.
 - **Mouse Jiggler.** Enable it under **Settings → Device** to keep the remote computer awake after you close the browser. The default runtime is 8 hours.
