@@ -11,6 +11,7 @@ A NanoKVM Go+ fork for digital nomads. Use your laptop’s webcam in a call on t
   - **Motion JPEG (MJPEG).** Your browser compresses each camera frame as a JPEG. The Go+ sends those frames to the remote computer as a standard USB webcam stream.
   - **Start a call.** Open the dashboard over HTTPS. Enable **Settings → Device → Webcam**, then click the **Webcam** icon to start sharing. Hover over it or tap its menu arrow to choose a camera. Microphone sharing has its own control.
   - **Webcam name.** Change **Settings → Device → Advanced → USB Webcam Name** to set the name reported to the host.
+- **EDID profiles.** Build 2 updates the five built-in display profiles. Choose a profile under **Settings → Screen → EDID**. The Go+ reports both the monitor name and the supported display modes from that profile, keeping them consistent when you switch. To simplify setup, build 2 removes the separate **Monitor Name** setting.
 - **Mouse Jiggler.** The Go+ can keep the remote host awake with timed USB mouse movements, even after you close the browser. [Controls and movement patterns](#mouse-jiggler)
 - **Toolbar shortcuts.** Click **Screen** to toggle view-only mode, **Volume** to mute or restore the last audible level, and **Terminal** to open a new tab. Open **Screen → Cropping** to detect borders automatically, select an area manually, or turn cropping off. Hover over a toolbar menu for its controls or use its arrow on a touchscreen.
 - **Activate on Connect.** Under **Settings → Appearance**, choose whether this browser starts volume, microphone, webcam or Mouse Jiggler when it connects or reconnects. Each preference works even if its toolbar icon is hidden. The webcam must be enabled on the Go+. Volume and microphone use WebRTC, and the browser still controls capture permissions.
@@ -20,7 +21,7 @@ A NanoKVM Go+ fork for digital nomads. Use your laptop’s webcam in a call on t
 **Defaults**
 
 - A stock Go+ starts with keyboard, mouse, absolute pointer and USB networking enabled. Webcam, Virtual Disk and USB audio are optional.
-- Upgrades preserve your monitor EDID, timezone, USB identity, Webcam setting and saved toolbar layout.
+- Upgrades preserve your selected EDID profile, timezone, USB identity, Webcam setting and saved toolbar layout.
 
 ## Mouse Jiggler
 
