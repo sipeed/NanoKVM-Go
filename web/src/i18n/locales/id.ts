@@ -698,15 +698,6 @@ const id = {
           default: 'Bawaan',
           custom: 'Kustom',
           document: 'Dokumen',
-          monitorName: 'Nama Monitor',
-          monitorNameDescription:
-            'Maksimal 13 karakter ASCII yang dapat dicetak; kosongkan untuk menggunakan nama asli dari EDID',
-          monitorNamePlaceholder: 'Gunakan nama EDID asli',
-          monitorNameApply: 'Terapkan',
-          monitorNameInvalid: 'Masukkan tidak lebih dari 13 karakter ASCII yang dapat dicetak',
-          monitorNameUnsupported: 'EDID saat ini tidak mendukung penggantian nama monitor',
-          monitorNameLoadFailed: 'Gagal memuat nama monitor',
-          monitorNameUpdateFailed: 'Gagal memperbarui nama monitor',
           powerConfirmTitle: 'Konfirmasi sebelum memperbarui EDID',
           powerConfirmDescription:
             'Sambungkan daya PD terlebih dahulu. Memperbarui EDID dapat memutus layar sebentar; jika perangkat tidak dapat mendeteksi layar dengan benar setelahnya, mulai ulang secara manual.',

@@ -642,17 +642,6 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       if (edid) state.stream.edid = edid;
       return ok({ edid: state.stream.edid });
     }),
-    http.get(`${origin}/api/vm/edid/monitor-name`, () =>
-      ok({ monitorName: state.stream.monitorName })
-    ),
-    http.post(`${origin}/api/vm/edid/monitor-name`, async ({ request }) => {
-      const monitorName = readString(await readJsonObject(request), 'monitorName');
-      if (monitorName === null || !/^[\x20-\x7e]{0,13}$/.test(monitorName)) {
-        return fail(-1, 'invalid monitor name', { monitorName: state.stream.monitorName });
-      }
-      state.stream.monitorName = monitorName;
-      return ok({ monitorName: state.stream.monitorName });
-    }),
     http.get(`${origin}/api/vm/edid/custom`, () => ok({ edidList: state.stream.customEdids })),
     http.post(`${origin}/api/vm/edid/delete`, async ({ request }) => {
       const edid = readString(await readJsonObject(request), 'edid');

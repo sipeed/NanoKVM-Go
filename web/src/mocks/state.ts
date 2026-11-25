@@ -184,7 +184,6 @@ export type MockState = {
     fps: number;
     mode: string;
     edid: string;
-    monitorName: string;
     customEdids: string[];
   };
   vm: {
@@ -432,7 +431,6 @@ export function createMockState(): MockState {
       fps: 60,
       mode: 'h264-webrtc',
       edid: 'nanokvm-go-1920x1080-60',
-      monitorName: '',
       customEdids: ['mock-development-display.bin']
     },
     vm: {

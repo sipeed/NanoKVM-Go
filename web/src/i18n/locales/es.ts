@@ -704,15 +704,6 @@ const es = {
           default: 'Predeterminado',
           custom: 'Personalizado',
           document: 'Documento',
-          monitorName: 'Nombre del monitor',
-          monitorNameDescription:
-            'Hasta 13 caracteres ASCII imprimibles; déjalo vacío para usar el nombre original del EDID',
-          monitorNamePlaceholder: 'Usar el nombre original del EDID',
-          monitorNameApply: 'Aplicar',
-          monitorNameInvalid: 'Introduce como máximo 13 caracteres ASCII imprimibles',
-          monitorNameUnsupported: 'El EDID actual no admite la sustitución del nombre del monitor',
-          monitorNameLoadFailed: 'No se pudo cargar el nombre del monitor',
-          monitorNameUpdateFailed: 'No se pudo actualizar el nombre del monitor',
           powerConfirmTitle: 'Confirmar antes de actualizar EDID',
           powerConfirmDescription:
             'Conecta primero la alimentación PD. Actualizar EDID puede desconectar brevemente la pantalla; si después el dispositivo no detecta la pantalla correctamente, reinícialo manualmente.',

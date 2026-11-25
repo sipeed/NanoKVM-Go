@@ -92,7 +92,7 @@ func TestValidateEdidAcceptsOneToFourBlocks(t *testing.T) {
 func TestValidateEdidRejectsInvalidHeader(t *testing.T) {
 	data := makeValidationTestEdid(1, 0)
 	data[0] = 0x01
-	updateEdidBlockChecksum(data)
+	updateEdidChecksum(data)
 
 	assertEdidValidationReason(t, validateEdid(data), edidReasonInvalidHeader)
 }
@@ -112,7 +112,7 @@ func TestValidateEdidRejectsUnsupportedVersion(t *testing.T) {
 			data := makeValidationTestEdid(1, 0)
 			data[18] = tt.major
 			data[19] = tt.revision
-			updateEdidBlockChecksum(data)
+			updateEdidChecksum(data)
 
 			assertEdidValidationReason(t, validateEdid(data), edidReasonUnsupportedVersion)
 		})
@@ -124,7 +124,7 @@ func TestValidateEdidAcceptsVersionsOnePointZeroThroughFour(t *testing.T) {
 		t.Run(fmt.Sprintf("1.%d", revision), func(t *testing.T) {
 			data := makeValidationTestEdid(1, 0)
 			data[19] = revision
-			updateEdidBlockChecksum(data)
+			updateEdidChecksum(data)
 
 			if err := validateEdid(data); err != nil {
 				t.Fatalf("validateEdid rejected EDID 1.%d: %v", revision, err)
@@ -136,7 +136,7 @@ func TestValidateEdidAcceptsVersionsOnePointZeroThroughFour(t *testing.T) {
 func TestValidateEdidRejectsExtensionCountMismatch(t *testing.T) {
 	data := makeValidationTestEdid(1, 0)
 	data[126] = 1
-	updateEdidBlockChecksum(data)
+	updateEdidChecksum(data)
 
 	assertEdidValidationReason(t, validateEdid(data), edidReasonExtensionCountMismatch)
 }
@@ -156,7 +156,7 @@ func TestValidateEdidRejectsInvalidCTADTDOffset(t *testing.T) {
 	data := makeValidationTestEdid(2, 0x02)
 	cta := data[edidBlockSize:]
 	cta[2] = 255
-	updateEdidBlockChecksum(cta)
+	updateEdidChecksum(cta)
 
 	assertEdidValidationReason(t, validateEdid(data), edidReasonInvalidCTAExtension)
 }
@@ -166,7 +166,7 @@ func TestValidateEdidRejectsCTADataBlockCrossingDTDBoundary(t *testing.T) {
 	cta := data[edidBlockSize:]
 	cta[2] = 5
 	cta[4] = 0x01 // One-byte payload ends at offset 6, beyond the DTD boundary.
-	updateEdidBlockChecksum(cta)
+	updateEdidChecksum(cta)
 
 	assertEdidValidationReason(t, validateEdid(data), edidReasonInvalidCTAExtension)
 }
@@ -176,7 +176,7 @@ func TestValidateEdidRejectsCTAExtendedBlockWithoutTag(t *testing.T) {
 	cta := data[edidBlockSize:]
 	cta[2] = 5
 	cta[4] = 0xe0 // Extended Data Block with a zero-length payload.
-	updateEdidBlockChecksum(cta)
+	updateEdidChecksum(cta)
 
 	assertEdidValidationReason(t, validateEdid(data), edidReasonInvalidCTAExtension)
 }
@@ -187,7 +187,7 @@ func TestValidateEdidAcceptsCTAOffsetBoundaries(t *testing.T) {
 			data := makeValidationTestEdid(2, 0x02)
 			cta := data[edidBlockSize:]
 			cta[2] = offset
-			updateEdidBlockChecksum(cta)
+			updateEdidChecksum(cta)
 
 			if err := validateEdid(data); err != nil {
 				t.Fatalf("validateEdid rejected CTA DTD offset %d: %v", offset, err)
@@ -256,12 +256,12 @@ func makeValidationTestEdid(blockCount int, extensionTag byte) []byte {
 	data[18] = 1
 	data[19] = 4
 	data[126] = byte(blockCount - 1)
-	updateEdidBlockChecksum(data[:edidBlockSize])
+	updateEdidChecksum(data[:edidBlockSize])
 
 	for blockIndex := 1; blockIndex < blockCount; blockIndex++ {
 		block := data[blockIndex*edidBlockSize : (blockIndex+1)*edidBlockSize]
 		block[0] = extensionTag
-		updateEdidBlockChecksum(block)
+		updateEdidChecksum(block)
 	}
 	return data
 }

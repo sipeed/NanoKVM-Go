@@ -705,15 +705,6 @@ const hu = {
           default: 'Alapértelmezett',
           custom: 'Egyéni',
           document: 'Dokumentum',
-          monitorName: 'Monitor neve',
-          monitorNameDescription:
-            'Legfeljebb 13 nyomtatható ASCII-karakter; hagyja üresen az EDID eredeti nevének használatához',
-          monitorNamePlaceholder: 'Eredeti EDID-név használata',
-          monitorNameApply: 'Alkalmaz',
-          monitorNameInvalid: 'Legfeljebb 13 nyomtatható ASCII-karaktert adjon meg',
-          monitorNameUnsupported: 'A jelenlegi EDID nem támogatja a monitornév felülírását',
-          monitorNameLoadFailed: 'Nem sikerült betölteni a monitor nevét',
-          monitorNameUpdateFailed: 'Nem sikerült frissíteni a monitor nevét',
           powerConfirmTitle: 'Megerősítés az EDID frissítése előtt',
           powerConfirmDescription:
             'Először csatlakoztassa a PD-tápellátást. Az EDID frissítése rövid időre leválaszthatja a kijelzőt; ha ezután az eszköz nem érzékeli megfelelően a kijelzőt, indítsa újra kézzel.',

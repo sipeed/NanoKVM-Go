@@ -85,6 +85,9 @@ func initialize() {
 
 	// sync HDMI hardware with persisted capture state
 	syncHDMICaptureState()
+	if err := vm.RestoreLegacyEdid(); err != nil {
+		log.Printf("failed to restore the selected EDID profile on upgrade: %v", err)
+	}
 
 	// init screen parameters
 	_ = common.GetScreen()

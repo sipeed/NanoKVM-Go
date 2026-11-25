@@ -699,16 +699,6 @@ const it = {
           default: 'Predefinito',
           custom: 'Personalizzato',
           document: 'Documento',
-          monitorName: 'Nome monitor',
-          monitorNameDescription:
-            "Fino a 13 caratteri ASCII stampabili; lascia vuoto per usare il nome originale dell'EDID",
-          monitorNamePlaceholder: 'Usa il nome EDID originale',
-          monitorNameApply: 'Applica',
-          monitorNameInvalid: 'Inserisci non più di 13 caratteri ASCII stampabili',
-          monitorNameUnsupported:
-            "L'EDID corrente non supporta la sostituzione del nome del monitor",
-          monitorNameLoadFailed: 'Impossibile caricare il nome del monitor',
-          monitorNameUpdateFailed: 'Impossibile aggiornare il nome del monitor',
           powerConfirmTitle: 'Conferma prima di aggiornare EDID',
           powerConfirmDescription:
             "Collega prima l'alimentazione PD. L'aggiornamento EDID potrebbe disconnettere brevemente il display; se dopo il dispositivo non riesce a rilevare correttamente il display, riavvialo manualmente.",

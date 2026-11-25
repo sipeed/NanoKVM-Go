@@ -455,20 +455,17 @@ func setupEdidTestPaths(t *testing.T) {
 	oldLT7911Edid := LT7911Edid
 	oldCustomEdidDir := CustomEdidDir
 	oldCurrentEdidStateFile := CurrentEdidStateFile
-	oldEdidConfigFile := EdidConfigFile
 
 	EdidDir = filepath.Join(root, "kvmcomm", "edid")
 	LT7911Edid = filepath.Join(root, "proc", "lt7911_info", "edid")
 	CustomEdidDir = filepath.Join(root, "etc", "kvm", "edid")
 	CurrentEdidStateFile = filepath.Join(CustomEdidDir, "current.json")
-	EdidConfigFile = filepath.Join(CustomEdidDir, "config.json")
 
 	t.Cleanup(func() {
 		EdidDir = oldEdidDir
 		LT7911Edid = oldLT7911Edid
 		CustomEdidDir = oldCustomEdidDir
 		CurrentEdidStateFile = oldCurrentEdidStateFile
-		EdidConfigFile = oldEdidConfigFile
 	})
 }
 
@@ -563,8 +560,9 @@ func readEdidTestFile(t *testing.T, path string) []byte {
 }
 
 func makeEdidTestData(marker byte) []byte {
-	data := makeMonitorNameTestEdid(1, 90)
+	data := makeValidationTestEdid(1, 0)
+	copy(data[90:108], "\x00\x00\x00\xfc\x00Test Display\n")
 	data[8] = marker
-	updateEdidBlockChecksum(data[:edidBlockSize])
+	updateEdidChecksum(data[:edidBlockSize])
 	return data
 }

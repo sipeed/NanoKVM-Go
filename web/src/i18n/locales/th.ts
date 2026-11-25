@@ -680,15 +680,6 @@ const th = {
           default: 'ค่าเริ่มต้น',
           custom: 'กำหนดเอง',
           document: 'เอกสาร',
-          monitorName: 'ชื่อจอภาพ',
-          monitorNameDescription:
-            'อักขระ ASCII ที่พิมพ์ได้สูงสุด 13 ตัว เว้นว่างเพื่อใช้ชื่อเดิมจาก EDID',
-          monitorNamePlaceholder: 'ใช้ชื่อ EDID เดิม',
-          monitorNameApply: 'นำไปใช้',
-          monitorNameInvalid: 'ป้อนได้เฉพาะอักขระ ASCII ที่พิมพ์ได้สูงสุด 13 ตัว',
-          monitorNameUnsupported: 'EDID ปัจจุบันไม่รองรับการแทนที่ชื่อจอภาพ',
-          monitorNameLoadFailed: 'โหลดชื่อจอภาพไม่สำเร็จ',
-          monitorNameUpdateFailed: 'อัปเดตชื่อจอภาพไม่สำเร็จ',
           powerConfirmTitle: 'ยืนยันก่อนอัปเดต EDID',
           powerConfirmDescription:
             'เชื่อมต่อไฟ PD ก่อน การอัปเดต EDID อาจทำให้จอแสดงผลถูกตัดการเชื่อมต่อชั่วคราว หากอุปกรณ์ตรวจพบจอแสดงผลไม่ถูกต้องหลังจากนั้น ให้รีสตาร์ทด้วยตนเอง',

@@ -359,25 +359,6 @@ export function updateEdid(edid: string): Promise<EdidResponse> {
   });
 }
 
-export type EdidMonitorNameResponse = EdidResponse<{ monitorName: string }>;
-
-const edidMonitorNameUnsupportedMessages = new Set([
-  'monitor name descriptor not found',
-  'multiple monitor name descriptors found'
-]);
-
-export function isEdidMonitorNameUnsupportedError(message: string) {
-  return edidMonitorNameUnsupportedMessages.has(message);
-}
-
-export function getEdidMonitorName(): Promise<EdidMonitorNameResponse> {
-  return http.get('/api/vm/edid/monitor-name');
-}
-
-export function setEdidMonitorName(monitorName: string): Promise<EdidMonitorNameResponse> {
-  return http.post('/api/vm/edid/monitor-name', { monitorName });
-}
-
 export function uploadEdid(formData: FormData): Promise<EdidResponse<{ file: string }>> {
   return http.request({
     method: 'post',

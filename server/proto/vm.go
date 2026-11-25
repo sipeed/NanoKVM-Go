@@ -285,14 +285,6 @@ type SwitchEdidReq struct {
 	Edid string `form:"edid" validate:"required"`
 }
 
-type GetEdidMonitorNameRsp struct {
-	MonitorName string `json:"monitorName"`
-}
-
-type SetEdidMonitorNameReq struct {
-	MonitorName string `json:"monitorName" form:"monitorName"`
-}
-
 type GetCustomEdidListRsp struct {
 	EdidList []string `json:"edidList"`
 }

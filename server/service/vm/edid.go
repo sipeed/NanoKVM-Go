@@ -22,7 +22,6 @@ const (
 	edidSourceCustom  = "custom"
 
 	defaultCurrentEdidName = "nanokvm-go-3840x2160-30"
-	monitorNameMaxLength   = 13
 	edidBlockSize          = 128
 	edidUploadRequestLimit = 16 * 1024
 )
@@ -32,33 +31,20 @@ var (
 	LT7911Edid           = "/proc/lt7911_info/edid"
 	CustomEdidDir        = "/etc/kvm/edid"
 	CurrentEdidStateFile = "/etc/kvm/edid/current.json"
-	EdidConfigFile       = "/etc/kvm/edid/config.json"
 
 	edidMutationMu sync.Mutex
 
 	writeEdidHardware = func(data []byte) error {
 		return os.WriteFile(LT7911Edid, data, 0o644)
 	}
-	saveEdidConfigAction       = saveEdidConfig
 	saveCurrentEdidStateAction = saveCurrentEdidState
 	renameEdidFileAction       = os.Rename
-	applyMonitorNameAction     = applyMonitorNameOverride
-	stripEdidAudioAction       = stripEdidAudio
-)
-
-var (
-	errMonitorNameDescriptorNotFound  = errors.New("monitor name descriptor not found")
-	errMultipleMonitorNameDescriptors = errors.New("multiple monitor name descriptors found")
 )
 
 type edidState struct {
 	Name   string `json:"name"`
 	Source string `json:"source"`
 	File   string `json:"file"`
-}
-
-type edidConfig struct {
-	MonitorName string `json:"monitorName"`
 }
 
 type edidRollbackCandidate struct {
@@ -124,99 +110,6 @@ func currentEdidResolution(state edidState) (int, int) {
 	return 1920, 1080
 }
 
-func (s *Service) GetEdidMonitorName(c *gin.Context) {
-	var rsp proto.Response
-
-	edidMutationMu.Lock()
-	defer edidMutationMu.Unlock()
-
-	config, err := loadEdidConfig()
-	if err != nil {
-		log.Errorf("failed to get EDID monitor name: %s", err)
-		rsp.ErrRsp(c, -1, "get monitor name failed")
-		return
-	}
-
-	rsp.OkRspWithData(c, &proto.GetEdidMonitorNameRsp{
-		MonitorName: config.MonitorName,
-	})
-}
-
-func (s *Service) SetEdidMonitorName(c *gin.Context) {
-	var req proto.SetEdidMonitorNameReq
-	var rsp proto.Response
-
-	if err := proto.ParseFormRequest(c, &req); err != nil {
-		writeEdidErrorResponse(c, &rsp, -1, "invalid arguments", edidReasonBadRequest)
-		return
-	}
-	if err := validateMonitorName(req.MonitorName); err != nil {
-		writeEdidErrorResponse(c, &rsp, -2, "invalid monitor name", edidReasonBadRequest)
-		return
-	}
-
-	virtualDeviceUpdateMu.Lock()
-	defer virtualDeviceUpdateMu.Unlock()
-	edidMutationMu.Lock()
-	defer edidMutationMu.Unlock()
-
-	oldConfig, err := loadEdidConfig()
-	if err != nil {
-		log.Errorf("failed to load existing EDID monitor name: %s", err)
-		rsp.ErrRsp(c, -3, "load monitor name failed")
-		return
-	}
-
-	state, err := loadCurrentEdidState()
-	if err != nil {
-		log.Errorf("failed to load current EDID before setting monitor name: %s", err)
-		rsp.ErrRsp(c, -4, "get current EDID failed")
-		return
-	}
-
-	dpAudioEnabled := !virtualSpeakerMarkerExists()
-	oldEdid, err := readEffectiveEdid(state.File, oldConfig.MonitorName, dpAudioEnabled)
-	if err != nil {
-		log.Errorf("failed to prepare current EDID for rollback: %s", err)
-		writeEdidErrorResponse(c, &rsp, -5, monitorNameApplyErrorMessage(err), edidReason(err))
-		return
-	}
-	newEdid, err := readEffectiveEdid(state.File, req.MonitorName, dpAudioEnabled)
-	if err != nil {
-		log.Errorf("failed to apply monitor name to current EDID: %s", err)
-		writeEdidErrorResponse(c, &rsp, -5, monitorNameApplyErrorMessage(err), edidReason(err))
-		return
-	}
-
-	if err := writeValidatedEdidHardware(newEdid); err != nil {
-		log.Errorf("failed to write current EDID with monitor name: %s", err)
-		if rollbackErr := writeValidatedEdidHardware(oldEdid); rollbackErr != nil {
-			log.Errorf("failed to roll back EDID after monitor name apply failure: %s", rollbackErr)
-			rsp.ErrRsp(c, -6, "apply monitor name failed and EDID rollback failed")
-			return
-		}
-		rsp.ErrRsp(c, -6, "apply monitor name failed")
-		return
-	}
-
-	newConfig := edidConfig{MonitorName: req.MonitorName}
-	if err := saveEdidConfigAction(newConfig); err != nil {
-		log.Errorf("failed to save EDID monitor name: %s", err)
-		if rollbackErr := writeValidatedEdidHardware(oldEdid); rollbackErr != nil {
-			log.Errorf("failed to roll back EDID after monitor name save failure: %s", rollbackErr)
-			rsp.ErrRsp(c, -7, "save monitor name failed and EDID rollback failed")
-			return
-		}
-		rsp.ErrRsp(c, -7, "save monitor name failed")
-		return
-	}
-
-	rsp.OkRspWithData(c, &proto.GetEdidMonitorNameRsp{
-		MonitorName: req.MonitorName,
-	})
-	log.Debugf("set EDID monitor name: %q", req.MonitorName)
-}
-
 func (s *Service) SwitchEdid(c *gin.Context) {
 	var req proto.SwitchEdidReq
 	var rsp proto.Response
@@ -248,26 +141,15 @@ func (s *Service) SwitchEdid(c *gin.Context) {
 		return
 	}
 
-	config, err := loadEdidConfig()
-	if err != nil {
-		log.Errorf("failed to load EDID config: %s", err)
-		rsp.ErrRsp(c, -4, "failed to load EDID config")
-		return
-	}
-
 	dpAudioEnabled := !virtualSpeakerMarkerExists()
-	effectiveEdid, err := readEffectiveEdid(state.File, config.MonitorName, dpAudioEnabled)
+	effectiveEdid, err := readEffectiveEdid(state.File, dpAudioEnabled)
 	if err != nil {
 		log.Errorf("failed to prepare EDID %s: %s", req.Edid, err)
-		message := "failed to switch EDID"
-		if config.MonitorName != "" {
-			message = monitorNameApplyErrorMessage(err)
-		}
-		writeEdidErrorResponse(c, &rsp, -4, message, edidReason(err))
+		writeEdidErrorResponse(c, &rsp, -4, "failed to switch EDID", edidReason(err))
 		return
 	}
 
-	previousEdid, err := prepareEdidRollbackCandidate(config.MonitorName, dpAudioEnabled)
+	previousEdid, err := prepareEdidRollbackCandidate(dpAudioEnabled)
 	if err != nil {
 		log.Errorf("failed to prepare previous EDID for rollback: %s", err)
 		writeEdidErrorResponse(c, &rsp, -4, "failed to get current EDID", edidReason(err))
@@ -638,193 +520,25 @@ func saveCurrentEdidState(state edidState) error {
 	return nil
 }
 
-func loadEdidConfig() (edidConfig, error) {
-	data, err := os.ReadFile(EdidConfigFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return edidConfig{}, nil
-		}
-		return edidConfig{}, err
-	}
-
-	var config edidConfig
-	if err := json.Unmarshal(data, &config); err != nil {
-		return edidConfig{}, err
-	}
-	if err := validateMonitorName(config.MonitorName); err != nil {
-		return edidConfig{}, err
-	}
-
-	return config, nil
-}
-
-func saveEdidConfig(config edidConfig) error {
-	if err := validateMonitorName(config.MonitorName); err != nil {
-		return err
-	}
-
-	dir := filepath.Dir(EdidConfigFile)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return err
-	}
-
-	data, err := json.MarshalIndent(config, "", "  ")
-	if err != nil {
-		return err
-	}
-	data = append(data, '\n')
-
-	tmp, err := os.CreateTemp(dir, ".config.json.*")
-	if err != nil {
-		return err
-	}
-	tmpPath := tmp.Name()
-	defer func() {
-		_ = os.Remove(tmpPath)
-	}()
-
-	if err := tmp.Chmod(0o644); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(tmpPath, EdidConfigFile); err != nil {
-		return err
-	}
-
-	// The rename is the commit point. A directory sync failure affects crash
-	// durability, but the visible configuration and hardware already agree.
-	dirFile, err := os.Open(dir)
-	if err != nil {
-		log.Warnf("failed to open EDID config directory for sync: %s", err)
-		return nil
-	}
-	defer dirFile.Close()
-	if err := dirFile.Sync(); err != nil {
-		log.Warnf("failed to sync EDID config directory: %s", err)
-	}
-	return nil
-}
-
-func validateMonitorName(name string) error {
-	if len(name) > monitorNameMaxLength {
-		return fmt.Errorf("monitor name exceeds %d bytes", monitorNameMaxLength)
-	}
-	for i := 0; i < len(name); i++ {
-		if name[i] < 0x20 || name[i] > 0x7e {
-			return fmt.Errorf("monitor name contains non-printable ASCII")
-		}
-	}
-	return nil
-}
-
-func readEffectiveEdid(path, monitorName string, dpAudioEnabled bool) ([]byte, error) {
+func readEffectiveEdid(path string, dpAudioEnabled bool) ([]byte, error) {
 	data, err := readEdidFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	data, err = applyMonitorNameAction(data, monitorName)
-	if err != nil {
-		return nil, err
-	}
 	if !dpAudioEnabled {
-		data, err = stripEdidAudioAction(data)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if err := validateEdid(data); err != nil {
-		return nil, err
+		return stripEdidAudio(data)
 	}
 	return data, nil
 }
 
-func applyMonitorNameOverride(data []byte, monitorName string) ([]byte, error) {
-	if err := validateMonitorName(monitorName); err != nil {
-		return nil, err
-	}
-	if err := validateEdid(data); err != nil {
-		return nil, err
-	}
-
-	result := append([]byte(nil), data...)
-	if monitorName == "" {
-		return result, nil
-	}
-
-	descriptorOffset := -1
-	for _, offset := range []int{54, 72, 90, 108} {
-		if result[offset] == 0x00 &&
-			result[offset+1] == 0x00 &&
-			result[offset+2] == 0x00 &&
-			result[offset+3] == 0xfc &&
-			result[offset+4] == 0x00 {
-			if descriptorOffset != -1 {
-				return nil, errMultipleMonitorNameDescriptors
-			}
-			descriptorOffset = offset
-		}
-	}
-	if descriptorOffset == -1 {
-		return nil, errMonitorNameDescriptorNotFound
-	}
-
-	payload := result[descriptorOffset+5 : descriptorOffset+18]
-	for i := range payload {
-		payload[i] = 0x20
-	}
-	copy(payload, monitorName)
-	if len(monitorName) < len(payload) {
-		payload[len(monitorName)] = 0x0a
-	}
-	updateEdidBlockChecksum(result[:edidBlockSize])
-
-	if err := validateEdid(result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func updateEdidBlockChecksum(block []byte) {
-	checksumOffset := edidBlockSize - 1
-	block[checksumOffset] = 0
-	sum := 0
-	for _, value := range block[:checksumOffset] {
-		sum += int(value)
-	}
-	block[checksumOffset] = byte((-sum) & 0xff)
-}
-
-func monitorNameApplyErrorMessage(err error) string {
-	switch {
-	case errors.Is(err, errMonitorNameDescriptorNotFound):
-		return "monitor name descriptor not found"
-	case errors.Is(err, errMultipleMonitorNameDescriptors):
-		return "multiple monitor name descriptors found"
-	default:
-		return "invalid EDID for monitor name override"
-	}
-}
-
-func prepareEdidRollbackCandidate(monitorName string, dpAudioEnabled bool) (edidRollbackCandidate, error) {
+func prepareEdidRollbackCandidate(dpAudioEnabled bool) (edidRollbackCandidate, error) {
 	state, hasState, currentErr := loadPersistedCurrentEdidState()
 	if currentErr == nil && !hasState {
 		state, currentErr = createDefaultCurrentEdidState()
 	}
 	if currentErr == nil {
-		data, err := readEffectiveEdid(state.File, monitorName, dpAudioEnabled)
+		data, err := readEffectiveEdid(state.File, dpAudioEnabled)
 		if err == nil {
 			return edidRollbackCandidate{data: data}, nil
 		}
@@ -839,7 +553,7 @@ func prepareEdidRollbackCandidate(monitorName string, dpAudioEnabled bool) (edid
 			fallbackErr,
 		)
 	}
-	fallbackData, fallbackErr := readEffectiveEdid(defaultState.File, monitorName, dpAudioEnabled)
+	fallbackData, fallbackErr := readEffectiveEdid(defaultState.File, dpAudioEnabled)
 	if fallbackErr != nil {
 		return edidRollbackCandidate{}, fmt.Errorf(
 			"current EDID cannot be prepared (%v) and default rollback EDID cannot be prepared: %w",
@@ -944,6 +658,20 @@ func regularFileExists(path string) (bool, error) {
 	return info.Mode().IsRegular(), nil
 }
 
+// RestoreLegacyEdid reapplies the selected profile once on units whose capture
+// chip may still advertise a name written by an older server.
+func RestoreLegacyEdid() error {
+	legacyConfig := filepath.Join(CustomEdidDir, "config.json")
+	exists, err := regularFileExists(legacyConfig)
+	if err != nil || !exists {
+		return err
+	}
+	if err := applyCurrentEdid(!virtualSpeakerMarkerExists()); err != nil {
+		return err
+	}
+	return os.Remove(legacyConfig)
+}
+
 func applyCurrentEdid(dpAudioEnabled bool) error {
 	edidMutationMu.Lock()
 	defer edidMutationMu.Unlock()
@@ -952,15 +680,7 @@ func applyCurrentEdid(dpAudioEnabled bool) error {
 	if err != nil {
 		return err
 	}
-	config, err := loadEdidConfig()
-	if err != nil {
-		return err
-	}
-	return applyEdidFile(state.File, config.MonitorName, dpAudioEnabled)
-}
-
-func applyEdidFile(src, monitorName string, dpAudioEnabled bool) error {
-	input, err := readEffectiveEdid(src, monitorName, dpAudioEnabled)
+	input, err := readEffectiveEdid(state.File, dpAudioEnabled)
 	if err != nil {
 		return err
 	}

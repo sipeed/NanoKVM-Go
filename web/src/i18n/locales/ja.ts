@@ -699,15 +699,6 @@ const ja = {
           default: 'デフォルト',
           custom: 'カスタム',
           document: 'ドキュメント',
-          monitorName: 'モニター名',
-          monitorNameDescription:
-            '印刷可能な ASCII 文字を最大 13 文字。空欄の場合は EDID の元の名前を使用します',
-          monitorNamePlaceholder: 'EDID の元の名前を使用',
-          monitorNameApply: '適用',
-          monitorNameInvalid: '印刷可能な ASCII 文字を 13 文字以内で入力してください',
-          monitorNameUnsupported: '現在の EDID はモニター名の上書きをサポートしていません',
-          monitorNameLoadFailed: 'モニター名の読み込みに失敗しました',
-          monitorNameUpdateFailed: 'モニター名の更新に失敗しました',
           powerConfirmTitle: 'EDID を更新する前に確認',
           powerConfirmDescription:
             '先に PD 電源を接続してください。EDID の更新中にディスプレイが一時的に切断されることがあります。更新後にデバイスがディスプレイを正しく検出できない場合は、手動で再起動してください。',

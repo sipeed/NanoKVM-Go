@@ -4,7 +4,7 @@ export const EDID_MIN_FILE_SIZE = 128;
 export const EDID_MAX_FILE_SIZE = 512;
 export const EDID_BLOCK_SIZE = 128;
 
-export type EdidErrorTranslationKey =
+type EdidErrorTranslationKey =
   | 'settings.screen.edid.errors.badRequest'
   | 'settings.screen.edid.errors.invalidFileName'
   | 'settings.screen.edid.errors.fileTooLarge'
@@ -19,10 +19,7 @@ export type EdidErrorTranslationKey =
   | 'settings.screen.edid.errors.switchFailed'
   | 'settings.screen.edid.errors.uploadFailed'
   | 'settings.screen.edid.errors.deleteFailed'
-  | 'settings.screen.edid.errors.networkFailed'
-  | 'settings.screen.edid.monitorNameUnsupported'
-  | 'settings.screen.edid.monitorNameLoadFailed'
-  | 'settings.screen.edid.monitorNameUpdateFailed';
+  | 'settings.screen.edid.errors.networkFailed';
 
 const reasonTranslationKeys: Record<EdidErrorReason, EdidErrorTranslationKey> = {
   bad_request: 'settings.screen.edid.errors.badRequest',
@@ -41,11 +38,6 @@ const reasonTranslationKeys: Record<EdidErrorReason, EdidErrorTranslationKey> = 
 const knownEdidReasons = new Set<EdidErrorReason>(
   Object.keys(reasonTranslationKeys) as EdidErrorReason[]
 );
-
-const monitorNameUnsupportedMessages = new Set([
-  'monitor name descriptor not found',
-  'multiple monitor name descriptors found'
-]);
 
 export function getEdidUploadPreflightError(file: {
   name: string;
@@ -82,10 +74,6 @@ export function getEdidResponseErrorTranslationKey(
   response: EdidResponse,
   fallback: EdidErrorTranslationKey
 ): EdidErrorTranslationKey {
-  if (monitorNameUnsupportedMessages.has(response.msg)) {
-    return 'settings.screen.edid.monitorNameUnsupported';
-  }
-
   return getEdidErrorTranslationKey(getEdidResponseReason(response), fallback);
 }
 
@@ -93,7 +81,6 @@ type EdidOperationOptions = {
   request: () => Promise<EdidResponse>;
   setLoading: (loading: boolean) => void;
   onError: (key: EdidErrorTranslationKey) => void;
-  onSuccess?: () => void;
 };
 
 type EdidSwitchOptions = EdidOperationOptions & {
@@ -112,7 +99,6 @@ export async function runEdidSwitch(options: EdidSwitchOptions): Promise<boolean
       return false;
     }
 
-    options.onSuccess?.();
     return true;
   } catch {
     options.onError('settings.screen.edid.errors.networkFailed');
@@ -155,7 +141,6 @@ export async function runEdidUpload(options: EdidUploadOptions): Promise<boolean
     }
 
     await options.refreshCustomList();
-    options.onSuccess?.();
     return true;
   } catch {
     options.onError('settings.screen.edid.errors.networkFailed');

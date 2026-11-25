@@ -701,15 +701,6 @@ const ru = {
           default: 'По умолчанию',
           custom: 'Свои параметры',
           document: 'Документ',
-          monitorName: 'Имя монитора',
-          monitorNameDescription:
-            'Не более 13 печатных символов ASCII; оставьте поле пустым, чтобы использовать исходное имя из EDID',
-          monitorNamePlaceholder: 'Использовать исходное имя EDID',
-          monitorNameApply: 'Применить',
-          monitorNameInvalid: 'Введите не более 13 печатных символов ASCII',
-          monitorNameUnsupported: 'Текущий EDID не поддерживает переопределение имени монитора',
-          monitorNameLoadFailed: 'Не удалось загрузить имя монитора',
-          monitorNameUpdateFailed: 'Не удалось обновить имя монитора',
           powerConfirmTitle: 'Подтвердите перед обновлением EDID',
           powerConfirmDescription:
             'Сначала подключите питание PD. Обновление EDID может кратковременно отключить дисплей; если после этого устройство не сможет правильно обнаружить дисплей, перезапустите его вручную.',

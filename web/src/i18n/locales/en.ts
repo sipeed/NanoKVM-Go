@@ -688,15 +688,6 @@ const en = {
           default: 'Default',
           custom: 'Custom',
           document: 'Document',
-          monitorName: 'Monitor Name',
-          monitorNameDescription:
-            'Up to 13 printable ASCII characters; leave blank to use the original name from the EDID',
-          monitorNamePlaceholder: 'Use original EDID name',
-          monitorNameApply: 'Apply',
-          monitorNameInvalid: 'Enter no more than 13 printable ASCII characters',
-          monitorNameUnsupported: 'The current EDID does not support a monitor name override',
-          monitorNameLoadFailed: 'Failed to load monitor name',
-          monitorNameUpdateFailed: 'Failed to update monitor name',
           powerConfirmTitle: 'Confirm before updating EDID',
           powerConfirmDescription:
             'Connect PD power first. Updating EDID may briefly disconnect the display; if the device cannot detect the display correctly afterward, restart it manually.',

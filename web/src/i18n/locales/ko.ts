@@ -681,15 +681,6 @@ const ko = {
           default: '기본값',
           custom: '사용자 지정',
           document: '문서',
-          monitorName: '모니터 이름',
-          monitorNameDescription:
-            '인쇄 가능한 ASCII 문자 최대 13자. 비워 두면 EDID의 원래 이름을 사용합니다',
-          monitorNamePlaceholder: '원래 EDID 이름 사용',
-          monitorNameApply: '적용',
-          monitorNameInvalid: '인쇄 가능한 ASCII 문자를 최대 13자까지 입력하세요',
-          monitorNameUnsupported: '현재 EDID는 모니터 이름 재정의를 지원하지 않습니다',
-          monitorNameLoadFailed: '모니터 이름을 불러오지 못했습니다',
-          monitorNameUpdateFailed: '모니터 이름을 업데이트하지 못했습니다',
           powerConfirmTitle: 'EDID 업데이트 전 확인',
           powerConfirmDescription:
             '먼저 PD 전원을 연결하세요. EDID 업데이트 중 디스플레이가 잠시 연결 해제될 수 있습니다. 이후 장치가 디스플레이를 올바르게 감지하지 못하면 수동으로 다시 시작하세요.',

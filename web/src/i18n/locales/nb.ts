@@ -699,15 +699,6 @@ const nb = {
           default: 'Standard',
           custom: 'Egendefinert',
           document: 'Dokument',
-          monitorName: 'Skjermnavn',
-          monitorNameDescription:
-            'Maksimalt 13 utskrivbare ASCII-tegn; la stå tomt for å bruke det opprinnelige navnet fra EDID',
-          monitorNamePlaceholder: 'Bruk opprinnelig EDID-navn',
-          monitorNameApply: 'Bruk',
-          monitorNameInvalid: 'Skriv inn maksimalt 13 utskrivbare ASCII-tegn',
-          monitorNameUnsupported: 'Gjeldende EDID støtter ikke overstyring av skjermnavnet',
-          monitorNameLoadFailed: 'Kunne ikke laste inn skjermnavnet',
-          monitorNameUpdateFailed: 'Kunne ikke oppdatere skjermnavnet',
           powerConfirmTitle: 'Bekreft før EDID oppdateres',
           powerConfirmDescription:
             'Koble til PD-strøm først. Oppdatering av EDID kan koble fra skjermen kortvarig; hvis enheten ikke kan oppdage skjermen riktig etterpå, start den på nytt manuelt.',

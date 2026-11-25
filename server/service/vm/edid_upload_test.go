@@ -284,7 +284,7 @@ func newEdidUploadTestRequest(t *testing.T, filename string, data []byte, includ
 func invalidHeaderUploadTestEdid() []byte {
 	data := makeValidationTestEdid(2, 0xf0)
 	data[0] = 1
-	updateEdidBlockChecksum(data[:edidBlockSize])
+	updateEdidChecksum(data[:edidBlockSize])
 	return data
 }
 
@@ -292,7 +292,7 @@ func invalidCTAUploadTestEdid() []byte {
 	data := makeValidationTestEdid(2, 0x02)
 	cta := data[edidBlockSize:]
 	cta[2] = 255
-	updateEdidBlockChecksum(cta)
+	updateEdidChecksum(cta)
 	return data
 }
 

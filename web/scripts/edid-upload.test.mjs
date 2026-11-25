@@ -119,14 +119,6 @@ test('every backend EDID reason maps to its localized message', async () => {
     assert.equal(succeeded, false, reason);
     assert.deepEqual(errors, [expectedKey], reason);
   }
-
-  assert.equal(
-    model.getEdidResponseErrorTranslationKey(
-      { code: -1, msg: 'monitor name descriptor not found' },
-      'settings.screen.edid.errors.switchFailed'
-    ),
-    'settings.screen.edid.monitorNameUnsupported'
-  );
 });
 
 test('successful uploads refresh the authoritative custom list and release loading', async () => {
@@ -222,14 +214,6 @@ test('both EDID surfaces use the shared tested workflows and visible error messa
   assert.match(settingsSource, /runEdidSwitch\(\{/);
   assert.match(settingsSource, /refreshCurrent: getCurrentEdid/);
   assert.match(settingsSource, /feedback\.error\(t\(key\)\)/);
-  assert.match(
-    settingsSource.slice(
-      settingsSource.indexOf('async function saveMonitorName'),
-      settingsSource.indexOf('function confirmMonitorNameUpdate')
-    ),
-    /getEdidResponseErrorTranslationKey/
-  );
-
   assert.match(apiSource, /export type EdidErrorReason =/);
   for (const reason of Object.keys(reasonKeys)) {
     assert.match(apiSource, new RegExp(`'${reason}'`));

@@ -711,16 +711,6 @@ const de = {
           default: 'Standard',
           custom: 'Benutzerdefiniert',
           document: 'Dokument',
-          monitorName: 'Monitorname',
-          monitorNameDescription:
-            'Bis zu 13 druckbare ASCII-Zeichen; leer lassen, um den ursprünglichen Namen aus der EDID zu verwenden',
-          monitorNamePlaceholder: 'Ursprünglichen EDID-Namen verwenden',
-          monitorNameApply: 'Anwenden',
-          monitorNameInvalid: 'Geben Sie höchstens 13 druckbare ASCII-Zeichen ein',
-          monitorNameUnsupported:
-            'Die aktuelle EDID unterstützt keine Überschreibung des Monitornamens',
-          monitorNameLoadFailed: 'Monitorname konnte nicht geladen werden',
-          monitorNameUpdateFailed: 'Monitorname konnte nicht aktualisiert werden',
           powerConfirmTitle: 'Vor Aktualisierung der EDID bestätigen',
           powerConfirmDescription:
             'Schließen Sie zuerst die PD-Stromversorgung an. Die Aktualisierung der EDID kann die Anzeige kurz trennen; wenn das Gerät die Anzeige danach nicht korrekt erkennt, starten Sie es manuell neu.',

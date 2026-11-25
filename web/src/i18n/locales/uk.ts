@@ -697,15 +697,6 @@ const uk = {
           default: 'За замовчуванням',
           custom: 'Настроюваний',
           document: 'Документ',
-          monitorName: 'Назва монітора',
-          monitorNameDescription:
-            'Не більше 13 друкованих символів ASCII; залиште поле порожнім, щоб використовувати початкову назву з EDID',
-          monitorNamePlaceholder: 'Використовувати початкову назву EDID',
-          monitorNameApply: 'Застосувати',
-          monitorNameInvalid: 'Введіть не більше 13 друкованих символів ASCII',
-          monitorNameUnsupported: 'Поточний EDID не підтримує перевизначення назви монітора',
-          monitorNameLoadFailed: 'Не вдалося завантажити назву монітора',
-          monitorNameUpdateFailed: 'Не вдалося оновити назву монітора',
           powerConfirmTitle: 'Підтвердьте перед оновленням EDID',
           powerConfirmDescription:
             "Спочатку підключіть живлення PD. Оновлення EDID може на короткий час від'єднати дисплей; якщо після цього пристрій не зможе правильно визначити дисплей, перезапустіть його вручну.",

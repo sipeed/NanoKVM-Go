@@ -703,16 +703,6 @@ const nl = {
           default: 'Standaard',
           custom: 'Aangepast',
           document: 'Documentatie',
-          monitorName: 'Monitornaam',
-          monitorNameDescription:
-            'Maximaal 13 afdrukbare ASCII-tekens; laat leeg om de oorspronkelijke naam uit de EDID te gebruiken',
-          monitorNamePlaceholder: 'Oorspronkelijke EDID-naam gebruiken',
-          monitorNameApply: 'Toepassen',
-          monitorNameInvalid: 'Voer maximaal 13 afdrukbare ASCII-tekens in',
-          monitorNameUnsupported:
-            'De huidige EDID ondersteunt geen overschrijving van de monitornaam',
-          monitorNameLoadFailed: 'Kan de monitornaam niet laden',
-          monitorNameUpdateFailed: 'Kan de monitornaam niet bijwerken',
           powerConfirmTitle: 'Bevestigen voordat EDID wordt bijgewerkt',
           powerConfirmDescription:
             'Sluit eerst PD-voeding aan. Het bijwerken van EDID kan het scherm kort loskoppelen; als het apparaat het scherm daarna niet correct detecteert, start het dan handmatig opnieuw op.',

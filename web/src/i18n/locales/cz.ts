@@ -695,15 +695,6 @@ const cz = {
           default: 'Výchozí',
           custom: 'Vlastní',
           document: 'Dokument',
-          monitorName: 'Název monitoru',
-          monitorNameDescription:
-            'Maximálně 13 tisknutelných znaků ASCII; ponechte prázdné pro použití původního názvu z EDID',
-          monitorNamePlaceholder: 'Použít původní název EDID',
-          monitorNameApply: 'Použít',
-          monitorNameInvalid: 'Zadejte nejvýše 13 tisknutelných znaků ASCII',
-          monitorNameUnsupported: 'Aktuální EDID nepodporuje přepsání názvu monitoru',
-          monitorNameLoadFailed: 'Název monitoru se nepodařilo načíst',
-          monitorNameUpdateFailed: 'Název monitoru se nepodařilo aktualizovat',
           powerConfirmTitle: 'Potvrdit před aktualizací EDID',
           powerConfirmDescription:
             'Nejprve připojte napájení PD. Aktualizace EDID může krátce odpojit displej; pokud zařízení poté nedokáže displej správně detekovat, ručně jej restartujte.',

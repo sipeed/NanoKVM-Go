@@ -45,10 +45,8 @@ func vmRouter(r *gin.Engine) {
 	api.POST("/vm/ssh/enable", service.EnableSSH)   // enable SSH
 	api.POST("/vm/ssh/disable", service.DisableSSH) // disable SSH
 
-	api.GET("/vm/edid", service.GetEdid)     // get current EDID
-	api.POST("/vm/edid", service.SwitchEdid) // switch EDID
-	api.GET("/vm/edid/monitor-name", service.GetEdidMonitorName)
-	api.POST("/vm/edid/monitor-name", service.SetEdidMonitorName)
+	api.GET("/vm/edid", service.GetEdid)                  // get current EDID
+	api.POST("/vm/edid", service.SwitchEdid)              // switch EDID
 	api.POST("/vm/edid/upload", service.UploadEdid)       // upload EDID
 	api.GET("/vm/edid/custom", service.GetCustomEdidList) // get custom EDID list
 	api.POST("/vm/edid/delete", service.DeleteEdid)       // delete custom EDID

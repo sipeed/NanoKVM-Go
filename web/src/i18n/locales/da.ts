@@ -695,16 +695,6 @@ const da = {
           default: 'Standard',
           custom: 'Brugerdefineret',
           document: 'Dokument',
-          monitorName: 'Skærmnavn',
-          monitorNameDescription:
-            'Maks. 13 ASCII-tegn, der kan udskrives; lad feltet stå tomt for at bruge det oprindelige navn fra EDID',
-          monitorNamePlaceholder: 'Brug oprindeligt EDID-navn',
-          monitorNameApply: 'Anvend',
-          monitorNameInvalid: 'Indtast højst 13 ASCII-tegn, der kan udskrives',
-          monitorNameUnsupported:
-            'Den aktuelle EDID understøtter ikke tilsidesættelse af skærmnavnet',
-          monitorNameLoadFailed: 'Skærmnavnet kunne ikke indlæses',
-          monitorNameUpdateFailed: 'Skærmnavnet kunne ikke opdateres',
           powerConfirmTitle: 'Bekræft før opdatering af EDID',
           powerConfirmDescription:
             'Tilslut først PD-strøm. Opdatering af EDID kan kortvarigt afbryde skærmen; hvis enheden derefter ikke kan registrere skærmen korrekt, skal du genstarte den manuelt.',
