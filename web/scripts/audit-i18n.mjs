@@ -64,6 +64,7 @@ const allowedSameAsEnglishByLanguage = {
   ]),
   de: new Set(['mouse.inputAdapter.touchpad', 'storage.files.sort.name', 'download.sha256']),
   es: new Set([
+    'mouse.scrollNatural',
     'portal.manual',
     'settings.remoteNetwork.status.bad',
     'settings.remoteNetwork.mode.experimental'

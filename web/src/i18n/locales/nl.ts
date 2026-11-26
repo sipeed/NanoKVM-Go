@@ -378,9 +378,10 @@ const nl = {
       touchScreen: 'Multitouchscherm',
       relative: 'Exclusieve muis',
       direction: 'Scrollwielrichting',
-      scrollUp: 'Scroll naar boven',
-      scrollDown: 'Scroll naar beneden',
+      scrollNatural: 'Natuurlijk',
+      scrollConventional: 'Klassiek',
       speed: 'Scrollwielsnelheid',
+      scrollStep: 'Touchpad-scrollen',
       fast: 'Snel',
       slow: 'Langzaam',
       requestPointer:

@@ -19,9 +19,15 @@ import {
   mapLocalPointToTouchPort
 } from '@/lib/input-viewport.ts';
 import type { TouchPort } from '@/lib/input-viewport.ts';
+import { WheelAccumulator, wheelStats } from '@/lib/wheel.ts';
 import { activeCalibrationAtom } from '@/jotai/active-input-calibration.ts';
 import { calibrationRawPointAtom, inputCalibrationSessionAtom } from '@/jotai/input-profile.ts';
-import { mouseModeAtom, scrollDirectionAtom, scrollIntervalAtom } from '@/jotai/mouse.ts';
+import {
+  mouseModeAtom,
+  scrollDirectionAtom,
+  scrollIntervalAtom,
+  scrollStepAtom
+} from '@/jotai/mouse.ts';
 import { isPreviewModeAtom } from '@/jotai/preview.ts';
 import {
   effectiveScreenAreaAtom,
@@ -47,6 +53,7 @@ export const Absolute = () => {
   const mouseMode = useAtomValue(mouseModeAtom);
   const scrollDirection = useAtomValue(scrollDirectionAtom);
   const scrollInterval = useAtomValue(scrollIntervalAtom);
+  const scrollStep = useAtomValue(scrollStepAtom);
   const isPreviewMode = useAtomValue(isPreviewModeAtom);
   const effectiveScreenArea = useAtomValue(effectiveScreenAreaAtom);
   const activeCalibration = useAtomValue(activeCalibrationAtom);
@@ -72,6 +79,7 @@ export const Absolute = () => {
   const scrollDirectionRef = useRef(scrollDirection);
   const scrollIntervalRef = useRef(scrollInterval);
   const lastScrollTimeRef = useRef(0);
+  const wheelRef = useRef(new WheelAccumulator());
   // null until a real pointer event provides a position; force-sent release
   // reports must never fabricate a coordinate (e.g. screen center) that the
   // host never observed.
@@ -95,6 +103,7 @@ export const Absolute = () => {
   setCalibrationRawPointRef.current = setCalibrationRawPoint;
   scrollDirectionRef.current = scrollDirection;
   scrollIntervalRef.current = scrollInterval;
+  wheelRef.current.setPixelsPerNotch(scrollStep);
 
   useLayoutEffect(() => {
     const wasStylus = outputStylusRef.current;
@@ -223,7 +232,7 @@ export const Absolute = () => {
         break;
       case 'wheel':
         if (!stylus) {
-          sendRelativePointerProxy(source, buttons.value, 0, 0, event.deltaY > 0 ? 1 : -1);
+          sendRelativePointerProxy(source, buttons.value, 0, 0, Math.round(event.deltaY));
         }
         return;
       case 'move': {
@@ -361,14 +370,14 @@ export const Absolute = () => {
   }
 
   function handleWheel(event: Extract<CapturedInputEvent, { type: 'wheel' }>) {
-    if (Math.floor(event.deltaY) === 0) return;
     const now = Date.now();
+    const notch = wheelRef.current.push(event, now);
+    if (notch === 0) return;
     if (now - lastScrollTimeRef.current < scrollIntervalRef.current) return;
+    wheelStats.sent += Math.abs(notch);
+    wheelStats.direction = scrollDirectionRef.current;
     updateLastPosition(event);
-    handleMouseEvent(
-      { type: 'wheel', deltaY: event.deltaY * scrollDirectionRef.current },
-      event.source
-    );
+    handleMouseEvent({ type: 'wheel', deltaY: notch * scrollDirectionRef.current }, event.source);
     lastScrollTimeRef.current = now;
   }
 

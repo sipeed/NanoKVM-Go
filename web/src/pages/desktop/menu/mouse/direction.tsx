@@ -12,8 +12,11 @@ export const Direction = () => {
   const [scrollDirection, setScrollDirection] = useAtom(scrollDirectionAtom);
 
   const directions = [
-    { name: t('mouse.scrollUp'), value: -1 },
-    { name: t('mouse.scrollDown'), value: 1 }
+    // Which option feels natural depends on the scroll settings of both the browser's
+    // machine and the target. These labels match a natural-scrolling touchpad driving a
+    // macOS target with its default (natural) scrolling; the stored values are unchanged.
+    { name: t('mouse.scrollNatural'), value: 1 },
+    { name: t('mouse.scrollConventional'), value: -1 }
   ];
 
   function update(direction: number): void {

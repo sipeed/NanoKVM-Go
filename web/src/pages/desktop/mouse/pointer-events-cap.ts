@@ -39,6 +39,7 @@ export type CapturedWheelEvent = {
   deltaX: number;
   deltaY: number;
   deltaZ: number;
+  deltaMode: number;
   target: HTMLElement;
 };
 

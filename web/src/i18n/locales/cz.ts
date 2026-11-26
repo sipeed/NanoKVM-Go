@@ -373,9 +373,10 @@ const cz = {
       touchScreen: 'Vícedotyková obrazovka',
       relative: 'Exkluzivní myš',
       direction: 'Směr kolečka',
-      scrollUp: 'Přejděte nahoru',
-      scrollDown: 'Přejděte dolů',
+      scrollNatural: 'Přirozený',
+      scrollConventional: 'Klasický',
       speed: 'Rychlost kolečka',
+      scrollStep: 'Posouvání touchpadem',
       fast: 'Rychle',
       slow: 'Pomalu',
       requestPointer:

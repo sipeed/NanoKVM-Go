@@ -367,9 +367,10 @@ const vi = {
       touchScreen: 'Màn hình cảm ứng đa điểm',
       relative: 'Chuột độc quyền',
       direction: 'Hướng bánh xe cuộn',
-      scrollUp: 'Cuộn lên',
-      scrollDown: 'Cuộn xuống',
+      scrollNatural: 'Tự nhiên',
+      scrollConventional: 'Truyền thống',
       speed: 'Tốc độ bánh xe cuộn',
+      scrollStep: 'Cuộn bằng touchpad',
       fast: 'Nhanh lên',
       slow: 'Chậm',
       requestPointer:

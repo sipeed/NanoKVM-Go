@@ -10,7 +10,8 @@ import {
   PointerButtonState
 } from '@/lib/input-router.ts';
 import { resolvePointerCapture } from '@/lib/pointer-capture.ts';
-import { scrollDirectionAtom, scrollIntervalAtom } from '@/jotai/mouse.ts';
+import { WheelAccumulator, wheelStats } from '@/lib/wheel.ts';
+import { scrollDirectionAtom, scrollIntervalAtom, scrollStepAtom } from '@/jotai/mouse.ts';
 import { isPreviewModeAtom } from '@/jotai/preview.ts';
 
 import {
@@ -26,12 +27,14 @@ export const Relative = () => {
   const { t } = useTranslation();
   const scrollDirection = useAtomValue(scrollDirectionAtom);
   const scrollInterval = useAtomValue(scrollIntervalAtom);
+  const scrollStep = useAtomValue(scrollStepAtom);
   const isPreviewMode = useAtomValue(isPreviewModeAtom);
   const pointerCapture = resolvePointerCapture('relative');
   const buttonsRef = useRef(new PointerButtonState());
   const isLockedRef = useRef(false);
   const isPreviewModeRef = useRef(isPreviewMode);
   const lastScrollTimeRef = useRef(0);
+  const wheelRef = useRef(new WheelAccumulator());
   const mouseLastPointRef = useRef<{ x: number; y: number } | null>(null);
   const touchPointersRef = useRef(new Map<number, { x: number; y: number }>());
   const touchStartPointRef = useRef({ x: 0, y: 0 });
@@ -41,6 +44,7 @@ export const Relative = () => {
   const touchLongPressRef = useRef(false);
   const touchLongPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   isPreviewModeRef.current = isPreviewMode;
+  wheelRef.current.setPixelsPerNotch(scrollStep);
 
   useEffect(() => {
     if (isPreviewMode) return;
@@ -188,10 +192,13 @@ export const Relative = () => {
     }
 
     function handleWheel(event: Extract<CapturedInputEvent, { type: 'wheel' }>) {
-      if (Math.floor(event.deltaY) === 0) return;
       const now = Date.now();
+      const notch = wheelRef.current.push(event, now);
+      if (notch === 0) return;
       if (now - lastScrollTimeRef.current < scrollInterval) return;
-      const deltaY = (event.deltaY > 0 ? 1 : -1) * scrollDirection;
+      wheelStats.sent += Math.abs(notch);
+      wheelStats.direction = scrollDirection;
+      const deltaY = notch * scrollDirection;
       sendMouseEvent({ type: 'wheel', deltaY }, event.source);
       lastScrollTimeRef.current = now;
     }
