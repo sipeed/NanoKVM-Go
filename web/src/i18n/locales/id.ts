@@ -467,7 +467,6 @@ const id = {
     },
     terminal: {
       title: 'Terminal',
-      nanokvm: 'Terminal NanoKVM',
       confirm: 'Oke',
       submit: 'Kirim',
       username: 'Nama pengguna',

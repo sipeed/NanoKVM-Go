@@ -455,7 +455,6 @@ const ko = {
     },
     terminal: {
       title: '터미널',
-      nanokvm: 'NanoKVM 터미널',
       confirm: '확인',
       submit: '제출',
       username: '사용자 이름',

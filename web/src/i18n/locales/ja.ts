@@ -466,7 +466,6 @@ const ja = {
     },
     terminal: {
       title: 'ターミナル',
-      nanokvm: 'NanoKVMターミナル',
       confirm: 'OK',
       submit: '送信',
       username: 'ユーザー名',

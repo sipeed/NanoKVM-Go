@@ -467,7 +467,6 @@ const ru = {
     },
     terminal: {
       title: 'Терминал',
-      nanokvm: 'Терминал NanoKVM',
       confirm: 'ОК',
       submit: 'Отправить',
       username: 'Имя пользователя',

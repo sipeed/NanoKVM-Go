@@ -470,7 +470,6 @@ const hu = {
     },
     terminal: {
       title: 'Terminál',
-      nanokvm: 'NanoKVM Terminál',
       confirm: 'OK',
       submit: 'Elküldés',
       username: 'Felhasználónév',

@@ -12,11 +12,6 @@ export function getInfo() {
   return http.get('/api/vm/info');
 }
 
-// get hardware information
-export function getHardware() {
-  return http.get('/api/vm/hardware');
-}
-
 export type FingerRobotArm = 'long' | 'short';
 export type FingerRobotSpeed = 'slow' | 'fast';
 
@@ -330,21 +325,18 @@ export function rebootToFlashing(challenge?: string) {
     : http.post('/api/vm/system/reboot-to-flashing');
 }
 
-export const edidErrorReasons = [
-  'bad_request',
-  'invalid_file_name',
-  'edid_too_large',
-  'invalid_edid_length',
-  'invalid_edid_header',
-  'unsupported_edid_version',
-  'edid_extension_count_mismatch',
-  'invalid_edid_checksum',
-  'invalid_cta_extension',
-  'current_edid_cannot_be_overwritten',
-  'save_failed'
-] as const;
-
-export type EdidErrorReason = (typeof edidErrorReasons)[number];
+export type EdidErrorReason =
+  | 'bad_request'
+  | 'invalid_file_name'
+  | 'edid_too_large'
+  | 'invalid_edid_length'
+  | 'invalid_edid_header'
+  | 'unsupported_edid_version'
+  | 'edid_extension_count_mismatch'
+  | 'invalid_edid_checksum'
+  | 'invalid_cta_extension'
+  | 'current_edid_cannot_be_overwritten'
+  | 'save_failed';
 
 export type EdidResponse<T extends object = object> = {
   code: number;

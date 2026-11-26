@@ -456,7 +456,6 @@ const vi = {
     },
     terminal: {
       title: 'Thiết bị đầu cuối',
-      nanokvm: 'Thiết bị đầu cuối NanoKVM',
       confirm: 'OK',
       submit: 'Gửi',
       username: 'Tên người dùng',

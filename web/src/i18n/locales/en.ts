@@ -460,7 +460,6 @@ const en = {
     },
     terminal: {
       title: 'Terminal',
-      nanokvm: 'NanoKVM Terminal',
       confirm: 'Ok',
       submit: 'Submit',
       username: 'Username',

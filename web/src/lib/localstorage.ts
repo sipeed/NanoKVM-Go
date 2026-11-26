@@ -14,7 +14,6 @@ const SKIP_MODIFY_PASSWORD_KEY = 'nano-kvm-skip-modify-password';
 const SKIP_BROWSER_NOTIFICATION_KEY = 'nano-kvm-skip-browser-notification';
 const MENU_DISABLED_ITEMS_KEY = 'nano-kvm-menu-disabled-items';
 const MENU_AUTO_HIDE_KEY = 'nano-kvm-menu-auto-hide';
-const POWER_CONFIRM_KEY = 'nano-kvm-power-confirm';
 const VIDEO_VOLUME_KEY = 'nano-kvm-video-volume';
 const LAST_AUDIBLE_VOLUME_KEY = 'nano-kvm-last-audible-volume';
 const PORTAL_MODE_KEY = 'nano-kvm-portal-mode';
@@ -229,15 +228,6 @@ export function getMenuDisplayMode(): string {
 
 export function setMenuDisplayMode(mode: string) {
   localStorage.setItem(MENU_AUTO_HIDE_KEY, mode);
-}
-
-export function getPowerConfirm() {
-  const enabled = localStorage.getItem(POWER_CONFIRM_KEY);
-  return enabled === 'true';
-}
-
-export function setPowerConfirm(enabled: boolean) {
-  localStorage.setItem(POWER_CONFIRM_KEY, String(enabled));
 }
 
 function readVolume(key: string): number | null {

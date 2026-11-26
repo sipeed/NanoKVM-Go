@@ -470,7 +470,6 @@ const es = {
     },
     terminal: {
       title: 'Consola',
-      nanokvm: 'Consola del NanoKVM',
       confirm: 'Confirmar',
       submit: 'Enviar',
       username: 'Usuario',

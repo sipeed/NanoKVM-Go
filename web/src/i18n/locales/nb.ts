@@ -466,7 +466,6 @@ const nb = {
     },
     terminal: {
       title: 'Terminal',
-      nanokvm: 'NanoKVM',
       confirm: 'OK',
       submit: 'Send',
       username: 'Brukernavn',

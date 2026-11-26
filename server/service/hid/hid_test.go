@@ -80,13 +80,13 @@ func wrappedHIDTimeout() error {
 	return fmt.Errorf("fake HID write: %w", os.ErrDeadlineExceeded)
 }
 
-func TestWriteHid0ReturnsKeyboardWriteError(t *testing.T) {
+func TestWriteKeyboardReportReturnsWriteError(t *testing.T) {
 	writeErr := errors.New("keyboard write failed")
 	h := &Hid{g0: hidEndpoint{file: &fakeHIDFile{defaultWriteErr: writeErr}}}
 
-	err := h.WriteHid0([]byte{0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00})
+	err := h.WriteKeyboardReport([]byte{0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00})
 	if !errors.Is(err, writeErr) {
-		t.Fatalf("WriteHid0 error = %v, want %v", err, writeErr)
+		t.Fatalf("WriteKeyboardReport error = %v, want %v", err, writeErr)
 	}
 }
 

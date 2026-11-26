@@ -465,7 +465,6 @@ const da = {
     },
     terminal: {
       title: 'Terminal',
-      nanokvm: 'Terminal til NanoKVM',
       confirm: 'OK',
       submit: 'Send',
       username: 'Brugernavn',

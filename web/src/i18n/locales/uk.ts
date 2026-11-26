@@ -464,7 +464,6 @@ const uk = {
     },
     terminal: {
       title: 'Термінал',
-      nanokvm: 'Термінал NanoKVM',
       confirm: 'ОК',
       submit: 'Надіслати',
       username: "Ім'я користувача",

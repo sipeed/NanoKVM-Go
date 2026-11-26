@@ -433,7 +433,6 @@ const zh = {
     },
     terminal: {
       title: '终端',
-      nanokvm: 'NanoKVM 终端',
       confirm: '确定',
       submit: '提交',
       username: '用户名',

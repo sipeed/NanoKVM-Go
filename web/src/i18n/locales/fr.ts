@@ -471,7 +471,6 @@ const fr = {
     },
     terminal: {
       title: 'Terminal',
-      nanokvm: 'Terminal NanoKVM',
       confirm: 'OK',
       submit: 'Soumettre',
       username: 'Nom d’utilisateur',

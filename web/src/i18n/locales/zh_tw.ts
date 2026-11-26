@@ -434,7 +434,6 @@ const zh_tw = {
     },
     terminal: {
       title: '終端機',
-      nanokvm: 'NanoKVM 終端機',
       confirm: '確定',
       submit: '提交',
       username: '使用者名稱',

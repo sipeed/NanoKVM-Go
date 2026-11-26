@@ -465,7 +465,6 @@ const cz = {
     },
     terminal: {
       title: 'Terminál',
-      nanokvm: 'Terminál NanoKVM',
       confirm: 'OK',
       submit: 'Odeslat',
       username: 'Uživatelské jméno',

@@ -474,7 +474,6 @@ const de = {
     },
     terminal: {
       title: 'Terminal',
-      nanokvm: 'NanoKVM-Terminal',
       confirm: 'OK',
       submit: 'Senden',
       username: 'Benutzername',

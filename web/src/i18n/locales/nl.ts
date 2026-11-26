@@ -470,7 +470,6 @@ const nl = {
     },
     terminal: {
       title: 'Terminal',
-      nanokvm: 'NanoKVM-terminal',
       confirm: 'OK',
       submit: 'Verzenden',
       username: 'Gebruikersnaam',

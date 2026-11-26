@@ -452,7 +452,6 @@ const th = {
     },
     terminal: {
       title: 'เทอร์มินอล',
-      nanokvm: 'เทอร์มินอลของ NanoKVM',
       confirm: 'ยืนยัน',
       submit: 'ส่ง',
       username: 'ชื่อผู้ใช้',

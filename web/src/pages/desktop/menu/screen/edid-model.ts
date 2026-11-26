@@ -1,8 +1,7 @@
 import type { EdidErrorReason, EdidResponse } from '@/api/vm.ts';
 
-export const EDID_MIN_FILE_SIZE = 128;
-export const EDID_MAX_FILE_SIZE = 512;
-export const EDID_BLOCK_SIZE = 128;
+const EDID_MAX_FILE_SIZE = 512;
+const EDID_BLOCK_SIZE = 128;
 
 type EdidErrorTranslationKey =
   | 'settings.screen.edid.errors.badRequest'
@@ -35,10 +34,6 @@ const reasonTranslationKeys: Record<EdidErrorReason, EdidErrorTranslationKey> = 
   save_failed: 'settings.screen.edid.errors.saveFailed'
 };
 
-const knownEdidReasons = new Set<EdidErrorReason>(
-  Object.keys(reasonTranslationKeys) as EdidErrorReason[]
-);
-
 export function getEdidUploadPreflightError(file: {
   name: string;
   size: number;
@@ -49,32 +44,22 @@ export function getEdidUploadPreflightError(file: {
   if (file.size > EDID_MAX_FILE_SIZE) {
     return 'edid_too_large';
   }
-  if (file.size < EDID_MIN_FILE_SIZE || file.size % EDID_BLOCK_SIZE !== 0) {
+  if (file.size < EDID_BLOCK_SIZE || file.size % EDID_BLOCK_SIZE !== 0) {
     return 'invalid_edid_length';
   }
 
   return undefined;
 }
 
-export function getEdidResponseReason(response: EdidResponse): EdidErrorReason | undefined {
-  const reason = response.data?.reason;
-  return typeof reason === 'string' && knownEdidReasons.has(reason as EdidErrorReason)
-    ? (reason as EdidErrorReason)
-    : undefined;
-}
-
-export function getEdidErrorTranslationKey(
-  reason: EdidErrorReason | undefined,
-  fallback: EdidErrorTranslationKey
-): EdidErrorTranslationKey {
-  return reason ? reasonTranslationKeys[reason] : fallback;
-}
-
 export function getEdidResponseErrorTranslationKey(
   response: EdidResponse,
   fallback: EdidErrorTranslationKey
 ): EdidErrorTranslationKey {
-  return getEdidErrorTranslationKey(getEdidResponseReason(response), fallback);
+  const reason = response.data?.reason;
+  if (typeof reason === 'string' && Object.prototype.hasOwnProperty.call(reasonTranslationKeys, reason)) {
+    return reasonTranslationKeys[reason];
+  }
+  return fallback;
 }
 
 type EdidOperationOptions = {
@@ -123,9 +108,7 @@ type EdidUploadOptions = Omit<EdidOperationOptions, 'request'> & {
 export async function runEdidUpload(options: EdidUploadOptions): Promise<boolean> {
   const preflightError = getEdidUploadPreflightError(options.file);
   if (preflightError) {
-    options.onError(
-      getEdidErrorTranslationKey(preflightError, 'settings.screen.edid.errors.uploadFailed')
-    );
+    options.onError(reasonTranslationKeys[preflightError]);
     return false;
   }
 

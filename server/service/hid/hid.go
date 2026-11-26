@@ -165,40 +165,6 @@ func (h *Hid) Close() {
 	h.CloseNoLock()
 }
 
-func (h *Hid) WriteHid0(data []byte) error {
-	if err := h.WriteKeyboardReport(data); err != nil {
-		log.Errorf("write to %s failed: %s", HID0, err)
-		return err
-	}
-
-	log.Debugf("write to %s: %v", HID0, data)
-	return nil
-}
-
-func (h *Hid) WriteHid1(data []byte) {
-	if err := h.WriteRelativeMouseReport(data); err != nil {
-		log.Errorf("write to %s failed: %s", HID1, err)
-		return
-	}
-
-	log.Debugf("write to %s: %v", HID1, data)
-}
-
-func (h *Hid) WriteHid2(data []byte) {
-	var err error
-	if len(data) == TouchScreenReportSize {
-		err = h.WriteTouchScreenReport(data)
-	} else {
-		err = h.WriteAbsoluteMouseReport(data)
-	}
-	if err != nil {
-		log.Errorf("write to %s failed: %s", HID2, err)
-		return
-	}
-
-	log.Debugf("write to %s: %v", HID2, data)
-}
-
 func (h *Hid) WriteKeyboardReport(data []byte) error {
 	if len(data) != 8 {
 		return errors.New("invalid keyboard report length")
@@ -298,12 +264,6 @@ func (h *Hid) WriteTouchScreenReport(data []byte) error {
 	}
 	pushHIDMouseState(data[len(data)-1:])
 	return nil
-}
-
-func (h *Hid) ReleaseMouseButtons() {
-	if err := h.releaseMouseButtons(); err != nil {
-		log.Errorf("release mouse inputs failed: %s", err)
-	}
 }
 
 func (h *Hid) ReleaseAllInputs() error {
