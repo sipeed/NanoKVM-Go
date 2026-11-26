@@ -206,6 +206,7 @@ export type MockState = {
       serialnumber: string;
       manufacturer: string;
       product: string;
+      configurationName: string;
     };
     usbNetwork: {
       mode: 'server' | 'client';
@@ -447,21 +448,22 @@ export function createMockState(): MockState {
       staticIp: { enabled: false, ip: '192.0.2.20/24' },
       usbId: {
         enabled: false,
-        vid: '0x359F',
-        pid: '0x3305',
-        bcdDevice: '0x0101',
-        serialnumber: '0123456789ABCDEF',
-        manufacturer: 'sipeed',
-        product: 'NanoKVM-Go'
+        vid: '',
+        pid: '',
+        bcdDevice: '',
+        serialnumber: '',
+        manufacturer: '',
+        product: '',
+        configurationName: ''
       },
       usbNetwork: {
         mode: 'server',
         ipv4: '',
         forwarding: false
       },
-      diskInquiry: { enabled: false, value: 'sipeed  Flash Drive     1.00' },
-      diskInquiryCdrom: { enabled: false, value: 'sipeed  Optical Drive   1.00' },
-      uac2FunctionName: { enabled: false, value: 'NanoKVM-Go Audio' },
+      diskInquiry: { enabled: false, value: 'LogitechFlash Drive     1.00' },
+      diskInquiryCdrom: { enabled: false, value: 'LogitechOptical Drive   1.00' },
+      uac2FunctionName: { enabled: false, value: '' },
       webcamFunctionName: { enabled: false, value: '' },
       dialBackground: {
         current: 'mock-grid.bmp',

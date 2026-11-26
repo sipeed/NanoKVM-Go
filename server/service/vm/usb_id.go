@@ -18,12 +18,13 @@ import (
 )
 
 const (
-	usbVidFile          = "/boot/usb.vid"
-	usbPidFile          = "/boot/usb.pid"
-	usbBcdDeviceFile    = "/boot/usb.bcddevice"
-	usbSerialnumberFile = "/boot/usb.serialnumber"
-	usbManufacturerFile = "/boot/usb.manufacturer"
-	usbProductFile      = "/boot/usb.product"
+	usbVidFile           = "/boot/usb.vid"
+	usbPidFile           = "/boot/usb.pid"
+	usbBcdDeviceFile     = "/boot/usb.bcddevice"
+	usbSerialnumberFile  = "/boot/usb.serialnumber"
+	usbManufacturerFile  = "/boot/usb.manufacturer"
+	usbProductFile       = "/boot/usb.product"
+	usbConfigurationFile = "/boot/usb.configuration"
 
 	usbIdentityStringMaxLen = 64
 )
@@ -37,6 +38,7 @@ var (
 		usbSerialnumberFile,
 		usbManufacturerFile,
 		usbProductFile,
+		usbConfigurationFile,
 	}
 )
 
@@ -51,8 +53,9 @@ func (s *Service) GetUsbId(c *gin.Context) {
 	serialnumber, serialOK := readUsbIdFile(usbSerialnumberFile)
 	manufacturer, mfgOK := readUsbIdFile(usbManufacturerFile)
 	product, productOK := readUsbIdFile(usbProductFile)
+	configurationName, configOK := readUsbIdFile(usbConfigurationFile)
 
-	if vidOK || pidOK || bcdOK || serialOK || mfgOK || productOK {
+	if vidOK || pidOK || bcdOK || serialOK || mfgOK || productOK || configOK {
 		data.Enabled = true
 		data.Vid = vid
 		data.Pid = pid
@@ -60,6 +63,7 @@ func (s *Service) GetUsbId(c *gin.Context) {
 		data.Serialnumber = serialnumber
 		data.Manufacturer = manufacturer
 		data.Product = product
+		data.ConfigurationName = configurationName
 	}
 
 	rsp.OkRspWithData(c, data)
@@ -115,6 +119,12 @@ func (s *Service) SetUsbId(c *gin.Context) {
 			return
 		}
 
+		configurationName, err := normalizeUsbIdentityString(req.ConfigurationName)
+		if err != nil {
+			rsp.ErrRsp(c, -2, "invalid configurationName")
+			return
+		}
+
 		writes := []struct {
 			path  string
 			value string
@@ -130,6 +140,7 @@ func (s *Service) SetUsbId(c *gin.Context) {
 			{usbSerialnumberFile, serialnumber},
 			{usbManufacturerFile, manufacturer},
 			{usbProductFile, product},
+			{usbConfigurationFile, configurationName},
 		}
 
 		var written []string
@@ -185,8 +196,8 @@ func (s *Service) SetUsbId(c *gin.Context) {
 
 	rsp.OkRsp(c)
 	log.Debugf(
-		"set usb id: enabled=%v vid=%q pid=%q bcdDevice=%q serialnumber=%q manufacturer=%q product=%q",
-		req.Enabled, req.Vid, req.Pid, req.BcdDevice, req.Serialnumber, req.Manufacturer, req.Product,
+		"set usb id: enabled=%v vid=%q pid=%q bcdDevice=%q serialnumber=%q manufacturer=%q product=%q configurationName=%q",
+		req.Enabled, req.Vid, req.Pid, req.BcdDevice, req.Serialnumber, req.Manufacturer, req.Product, req.ConfigurationName,
 	)
 }
 

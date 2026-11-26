@@ -178,6 +178,7 @@ def function_body(name):
 
 for function_name in ("hid_start", "hid_only_start"):
     body = function_body(function_name)
+    assert "configure_usb_identity" in body
     gs0 = body.index("mkdir functions/hid.GS0")
     gs1 = body.index("mkdir functions/hid.GS1")
     gs2 = body.index("configure_hid2")
@@ -190,6 +191,6 @@ PY
 
 grep -q 'HIDG_TOUCHSCREEN_FEATURE_REPORT_ID.*4' "$KERNEL_PATCH"
 grep -q 'HIDG_TOUCHSCREEN_MAX_CONTACTS.*10' "$KERNEL_PATCH"
-[[ "$(grep -c 'echo 0x0105 > bcdDevice' "$USBDEV_SCRIPT")" == "2" ]]
+grep -Fq 'echo 0x0521 > bcdDevice' "$USBDEV_SCRIPT"
 
 printf 'ok - HID2 profile descriptors\n'

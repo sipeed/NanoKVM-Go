@@ -355,6 +355,56 @@ configure_hid2() {
     ln -s functions/hid.GS2 configs/c.1
 }
 
+configure_usb_identity() {
+    echo 0x0200 > bcdUSB
+
+    if [ -e /boot/usb.bcddevice ]; then
+        cat /boot/usb.bcddevice > bcdDevice
+    else
+        echo 0x0521 > bcdDevice
+    fi
+
+    if [ -e /boot/usb.vid ]; then
+        cat /boot/usb.vid > idVendor
+    else
+        echo 0x046D > idVendor
+    fi
+
+    if [ -e /boot/usb.pid ]; then
+        cat /boot/usb.pid > idProduct
+    else
+        echo 0x0A4E > idProduct
+    fi
+
+    echo 0xEF > bDeviceClass
+    echo 0x02 > bDeviceSubClass
+    echo 0x01 > bDeviceProtocol
+
+    mkdir strings/0x409
+    if [ -e /boot/usb.serialnumber ]; then
+        cat /boot/usb.serialnumber > strings/0x409/serialnumber
+    else
+        echo '2214GG01KWF8' > strings/0x409/serialnumber
+    fi
+    if [ -e /boot/usb.manufacturer ]; then
+        cat /boot/usb.manufacturer > strings/0x409/manufacturer
+    else
+        echo 'Logitech' > strings/0x409/manufacturer
+    fi
+    if [ -e /boot/usb.product ]; then
+        cat /boot/usb.product > strings/0x409/product
+    else
+        echo 'Logitech P710e' > strings/0x409/product
+    fi
+}
+
+configure_usb_configuration_name() {
+    local strings_dir="$1/strings/0x409"
+    if [ -s /boot/usb.configuration ]; then
+        mkdir "$strings_dir" && cat /boot/usb.configuration > "$strings_dir/configuration"
+    fi
+}
+
 hid_start() {
     local storage_ready=1
     if ! prepare_storage; then
@@ -368,60 +418,19 @@ hid_start() {
     mkdir g0
     cd g0
 
-    echo 0x0200 > bcdUSB
-
-    if [ -e /boot/usb.bcddevice ]; then
-        cat /boot/usb.bcddevice > bcdDevice
-    else
-        echo 0x0105 > bcdDevice
-    fi
-
-    if [ -e /boot/usb.vid ]; then
-        cat /boot/usb.vid > idVendor
-    else
-        echo 0x359F > idVendor
-    fi
-
-    if [ -e /boot/usb.pid ]; then
-        cat /boot/usb.pid > idProduct
-    else
-        echo 0x3305 > idProduct
-    fi
-
-    echo 0xEF > bDeviceClass
-    echo 0x02 > bDeviceSubClass
-    echo 0x01 > bDeviceProtocol
-
-    mkdir strings/0x409
-    if [ -e /boot/usb.serialnumber ]; then
-        cat /boot/usb.serialnumber > strings/0x409/serialnumber
-    else
-        echo '0123456789ABCDEF' > strings/0x409/serialnumber
-    fi
-    if [ -e /boot/usb.manufacturer ]; then
-        cat /boot/usb.manufacturer > strings/0x409/manufacturer
-    else
-        echo 'sipeed' > strings/0x409/manufacturer
-    fi
-    if [ -e /boot/usb.product ]; then
-        cat /boot/usb.product > strings/0x409/product
-    else
-        echo 'NanoKVM-Go' > strings/0x409/product
-    fi
+    configure_usb_identity || return 1
 
     mkdir configs/c.1
     echo 0xA0 > configs/c.1/bmAttributes
     echo 200 > configs/c.1/MaxPower
-    mkdir configs/c.1/strings/0x409
-    echo "NanoKVM-Go" > configs/c.1/strings/0x409/configuration
+    configure_usb_configuration_name configs/c.1 || return 1
 
     if [ -e /boot/usb.udisp ] && [ ! -e /boot/usb.uac2 ]; then
         mkdir functions/Loopback.0
         mkdir functions/SourceSink.0
 
         mkdir configs/c.2
-        mkdir configs/c.2/strings/0x409
-        echo "NanoKVM-Go" > configs/c.2/strings/0x409/configuration
+        configure_usb_configuration_name configs/c.2 || return 1
 
         ln -s functions/Loopback.0 configs/c.1
         ln -s functions/SourceSink.0 configs/c.2
@@ -494,13 +503,13 @@ hid_start() {
         if [ -e /boot/disk.inquiry_string ]; then
             cat /boot/disk.inquiry_string > functions/mass_storage.disk0/lun.0/inquiry_string
         else
-            echo -n "sipeed  Flash Drive     1.00" > functions/mass_storage.disk0/lun.0/inquiry_string
+            echo -n "LogitechFlash Drive     1.00" > functions/mass_storage.disk0/lun.0/inquiry_string
         fi
 
         if [ -e /boot/disk.inquiry_string_cdrom ]; then
             cat /boot/disk.inquiry_string_cdrom > functions/mass_storage.disk0/lun.0/inquiry_string_cdrom
         else
-            echo -n "sipeed  Optical Drive   1.00" > functions/mass_storage.disk0/lun.0/inquiry_string_cdrom
+            echo -n "LogitechOptical Drive   1.00" > functions/mass_storage.disk0/lun.0/inquiry_string_cdrom
         fi
 
         if [ -e /boot/usb.disk0.ro ]; then
@@ -519,13 +528,13 @@ hid_start() {
         if [ -e /boot/disk.inquiry_string ]; then
             cat /boot/disk.inquiry_string > functions/mass_storage.disk1/lun.0/inquiry_string
         else
-            echo -n "sipeed  Flash Drive     1.00" > functions/mass_storage.disk1/lun.0/inquiry_string
+            echo -n "LogitechFlash Drive     1.00" > functions/mass_storage.disk1/lun.0/inquiry_string
         fi
 
         if [ -e /boot/disk.inquiry_string_cdrom ]; then
             cat /boot/disk.inquiry_string_cdrom > functions/mass_storage.disk1/lun.0/inquiry_string_cdrom
         else
-            echo -n "sipeed  Optical Drive   1.00" > functions/mass_storage.disk1/lun.0/inquiry_string_cdrom
+            echo -n "LogitechOptical Drive   1.00" > functions/mass_storage.disk1/lun.0/inquiry_string_cdrom
         fi
 
         echo /exfat.img > functions/mass_storage.disk1/lun.0/file || return 1
@@ -549,7 +558,7 @@ hid_start() {
         if [ -e /boot/uac2.function_name ]; then
             cat /boot/uac2.function_name > functions/uac2.usb0/function_name
         else
-            echo "NanoKVM-Go Audio" > functions/uac2.usb0/function_name
+            echo "Logitech P710e" > functions/uac2.usb0/function_name
         fi
         ln -s functions/uac2.usb0 configs/c.1/
     fi
@@ -594,52 +603,12 @@ hid_only_start() {
     mkdir g0
     cd g0
 
-    echo 0x0200 > bcdUSB
-
-    if [ -e /boot/usb.bcddevice ]; then
-        cat /boot/usb.bcddevice > bcdDevice
-    else
-        echo 0x0105 > bcdDevice
-    fi
-
-    if [ -e /boot/usb.vid ]; then
-        cat /boot/usb.vid > idVendor
-    else
-        echo 0x359F > idVendor
-    fi
-
-    if [ -e /boot/usb.pid ]; then
-        cat /boot/usb.pid > idProduct
-    else
-        echo 0x3305 > idProduct
-    fi
-
-    echo 0xEF > bDeviceClass
-    echo 0x02 > bDeviceSubClass
-    echo 0x01 > bDeviceProtocol
-
-    mkdir strings/0x409
-    if [ -e /boot/usb.serialnumber ]; then
-        cat /boot/usb.serialnumber > strings/0x409/serialnumber
-    else
-        echo '0123456789ABCDEF' > strings/0x409/serialnumber
-    fi
-    if [ -e /boot/usb.manufacturer ]; then
-        cat /boot/usb.manufacturer > strings/0x409/manufacturer
-    else
-        echo 'sipeed' > strings/0x409/manufacturer
-    fi
-    if [ -e /boot/usb.product ]; then
-        cat /boot/usb.product > strings/0x409/product
-    else
-        echo 'NanoKVM-Go' > strings/0x409/product
-    fi
+    configure_usb_identity || return 1
 
     mkdir configs/c.1
     echo 0xA0 > configs/c.1/bmAttributes
     echo 200 > configs/c.1/MaxPower
-    mkdir configs/c.1/strings/0x409
-    echo "NanoKVM-Go HID-only" > configs/c.1/strings/0x409/configuration
+    configure_usb_configuration_name configs/c.1 || return 1
 
     mkdir functions/hid.GS0
     echo 1 > functions/hid.GS0/no_out_endpoint
@@ -715,13 +684,17 @@ hid_stop() {
         rm -vf "$GADGET_PATH/configs/c.1/"uac2.usb0
         rm -vf "$GADGET_PATH/os_desc/c.1"
 
-        rmdir "$GADGET_PATH/configs/c.1/strings/0x409"
+        if [ -d "$GADGET_PATH/configs/c.1/strings/0x409" ]; then
+            rmdir "$GADGET_PATH/configs/c.1/strings/0x409"
+        fi
         rmdir "$GADGET_PATH/configs/c.1"
     fi
 
     if [ -d "$GADGET_PATH/configs/c.2" ]; then
         rm -vf "$GADGET_PATH/configs/c.2/"SourceSink.0
-        rmdir "$GADGET_PATH/configs/c.2/strings/0x409"
+        if [ -d "$GADGET_PATH/configs/c.2/strings/0x409" ]; then
+            rmdir "$GADGET_PATH/configs/c.2/strings/0x409"
+        fi
         rmdir "$GADGET_PATH/configs/c.2"
     fi
 

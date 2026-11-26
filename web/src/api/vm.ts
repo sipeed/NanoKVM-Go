@@ -257,6 +257,7 @@ export type UsbIdFields = {
   serialnumber: string;
   manufacturer: string;
   product: string;
+  configurationName: string;
 };
 
 // set USB device identity

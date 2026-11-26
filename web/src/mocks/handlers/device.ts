@@ -838,6 +838,7 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       const serialnumber = readString(body, 'serialnumber');
       const manufacturer = readString(body, 'manufacturer');
       const product = readString(body, 'product');
+      const configurationName = readString(body, 'configurationName');
       if (enabled !== null) state.vm.usbId.enabled = enabled;
       if (vid !== null) state.vm.usbId.vid = vid;
       if (pid !== null) state.vm.usbId.pid = pid;
@@ -845,6 +846,7 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       if (serialnumber !== null) state.vm.usbId.serialnumber = serialnumber;
       if (manufacturer !== null) state.vm.usbId.manufacturer = manufacturer;
       if (product !== null) state.vm.usbId.product = product;
+      if (configurationName !== null) state.vm.usbId.configurationName = configurationName;
       if (enabled === false) {
         state.vm.usbId.vid = '';
         state.vm.usbId.pid = '';
@@ -852,6 +854,7 @@ export function createDeviceHandlers(origin: string, state: MockState) {
         state.vm.usbId.serialnumber = '';
         state.vm.usbId.manufacturer = '';
         state.vm.usbId.product = '';
+        state.vm.usbId.configurationName = '';
       }
       return ok(state.vm.usbId);
     }),

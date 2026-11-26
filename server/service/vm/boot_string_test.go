@@ -12,7 +12,7 @@ func TestNormalizeDiskInquiryString(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{name: "standard identity", in: "sipeed  Flash Drive     1.00", want: "sipeed  Flash Drive     1.00"},
+		{name: "standard identity", in: "LogitechFlash Drive     1.00", want: "LogitechFlash Drive     1.00"},
 		{name: "short identity", in: "NanoKVM", want: "NanoKVM"},
 		{name: "surrounding whitespace", in: "  NanoKVM  ", want: "NanoKVM"},
 		{name: "empty", in: "   ", wantErr: true},
@@ -49,7 +49,7 @@ func TestNormalizeBootString(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{in: "sipeed  Flash Drive     1.00", maxLen: diskInquiryMaxLen, want: "sipeed  Flash Drive     1.00"},
+		{in: "LogitechFlash Drive     1.00", maxLen: diskInquiryMaxLen, want: "LogitechFlash Drive     1.00"},
 		{in: "  NanoKVM-Go Audio  ", maxLen: uac2FunctionNameMaxLen, want: "NanoKVM-Go Audio"},
 		{in: "", maxLen: 36, wantErr: true},
 		{in: "   ", maxLen: 36, wantErr: true},

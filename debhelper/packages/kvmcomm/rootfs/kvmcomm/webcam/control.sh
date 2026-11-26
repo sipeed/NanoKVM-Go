@@ -43,8 +43,12 @@ create() {
     budget
     install_rule
     mkdir "$f" || fail "The installed kernel must support ConfigFS UVC."
-    if [[ -e $f/function_name && -f /boot/uvc.function_name ]]; then
-        cat /boot/uvc.function_name > "$f/function_name"
+    if [[ -e $f/function_name ]]; then
+        if [[ -f /boot/uvc.function_name ]]; then
+            cat /boot/uvc.function_name > "$f/function_name"
+        else
+            echo 'Anker Powerconf C200' > "$f/function_name"
+        fi
     fi
     mkdir -p "$f/control/header/h" "$f/streaming/header/h" "$m/720p"
     echo 1280 > "$m/720p/wWidth"

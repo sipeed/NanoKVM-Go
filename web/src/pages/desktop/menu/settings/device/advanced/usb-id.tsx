@@ -5,15 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import * as api from '@/api/vm.ts';
 
-type UsbIdConfig = {
-  isEnabled: boolean;
-  vid: string;
-  pid: string;
-  bcdDevice: string;
-  serialnumber: string;
-  manufacturer: string;
-  product: string;
-};
+type UsbIdConfig = api.UsbIdFields & { isEnabled: boolean };
 
 type Result = {
   type: 'success' | 'failed';
@@ -27,7 +19,8 @@ const emptyConfig: UsbIdConfig = {
   bcdDevice: '',
   serialnumber: '',
   manufacturer: '',
-  product: ''
+  product: '',
+  configurationName: ''
 };
 
 const usbIdHexRegex = /^(0x)?[0-9a-fA-F]{1,4}$/;
@@ -44,6 +37,7 @@ export const UsbId = () => {
   const [serialnumber, setSerialnumber] = useState('');
   const [manufacturer, setManufacturer] = useState('');
   const [product, setProduct] = useState('');
+  const [configurationName, setConfigurationName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
 
@@ -59,6 +53,7 @@ export const UsbId = () => {
     setSerialnumber(config.serialnumber);
     setManufacturer(config.manufacturer);
     setProduct(config.product);
+    setConfigurationName(config.configurationName);
     setResult(null);
     setIsModalOpen(true);
   }
@@ -77,7 +72,8 @@ export const UsbId = () => {
         bcdDevice: rsp.data.bcdDevice ?? '',
         serialnumber: rsp.data.serialnumber ?? '',
         manufacturer: rsp.data.manufacturer ?? '',
-        product: rsp.data.product ?? ''
+        product: rsp.data.product ?? '',
+        configurationName: rsp.data.configurationName ?? ''
       };
       setConfig(next);
       setIsEnabled(next.isEnabled);
@@ -87,6 +83,7 @@ export const UsbId = () => {
       setSerialnumber(next.serialnumber);
       setManufacturer(next.manufacturer);
       setProduct(next.product);
+      setConfigurationName(next.configurationName);
     });
   }
 
@@ -97,6 +94,7 @@ export const UsbId = () => {
     const nextSerial = isEnabled ? serialnumber.trim() : '';
     const nextMfg = isEnabled ? manufacturer.trim() : '';
     const nextProduct = isEnabled ? product.trim() : '';
+    const nextConfigurationName = isEnabled ? configurationName.trim() : '';
 
     if (
       config.isEnabled === isEnabled &&
@@ -105,7 +103,8 @@ export const UsbId = () => {
       config.bcdDevice === nextBcd &&
       config.serialnumber === nextSerial &&
       config.manufacturer === nextMfg &&
-      config.product === nextProduct
+      config.product === nextProduct &&
+      config.configurationName === nextConfigurationName
     ) {
       setIsModalOpen(false);
       return;
@@ -126,7 +125,8 @@ export const UsbId = () => {
         bcdDevice: nextBcd,
         serialnumber: nextSerial,
         manufacturer: nextMfg,
-        product: nextProduct
+        product: nextProduct,
+        configurationName: nextConfigurationName
       });
       if (rsp.code !== 0) {
         console.log(rsp.msg);
@@ -142,7 +142,8 @@ export const UsbId = () => {
         bcdDevice: nextBcd,
         serialnumber: nextSerial,
         manufacturer: nextMfg,
-        product: nextProduct
+        product: nextProduct,
+        configurationName: nextConfigurationName
       });
       setVid(nextVid);
       setPid(nextPid);
@@ -150,6 +151,7 @@ export const UsbId = () => {
       setSerialnumber(nextSerial);
       setManufacturer(nextMfg);
       setProduct(nextProduct);
+      setConfigurationName(nextConfigurationName);
       setIsLoading(false);
       setResult({ type: 'success', message: t('settings.device.usbId.success') });
     } catch (err) {
@@ -284,6 +286,19 @@ export const UsbId = () => {
                   disabled={isLoading}
                   onFocus={() => setResult(null)}
                   onChange={(e) => setProduct(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="usb-configuration-name" className="text-xs text-neutral-500">
+                  {t('settings.device.usbId.configurationName')}
+                </label>
+                <Input
+                  id="usb-configuration-name"
+                  value={configurationName}
+                  maxLength={64}
+                  disabled={isLoading}
+                  onFocus={() => setResult(null)}
+                  onChange={(e) => setConfigurationName(e.target.value)}
                 />
               </div>
             </div>
