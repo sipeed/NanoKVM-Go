@@ -1,33 +1,54 @@
 # NanoKVM-Go Nomad
 
-NanoKVM Go+ presents your browser’s camera to the remote computer as a 720p USB webcam. Nomad supports Go+ firmware v1.0.10. [中文](README.zh.md) · [Changelog](CHANGELOG.md)
+Nomad is a fork of Sipeed’s NanoKVM-Go for the **Go+ running firmware v1.0.10**. [Original project](https://github.com/sipeed/NanoKVM-Go) · [中文](README.zh.md) · [Changelog](CHANGELOG.md)
 
-## Dashboard controls
+## What Nomad adds
 
-### Screen, Preview and EDID
+- **USB webcam sharing**
+  - Use the camera on the computer or phone running your browser as a **720p USB webcam at up to 30 fps** on the remote computer.
+  - Automatic calibration adjusts bitrate and frame rate as the connection changes. The webcam menu shows throughput, delivered frame rate and upload delay.
+- **Menu bar improvements**
+  - Hover over a shortcut to open its menu, or tap its arrow on a touchscreen. Click the icon itself to mute or restore volume, toggle the webcam or microphone, or open a terminal tab.
+  - **Screen** combines Preview and cropping. Click the icon for view-only mode (a red eye), or open the menu to remove black borders automatically or select a saved crop.
+  - Closing Settings with the mouse resumes the five-second auto-hide timer when the pointer is outside the bar. Keyboard focus keeps the bar visible.
+  - **Settings → Appearance** lets each browser choose which icons to show and whether audio playback, microphone, webcam or Mouse Jiggler starts on connect. Hidden icons can still activate on connect.
+- **Mouse Jiggler improvements**
+  - Start or stop the built-in jiggler from the toolbar, set a runtime limit and see the time remaining. Movement changes after the last desktop viewer disconnects.
+- **Monitor EDIDs**
+  - Five revised display profiles give the remote computer a monitor model, resolution and refresh rate together. The selected profile supplies the monitor name.
+- **USB configuration and offline updates**
+  - Device settings show used and free USB IN endpoints out of seven. **Mouse → Mouse mode → Use one USB pointer endpoint** frees one by exposing only the selected pointer. Switching layouts briefly reconnects USB.
+  - Advanced device settings let you edit the USB configuration name and webcam name. The composite USB device defaults to Logitech P710e and the webcam to Anker Powerconf C200.
+  - The offline update bundles the application and webcam-enabled kernel. The dashboard and update screen identify the installed Nomad build.
 
-- **Preview.** Click the **Screen** icon to watch without sending keyboard or mouse input. A red eye marks view-only mode. Click it again to regain control. Hover over the icon or tap its menu arrow to open display settings.
-- **Screen → Cropping** can remove black borders automatically. For a fixed crop, select an area manually and reuse the saved region.
-- **Screen → EDID** sets the monitor name, resolution and refresh rate the remote computer sees. For example, the 1080p60 preset identifies as a Dell U2414H. Each of the five built-in profiles supplies its own monitor name. For a custom name, upload and select an EDID `.bin` containing it. You can also switch profiles under **Settings → Screen → EDID**.
+## How the features work
+
+### Webcam
+
+Open the dashboard over HTTPS, enable **Settings → Device → Webcam**, then click **Webcam** to share your camera. The browser sends JPEG frames over a secure WebSocket. The Go+ passes them to its USB Video Class (UVC) device, so an app on the remote computer can select it like a locally plugged-in camera. It uses two free USB IN endpoints and requires USB display mode to be off.
+
+Calibration starts at **8 Mbps and 25 fps**. During streaming, the browser tracks missed frames, upload delay and queue growth. It lowers its targets when frames miss their upload window. When the link recovers, it can raise bitrate again even if the camera has reached its frame-rate limit. The targets range from **2–10 Mbps** and **15–30 fps**. Stopping sharing releases the browser camera and returns the USB video to black. [Webcam setup, calibration and live statistics](docs/remote-webcam.md)
 
 ### Mouse Jiggler
 
-Click **Mouse Jiggler** to start or stop it. If the shortcut is hidden, enable **Show icon** under **Settings → Appearance**. Choose relative or absolute movement under **Settings → Device → Mouse Jiggler**.
+The Go+ sends USB mouse movements in relative or absolute mode. If the toolbar shortcut is hidden, enable **Show icon** under **Settings → Appearance**. Select the mode under **Settings → Device → Mouse Jiggler**. Its toolbar menu sets the maximum runtime in whole hours (**8** by default, **0** for unlimited). Changing the limit restarts the countdown. The timer runs on the Go+, so closing the browser leaves it running and a reboot preserves its deadline.
 
-The toolbar menu shows the time remaining and lets you set a limit in whole hours. The default is **8 hours**. Set **0** for unlimited. Changing the limit during a run restarts the countdown. Closing the dashboard leaves it running, and rebooting the Go+ preserves the original deadline.
-
-| Desktop viewers | What the pointer does while the jiggler is on |
+| Desktop viewers | Pointer behavior |
 | --- | --- |
-| At least one connected | After 30–60 seconds without KVM input, the pointer makes a short nudge. New input restarts the idle wait. |
-| Last viewer disconnected | Short nudges continue for the first five minutes. After that, idle movements follow smooth curves lasting 5–8 seconds. Reconnecting stops a curve in progress and restores short nudges. |
+| At least one connected | A short nudge after 30–60 seconds without KVM input. New input restarts the idle wait. |
+| All disconnected | Short nudges continue for five minutes. Subsequent movements trace smooth 5–8 second curves, turning inward near screen edges. Reconnecting stops a curve in progress. |
 
-### Webcam, toolbar and USB
+### Monitor EDIDs
 
-- **Webcam.** Open the dashboard over HTTPS and enable **Settings → Device → Webcam**. Click **Webcam** to start or stop sharing. Its menu lets you choose the camera and check upload stats. The browser adjusts bitrate and frame rate together as the connection changes. [Webcam setup and upload stats](docs/remote-webcam.md)
-- **Toolbar shortcuts.** Click **Volume** to mute or restore the previous level, **Microphone** to toggle sharing, or **Terminal** to open a new tab. After you close Settings with the mouse, the bar hides again after five seconds with the pointer outside it. Keyboard focus keeps the bar visible.
-- **Activate on Connect.** Under **Settings → Appearance**, each browser can start audio playback, microphone sharing, webcam sharing and Mouse Jiggler independently. **Show icon** only controls visibility. Hidden shortcuts can still activate on connect, and toggling one during a session leaves its startup preference intact.
-- **USB devices.** **Settings → Device** shows used and free USB IN endpoints out of seven. Webcam needs two. If you are short by one, **Mouse → Mouse mode → Use one USB pointer endpoint** frees one by exposing only the selected pointer. Switching layouts briefly reconnects USB. The jiggler needs a mouse endpoint, so choose a mouse mode to use it in this layout.
-- **USB identity.** **Settings → Device → Advanced → USB Device Identity** lets you edit the configuration name, device IDs and device strings. The webcam has its own **USB Webcam Name** setting.
+The remote computer reads the selected EDID to identify the attached display and its supported modes. Choose a preset under **Screen → EDID** or **Settings → Screen → EDID**. Each preset includes the monitor name, so there is no separate **Monitor Name** field. For a different identity, upload an EDID `.bin` with the desired name through **Screen → EDID**, then select it.
+
+| Display mode | Monitor reported to the remote computer |
+| --- | --- |
+| 1920 × 1080 at 60 Hz | Dell U2414H |
+| 2560 × 1440 at 60 Hz | Dell S2716DG |
+| 3440 × 1440 at 60 Hz | Dell U3415W |
+| 3840 × 2160 at 30 Hz | Dell P2415Q |
+| 3840 × 2160 at 50 Hz | Acer XV273K |
 
 ## Install
 
