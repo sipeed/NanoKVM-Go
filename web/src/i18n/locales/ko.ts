@@ -910,7 +910,10 @@ const ko = {
           okBtn: '알았어',
           cancelBtn: '취소'
         },
+        webcamUsbDisplay: '웹캠을 켜기 전에 USB 디스플레이 모드를 끄세요.',
+        webcamEndpoints: '웹캠에는 빈 USB IN 엔드포인트가 두 개 필요합니다.',
         mouseJiggler: {
+          noMouse: '이 구성에서는 마우스 지글러를 사용할 수 없습니다. 마우스 모드를 선택하거나 단일 엔드포인트 모드를 끄세요.',
           title: '마우스 흔들기',
           description: '원격 호스트가 절전 모드로 진입하는 것을 방지',
           disable: '비활성화',

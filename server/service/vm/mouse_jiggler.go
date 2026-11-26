@@ -26,6 +26,10 @@ func (s *Service) SetMouseJiggler(c *gin.Context) {
 
 	state, err := jiggler.GetJiggler().Configure(req.Enabled, req.Mode, req.MaxHours)
 	if err != nil {
+		if err == jiggler.ErrNoMouseEndpoint {
+			rsp.ErrRsp(c, -3, err.Error())
+			return
+		}
 		log.Warnf("set mouse jiggler: %v", err)
 		rsp.ErrRsp(c, -2, "operation failed")
 		return

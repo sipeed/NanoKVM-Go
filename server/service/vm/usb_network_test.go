@@ -213,14 +213,14 @@ func TestRestoreUsbNetworkFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	snapshot, err := snapshotUsbNetworkFiles(paths)
+	snapshot, err := snapshotUsbFiles(paths.dhcp, paths.ipv4, paths.forward)
 	if err != nil {
 		t.Fatalf("snapshot configuration: %v", err)
 	}
 	if err := writeUsbNetworkConfig(paths, &proto.GetUsbNetworkRsp{Mode: usbNetworkModeClient}); err != nil {
 		t.Fatalf("replace configuration: %v", err)
 	}
-	if err := restoreUsbNetworkFiles(snapshot); err != nil {
+	if err := restoreUsbFiles(snapshot); err != nil {
 		t.Fatalf("restore configuration: %v", err)
 	}
 

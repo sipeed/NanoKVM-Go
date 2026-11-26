@@ -3,6 +3,7 @@ import { atom, useAtomValue, useStore } from 'jotai';
 import { useTranslation } from 'react-i18next';
 
 import * as api from '@/api/vm.ts';
+import { pointerModeDeviceStatusAtom } from '@/jotai/mouse.ts';
 import { feedback } from '@/lib/feedback.tsx';
 
 type Mode = 'relative' | 'absolute';
@@ -15,6 +16,7 @@ type Config = {
   remainingMs: number;
   elapsedMs: number;
   sampledAt: number;
+  blockedByPointerMode?: boolean;
 };
 
 const configAtom = atom<Config | null>(null);
@@ -25,6 +27,10 @@ const requestAtom = atom(0);
 export function useMouseJiggler(observe = true) {
   const store = useStore();
   const config = useAtomValue(configAtom);
+  const pointer = useAtomValue(pointerModeDeviceStatusAtom);
+  const blocked = pointer.ready
+    ? !!pointer.singleEndpoint && (pointer.mode === 'touch-screen' || pointer.mode === 'digitizer-stylus')
+    : !!config?.blockedByPointerMode;
   const writer = useAtomValue(writerAtom);
   const draft = useAtomValue(draftAtom);
   const { t } = useTranslation();
@@ -55,6 +61,10 @@ export function useMouseJiggler(observe = true) {
                       : { enabled: command === 'enable' || (command === 'toggle' && !current?.enabled) }
                 );
           if (store.get(requestAtom) !== request) return;
+          if (rsp.code === -3) {
+            feedback.error(t('settings.device.mouseJiggler.noMouse'), { key: 'mouse-jiggler' });
+            return;
+          }
           if (rsp.code !== 0 || typeof rsp.data?.enabled !== 'boolean') throw new Error(rsp.msg);
           store.set(configAtom, { ...rsp.data, sampledAt: performance.now() });
         } catch {
@@ -85,5 +95,5 @@ export function useMouseJiggler(observe = true) {
     return () => window.clearTimeout(timer);
   }, [config, observe, update]);
 
-  return { config, busy: !!writer, hours: draft?.maxHours ?? config?.maxHours, editingHours: draft !== null, update };
+  return { config, blocked, busy: !!writer, hours: draft?.maxHours ?? config?.maxHours, editingHours: draft !== null, update };
 }

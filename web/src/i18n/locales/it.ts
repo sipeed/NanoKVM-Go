@@ -932,7 +932,10 @@ const it = {
           okBtn: 'OK',
           cancelBtn: 'Annulla'
         },
+        webcamUsbDisplay: 'Disattiva la modalità schermo USB prima di attivare la webcam.',
+        webcamEndpoints: 'La webcam richiede due endpoint USB IN liberi.',
         mouseJiggler: {
+          noMouse: 'Il simulatore di movimento del mouse non funziona con questa configurazione. Seleziona una modalità mouse o disattiva la modalità a endpoint singolo.',
           title: 'Muovi il mouse',
           description: "Impedisce la sospensione dell'host remoto",
           disable: 'Disabilita',

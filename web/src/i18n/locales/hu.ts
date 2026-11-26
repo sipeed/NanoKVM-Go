@@ -935,7 +935,10 @@ const hu = {
           okBtn: 'Rendben',
           cancelBtn: 'Mégse'
         },
+        webcamUsbDisplay: 'A webkamera bekapcsolása előtt kapcsolja ki az USB-kijelző módot.',
+        webcamEndpoints: 'A webkamerához két szabad USB IN végpont szükséges.',
         mouseJiggler: {
+          noMouse: 'Az egérmozgató ebben az elrendezésben nem működik. Válasszon egérmódot, vagy kapcsolja ki az egyvégpontos módot.',
           title: 'Egér mozgató',
           description: 'A távoli gazdagép alvó állapotának megakadályozása',
           disable: 'Letiltás',

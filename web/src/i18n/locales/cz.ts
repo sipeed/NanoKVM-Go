@@ -925,7 +925,10 @@ const cz = {
           okBtn: 'Dobře',
           cancelBtn: 'Zrušit'
         },
+        webcamUsbDisplay: 'Před zapnutím webkamery vypněte režim USB displeje.',
+        webcamEndpoints: 'Webkamera vyžaduje dva volné vstupní koncové body USB.',
         mouseJiggler: {
+          noMouse: 'V tomto režimu nelze simulovat pohyb myši. Vyberte režim myši nebo vypněte režim jednoho koncového bodu.',
           title: 'Pohyb myši (Jiggler)',
           description: 'Zabraňte spánku vzdáleného hostitele',
           disable: 'Zakázat',

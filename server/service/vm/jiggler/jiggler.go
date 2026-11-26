@@ -36,12 +36,15 @@ func (s settings) deadline() time.Time {
 	return time.UnixMilli(s.StartedAt + int64(s.MaxHours)*3600000)
 }
 
+var ErrNoMouseEndpoint = errors.New("Mouse Jiggler requires a USB mouse endpoint. Select a mouse layout or turn off single-endpoint mode.")
+
 type Status struct {
-	Enabled     bool   `json:"enabled"`
-	Mode        string `json:"mode"`
-	MaxHours    int32  `json:"maxHours"`
-	RemainingMs int64  `json:"remainingMs"`
-	ElapsedMs   int64  `json:"elapsedMs"`
+	BlockedByPointerMode bool   `json:"blockedByPointerMode"`
+	Enabled              bool   `json:"enabled"`
+	Mode                 string `json:"mode"`
+	MaxHours             int32  `json:"maxHours"`
+	RemainingMs          int64  `json:"remainingMs"`
+	ElapsedMs            int64  `json:"elapsedMs"`
 }
 
 type Jiggler struct {
@@ -137,7 +140,7 @@ func (j *Jiggler) statusLocked() Status {
 	if end := j.config.deadline(); !end.IsZero() {
 		remaining = max(0, end.UnixMilli()-now)
 	}
-	return Status{Enabled: j.config.StartedAt != 0, Mode: j.config.Mode, MaxHours: j.config.MaxHours, RemainingMs: remaining, ElapsedMs: elapsed}
+	return Status{BlockedByPointerMode: mouseReportMode(j.config.Mode, hid.GetPointerModeStatus().Mode) == "", Enabled: j.config.StartedAt != 0, Mode: j.config.Mode, MaxHours: j.config.MaxHours, RemainingMs: remaining, ElapsedMs: elapsed}
 }
 
 func (j *Jiggler) Status() Status {
@@ -166,6 +169,9 @@ func (j *Jiggler) Configure(enabled *bool, mode string, hours *int32) (Status, e
 		return Status{}, errors.New("invalid mouse jiggler settings")
 	}
 	if enabled != nil {
+		if *enabled && mouseReportMode(cfg.Mode, hid.GetPointerModeStatus().Mode) == "" {
+			return Status{}, ErrNoMouseEndpoint
+		}
 		if !*enabled {
 			cfg.StartedAt = 0
 		} else if cfg.StartedAt == 0 {

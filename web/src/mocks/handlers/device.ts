@@ -40,6 +40,7 @@ function getVirtualDeviceResponse(state: MockState) {
       : 'mic';
 
   return {
+    isUsbDisplayEnabled: false,
     usbInEndpointsTotal: 7,
     usbInEndpointsUsed: (state.hid.pointerMode.singleEndpoint ? 2 : 3)
       + 2 * Number(state.virtualDevice.isWebcamEnabled) + 2 * Number(state.virtualDevice.isNetworkEnabled)
@@ -303,7 +304,9 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       ? Math.max(0, config.startedAt + config.maxHours * 3600000 - Date.now())
       : 0;
     if (config.maxHours > 0 && !remainingMs) config.enabled = false;
-    return { ...config, remainingMs, elapsedMs: config.enabled ? Date.now() - config.startedAt : 0 };
+    const pointer = state.hid.pointerMode;
+    const blockedByPointerMode = !!pointer.singleEndpoint && (pointer.mode === 'touch-screen' || pointer.mode === 'digitizer-stylus');
+    return { ...config, blockedByPointerMode, remainingMs, elapsedMs: config.enabled ? Date.now() - config.startedAt : 0 };
   }
 
   return [
@@ -601,7 +604,10 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       const mode = readString(body, 'mode');
       const hours = readNumber(body, 'maxHours');
       const config = state.vm.mouseJiggler;
-      jigglerStatus();
+      const status = jigglerStatus();
+      if (status.blockedByPointerMode && enabled === true) {
+        return fail(-3, 'Mouse Jiggler requires a USB mouse endpoint.', status);
+      }
       if (enabled === true && !config.enabled) config.startedAt = Date.now();
       if (enabled !== null) config.enabled = enabled;
       if (mode) config.mode = mode;

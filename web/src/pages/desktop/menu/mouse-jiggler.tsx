@@ -16,7 +16,7 @@ function remainingTime(hours: number, elapsedMs: number) {
 
 export function MouseJigglerButton() {
   const { t } = useTranslation();
-  const { config, busy, hours, editingHours, update } = useMouseJiggler();
+  const { config, blocked, busy, hours, editingHours, update } = useMouseJiggler();
   const [open, setOpen] = useState(false);
   const [, tick] = useReducer((value: number) => value + 1, 0);
   const active = !!config?.enabled;
@@ -30,8 +30,8 @@ export function MouseJigglerButton() {
   return (
     <MenuItem
       title={t('settings.device.mouseJiggler.title')}
-      icon={<MousePointerClickIcon size={18} className={active ? 'text-green-400' : undefined} />}
-      action={{ pressed: active, disabled: busy || !config, toggle: () => void update('toggle') }}
+      icon={<MousePointerClickIcon size={18} className={active && !blocked ? 'text-green-400' : undefined} />}
+      action={{ pressed: active, disabled: busy || !config || (blocked && !active), toggle: () => void update('toggle') }}
       onOpenChange={(next) => {
         setOpen(next);
         if (next) void update('refresh');
@@ -42,6 +42,7 @@ export function MouseJigglerButton() {
           onKeyDown={(event) => event.stopPropagation()}
           onKeyUp={(event) => event.stopPropagation()}
         >
+          {blocked && <span role="status">{t('settings.device.mouseJiggler.noMouse')}</span>}
           <label className="flex items-center gap-2 whitespace-nowrap">
             {t('settings.device.mouseJiggler.maxRuntime', 'max runtime:')}
             <ConfigProvider theme={{ components: { InputNumber: { controlWidth: 54, handleVisible: true } } }}>
@@ -64,7 +65,7 @@ export function MouseJigglerButton() {
             </ConfigProvider>
             <span>{t('settings.device.mouseJiggler.hoursUnit', 'hour(s).')}</span>
           </label>
-          {hours != null && (
+          {!blocked && hours != null && (
             <span role="timer" className="text-xs tabular-nums text-neutral-400">
               {t('settings.device.mouseJiggler.remaining', '{{time}} remaining', { time: remainingTime(hours, elapsed) })}
             </span>

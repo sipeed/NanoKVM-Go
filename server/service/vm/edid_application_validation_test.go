@@ -363,3 +363,36 @@ func TestWriteValidatedEdidHardwareRejectsInvalidDataBeforeWriter(t *testing.T) 
 		t.Fatalf("hardware writer calls = %d, want 0", writes)
 	}
 }
+
+func TestBuild2EdidMigrationWithoutNameOverride(t *testing.T) {
+	for _, profile := range []string{"stock", "custom"} {
+		t.Run(profile, func(t *testing.T) {
+			setupEdidTestPaths(t)
+			source := makeEdidTestData(41)
+			writeDefaultEdidTestFile(t, source)
+			if profile == "custom" {
+				path := filepath.Join(CustomEdidDir, "selected.bin")
+				writeEdidTestFile(t, path, source)
+				writeEdidTestState(t, edidState{Name: "selected.bin", Source: edidSourceCustom, File: path})
+			}
+			old := writeEdidHardware
+			writes := 0
+			writeEdidHardware = func(data []byte) error {
+				if !bytes.Equal(data, source) {
+					t.Fatal("wrong profile")
+				}
+				writes++
+				return nil
+			}
+			t.Cleanup(func() { writeEdidHardware = old })
+			for i := 0; i < 2; i++ {
+				if err := RestoreLegacyEdid(); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if (profile == "custom" && writes != 0) || (profile == "stock" && writes != 1) {
+				t.Fatalf("hardware writes = %d", writes)
+			}
+		})
+	}
+}

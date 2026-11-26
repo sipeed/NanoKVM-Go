@@ -251,7 +251,7 @@ function readVolume(key: string): number | null {
 export const connectFeatures = ['volume', 'microphone', 'webcam', 'mouseJiggler'] as const;
 export type ConnectFeature = (typeof connectFeatures)[number];
 export type ConnectPreferences = Record<ConnectFeature, boolean>;
-const CONNECT_PREFERENCES_KEY = 'nano-kvm-activate-on-connect';
+export const CONNECT_PREFERENCES_KEY = 'nano-kvm-activate-on-connect';
 
 export function getConnectPreferences(): ConnectPreferences {
   const defaults = {
@@ -264,22 +264,29 @@ export function getConnectPreferences(): ConnectPreferences {
     defaults.volume = (getSavedVideoVolume() ?? 0) > 0;
     const saved = localStorage.getItem(CONNECT_PREFERENCES_KEY);
     if (saved === null) {
-      // Snapshot the legacy behavior before a toolbar volume change can affect it.
-      setConnectPreferences(defaults);
-      return defaults;
+      // Keep the pre-Nomad volume preference as the migration default.
+      localStorage.setItem(CONNECT_PREFERENCES_KEY, JSON.stringify(defaults));
     }
-    const values = JSON.parse(saved);
+    let legacy;
+    try {
+      legacy = JSON.parse(saved ?? '{}');
+    } catch {
+      legacy = {};
+    }
     for (const feature of connectFeatures) {
-      if (typeof values?.[feature] === 'boolean') defaults[feature] = values[feature];
+      const value = localStorage.getItem(CONNECT_PREFERENCES_KEY + '.' + feature);
+      if (value !== null) defaults[feature] = value === 'true';
+      else if (typeof legacy?.[feature] === 'boolean') defaults[feature] = legacy[feature];
     }
   } catch {
-    // Older or malformed preferences fall back to the legacy audio setting.
+    // Storage can be unavailable in a restricted browser.
   }
   return defaults;
 }
 
-export function setConnectPreferences(preferences: ConnectPreferences) {
-  localStorage.setItem(CONNECT_PREFERENCES_KEY, JSON.stringify(preferences));
+export function setConnectPreference(feature: ConnectFeature, checked: boolean) {
+  // Independent keys let simultaneous edits in different tabs both survive.
+  localStorage.setItem(CONNECT_PREFERENCES_KEY + '.' + feature, String(checked));
 }
 
 export function getSavedVideoVolume(): number | null {

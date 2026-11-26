@@ -61,7 +61,7 @@ func (s *Service) SetUsbNetwork(c *gin.Context) {
 		return
 	}
 
-	snapshot, err := snapshotUsbNetworkFiles(usbNetworkConfigPaths)
+	snapshot, err := snapshotUsbFiles(usbNetworkConfigPaths.dhcp, usbNetworkConfigPaths.ipv4, usbNetworkConfigPaths.forward)
 	if err != nil {
 		log.Errorf("failed to snapshot USB network configuration: %v", err)
 		rsp.ErrRsp(c, -3, "read USB network configuration failed")
@@ -70,7 +70,7 @@ func (s *Service) SetUsbNetwork(c *gin.Context) {
 
 	if err := writeUsbNetworkConfig(usbNetworkConfigPaths, config); err != nil {
 		log.Errorf("failed to write USB network configuration: %v", err)
-		if rollbackErr := restoreUsbNetworkFiles(snapshot); rollbackErr != nil {
+		if rollbackErr := restoreUsbFiles(snapshot); rollbackErr != nil {
 			log.Errorf("failed to roll back USB network configuration: %v", rollbackErr)
 		}
 		rsp.ErrRsp(c, -4, "write USB network configuration failed")
@@ -80,7 +80,7 @@ func (s *Service) SetUsbNetwork(c *gin.Context) {
 	if usbNetworkRuntimeActive() {
 		if err := restartUsbNetwork(); err != nil {
 			log.Errorf("failed to restart USB gadget after updating network configuration: %v", err)
-			if rollbackErr := restoreUsbNetworkFiles(snapshot); rollbackErr != nil {
+			if rollbackErr := restoreUsbFiles(snapshot); rollbackErr != nil {
 				log.Errorf("failed to roll back USB network configuration: %v", rollbackErr)
 			} else if restartErr := restartUsbNetwork(); restartErr != nil {
 				log.Errorf("failed to restore USB gadget after network configuration rollback: %v", restartErr)

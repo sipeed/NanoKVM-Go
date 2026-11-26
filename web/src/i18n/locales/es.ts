@@ -935,7 +935,10 @@ const es = {
           okBtn: 'Aceptar',
           cancelBtn: 'Cancelar'
         },
+        webcamUsbDisplay: 'Desactiva el modo de pantalla USB antes de activar la cámara web.',
+        webcamEndpoints: 'La cámara web necesita dos puntos finales USB IN libres.',
         mouseJiggler: {
+          noMouse: 'El simulador de movimiento no funciona con esta configuración. Selecciona un modo de ratón o desactiva el modo de punto final único.',
           title: 'Agitador de ratón',
           description: 'Evitar que el host remoto entre en reposo',
           disable: 'Desactivar',

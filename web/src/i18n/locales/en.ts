@@ -929,7 +929,10 @@ const en = {
           okBtn: 'Ok',
           cancelBtn: 'Cancel'
         },
+        webcamUsbDisplay: 'Turn off USB display mode before enabling Webcam.',
+        webcamEndpoints: 'Webcam requires two free USB IN endpoints.',
         mouseJiggler: {
+          noMouse: 'Mouse Jiggler cannot run with this layout. Select a mouse mode or turn off single-endpoint mode.',
           title: 'Mouse Jiggler',
           description: 'Prevent the remote host from sleeping',
           disable: 'Disable',

@@ -933,7 +933,10 @@ const nl = {
           okBtn: 'Oké',
           cancelBtn: 'Annuleren'
         },
+        webcamUsbDisplay: 'Schakel de USB-schermmodus uit voordat je de webcam inschakelt.',
+        webcamEndpoints: 'De webcam heeft twee vrije USB-IN-eindpunten nodig.',
         mouseJiggler: {
+          noMouse: 'De muisbeweger werkt niet met deze indeling. Kies een muismodus of schakel de modus met één eindpunt uit.',
           title: 'Muisschommel',
           description: 'Voorkom dat de externe host in slaap valt',
           disable: 'Uitschakelen',

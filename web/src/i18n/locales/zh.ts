@@ -866,7 +866,10 @@ const zh = {
           okBtn: '确定',
           cancelBtn: '取消'
         },
+        webcamUsbDisplay: '请先关闭 USB 显示模式，然后启用摄像头。',
+        webcamEndpoints: '摄像头需要两个空闲的 USB IN 端点。',
         mouseJiggler: {
+          noMouse: '当前配置无法使用鼠标抖动器。请选择鼠标模式或关闭单端点模式。',
           title: '鼠标抖动',
           description: '防止远程主机休眠',
           disable: '关闭',

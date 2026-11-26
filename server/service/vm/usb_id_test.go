@@ -1,6 +1,10 @@
 package vm
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestNormalizeUsbIdHex(t *testing.T) {
 	tests := []struct {
@@ -77,5 +81,34 @@ func TestNormalizeUsbIdentityString(t *testing.T) {
 		if got != tc.want {
 			t.Fatalf("normalizeUsbIdentityString(%q) = %q, want %q", tc.in, got, tc.want)
 		}
+	}
+}
+
+func TestUsbIdentityLastWriteRestoresOverrides(t *testing.T) {
+	dir := t.TempDir()
+	vid, serial, product := filepath.Join(dir, "vid"), filepath.Join(dir, "serial"), filepath.Join(dir, "product")
+	last := filepath.Join(dir, "missing-parent", "configuration")
+	if err := os.WriteFile(vid, []byte("old vid\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(serial, []byte("old serial\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	values := map[string]string{vid: "new vid", product: "new product", last: "new configuration"}
+	err := applyUsbIdentity([]string{vid, serial, product, last}, values, func() error {
+		t.Fatal("unexpected gadget restart")
+		return nil
+	})
+	if err == nil {
+		t.Fatal("expected last write to fail")
+	}
+	for path, want := range map[string]string{vid: "old vid\n", serial: "old serial\n"} {
+		got, err := os.ReadFile(path)
+		if err != nil || string(got) != want {
+			t.Fatalf("%s after rollback: %q, %v", path, got, err)
+		}
+	}
+	if _, err := os.Stat(product); !os.IsNotExist(err) {
+		t.Fatalf("new override survived: %v", err)
 	}
 }

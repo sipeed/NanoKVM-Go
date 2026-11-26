@@ -926,7 +926,10 @@ const pl = {
           okBtn: 'OK',
           cancelBtn: 'Anuluj'
         },
+        webcamUsbDisplay: 'Przed włączeniem kamery wyłącz tryb wyświetlacza USB.',
+        webcamEndpoints: 'Kamera wymaga dwóch wolnych punktów końcowych USB IN.',
         mouseJiggler: {
+          noMouse: 'Symulator ruchu myszy nie działa w tej konfiguracji. Wybierz tryb myszy lub wyłącz tryb pojedynczego punktu końcowego.',
           title: 'Jiggler myszy',
           description: 'Uniemożliwia uśpienie zdalnego hosta',
           disable: 'Wyłącz',

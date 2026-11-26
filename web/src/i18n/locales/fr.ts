@@ -935,7 +935,10 @@ const fr = {
           okBtn: 'OK',
           cancelBtn: 'Annuler'
         },
+        webcamUsbDisplay: 'Désactivez le mode d’affichage USB avant d’activer la webcam.',
+        webcamEndpoints: 'La webcam nécessite deux points de terminaison USB IN libres.',
         mouseJiggler: {
+          noMouse: 'Le simulateur de mouvement est indisponible dans cette configuration. Choisissez un mode souris ou désactivez le mode à point de terminaison unique.',
           title: 'Souris Jiggler',
           description: "Empêcher l'hôte distant de dormir",
           disable: 'Désactiver',

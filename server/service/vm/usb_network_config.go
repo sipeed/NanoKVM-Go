@@ -21,7 +21,7 @@ type usbNetworkPaths struct {
 	forward string
 }
 
-type usbNetworkFileSnapshot struct {
+type usbFileSnapshot struct {
 	path    string
 	exists  bool
 	content []byte
@@ -97,7 +97,7 @@ func writeUsbNetworkConfig(paths usbNetworkPaths, config *proto.GetUsbNetworkRsp
 		return err
 	}
 
-	if err := writeOptionalUsbNetworkFile(paths.ipv4, config.IPv4); err != nil {
+	if err := writeOptionalUsbFile(paths.ipv4, config.IPv4); err != nil {
 		return err
 	}
 
@@ -105,15 +105,15 @@ func writeUsbNetworkConfig(paths usbNetworkPaths, config *proto.GetUsbNetworkRsp
 	if config.Mode == usbNetworkModeServer && config.Forwarding {
 		uplink = usbNetworkDefaultForwardInterface
 	}
-	return writeOptionalUsbNetworkFile(paths.forward, uplink)
+	return writeOptionalUsbFile(paths.forward, uplink)
 }
 
-func snapshotUsbNetworkFiles(paths usbNetworkPaths) ([]usbNetworkFileSnapshot, error) {
-	result := make([]usbNetworkFileSnapshot, 0, 3)
-	for _, path := range []string{paths.dhcp, paths.ipv4, paths.forward} {
+func snapshotUsbFiles(paths ...string) ([]usbFileSnapshot, error) {
+	result := make([]usbFileSnapshot, 0, len(paths))
+	for _, path := range paths {
 		info, err := os.Stat(path)
 		if os.IsNotExist(err) {
-			result = append(result, usbNetworkFileSnapshot{path: path})
+			result = append(result, usbFileSnapshot{path: path})
 			continue
 		}
 		if err != nil {
@@ -123,7 +123,7 @@ func snapshotUsbNetworkFiles(paths usbNetworkPaths) ([]usbNetworkFileSnapshot, e
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, usbNetworkFileSnapshot{
+		result = append(result, usbFileSnapshot{
 			path:    path,
 			exists:  true,
 			content: content,
@@ -157,7 +157,7 @@ func isUsbNetworkConfigCurrent(paths usbNetworkPaths, config *proto.GetUsbNetwor
 	return usbNetworkOptionalFileMatches(paths.forward, expectedForwardInterface)
 }
 
-func restoreUsbNetworkFiles(snapshot []usbNetworkFileSnapshot) error {
+func restoreUsbFiles(snapshot []usbFileSnapshot) error {
 	var firstErr error
 	for _, file := range snapshot {
 		var err error
@@ -184,7 +184,7 @@ func readOptionalUsbNetworkFile(path string) (string, error) {
 	return strings.TrimSpace(string(content)), nil
 }
 
-func writeOptionalUsbNetworkFile(path, value string) error {
+func writeOptionalUsbFile(path, value string) error {
 	if value == "" {
 		return removeUsbNetworkFile(path)
 	}

@@ -107,6 +107,7 @@ func (s *Service) GetVirtualDevice(c *gin.Context) {
 		usedEndpoints = &used
 	}
 	rsp.OkRspWithData(c, &proto.GetVirtualDeviceRsp{
+		IsUSBDisplayEnabled: isFileExists(usbgadget.ConfigDir + "/Loopback.0"),
 		USBInEndpointsUsed:  usedEndpoints,
 		USBInEndpointsTotal: usbgadget.INEndpointLimit,
 		IsWebcamEnabled:     isFileExists("/boot/usb.webcam") && isFileExists("/run/nanokvm-webcam/live.sock"),

@@ -6,7 +6,7 @@ import { useMouseJiggler } from '@/hooks/useMouseJiggler.ts';
 export const MouseJiggler = () => {
   const { t } = useTranslation();
 
-  const { config, busy, update } = useMouseJiggler();
+  const { config, blocked, busy, update } = useMouseJiggler();
 
   const options = [
     { value: 'disable', label: t('settings.device.mouseJiggler.disable') },
@@ -19,7 +19,7 @@ export const MouseJiggler = () => {
       <div className="flex flex-col space-y-1">
         <span>{t('settings.device.mouseJiggler.title')}</span>
         <span className="text-xs text-neutral-500">
-          {t('settings.device.mouseJiggler.description')}
+          {t(blocked ? 'settings.device.mouseJiggler.noMouse' : 'settings.device.mouseJiggler.description')}
         </span>
       </div>
 
@@ -27,12 +27,12 @@ export const MouseJiggler = () => {
         <Select
           style={{ width: 150 }}
           value={config.mode}
-          options={options}
+          options={blocked ? options.filter((item) => item.value === 'disable') : options}
           loading={busy}
           onChange={(value: 'relative' | 'absolute' | 'disable') => void update(value)}
         />
       ) : (
-        <Switch disabled={!config} checked={false} loading={busy} onChange={() => void update('toggle')} />
+        <Switch disabled={!config || blocked} checked={false} loading={busy} onChange={() => void update('toggle')} />
       )}
     </div>
   );

@@ -943,7 +943,10 @@ const de = {
           okBtn: 'OK',
           cancelBtn: 'Abbrechen'
         },
+        webcamUsbDisplay: 'Deaktiviere den USB-Displaymodus, bevor du die Webcam aktivierst.',
+        webcamEndpoints: 'Die Webcam benötigt zwei freie USB-IN-Endpunkte.',
         mouseJiggler: {
+          noMouse: 'Der Maus-Jiggler kann mit dieser Konfiguration nicht laufen. Wähle einen Mausmodus oder deaktiviere den Einzelendpunktmodus.',
           title: 'Mausaktivitäts-Simulator',
           description: 'Verhindert, dass der remote Host in den Energiesparmodus wechselt',
           disable: 'Deaktivieren',

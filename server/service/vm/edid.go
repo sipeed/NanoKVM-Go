@@ -658,18 +658,34 @@ func regularFileExists(path string) (bool, error) {
 	return info.Mode().IsRegular(), nil
 }
 
-// RestoreLegacyEdid reapplies the selected profile once on units whose capture
-// chip may still advertise a name written by an older server.
+// Build 2 replaced the stock profiles and retired the separate name override.
 func RestoreLegacyEdid() error {
-	legacyConfig := filepath.Join(CustomEdidDir, "config.json")
-	exists, err := regularFileExists(legacyConfig)
-	if err != nil || !exists {
+	done := filepath.Join(CustomEdidDir, ".nomad-2-profiles-applied")
+	legacy := filepath.Join(CustomEdidDir, "config.json")
+	hasOverride, err := regularFileExists(legacy)
+	if err != nil {
 		return err
 	}
-	if err := applyCurrentEdid(!virtualSpeakerMarkerExists()); err != nil {
+	if !hasOverride {
+		if applied, err := regularFileExists(done); err != nil || applied {
+			return err
+		}
+	}
+	state, err := loadCurrentEdidState()
+	if err != nil {
 		return err
 	}
-	return os.Remove(legacyConfig)
+	if hasOverride || state.Source == edidSourceDefault {
+		if err := applyCurrentEdid(!virtualSpeakerMarkerExists()); err != nil {
+			return err
+		}
+	}
+	if hasOverride {
+		if err := os.Remove(legacy); err != nil {
+			return err
+		}
+	}
+	return os.WriteFile(done, nil, 0644)
 }
 
 func applyCurrentEdid(dpAudioEnabled bool) error {

@@ -8,6 +8,8 @@ import (
 	"testing"
 	"testing/synctest"
 	"time"
+
+	"NanoKVM-Server/service/hid"
 )
 
 func TestCurveReports(t *testing.T) {
@@ -113,4 +115,20 @@ func TestDisconnectedMovementAndInterruption(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestMouseReportModeUsesAnAvailableMouse(t *testing.T) {
+	for _, tc := range []struct {
+		layout hid.PointerMode
+		want   string
+	}{
+		{hid.PointerModeSingleTouch, ""}, {hid.PointerModeSingleStylus, ""},
+		{hid.PointerModeSingleAbsolute, "absolute"}, {hid.PointerModeSingleRelative, "relative"},
+		{hid.PointerModeTouchScreen, "relative"}, {hid.PointerModeDigitizerStylus, "relative"},
+		{hid.PointerModeAbsolute, "absolute"},
+	} {
+		if got := mouseReportMode("absolute", tc.layout); got != tc.want {
+			t.Errorf("%s: got %q, want %q", tc.layout, got, tc.want)
+		}
+	}
 }

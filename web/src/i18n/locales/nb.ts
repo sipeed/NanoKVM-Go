@@ -927,7 +927,10 @@ const nb = {
           okBtn: 'OK',
           cancelBtn: 'Avbryt'
         },
+        webcamUsbDisplay: 'Slå av USB-skjermmodus før du aktiverer webkameraet.',
+        webcamEndpoints: 'Webkameraet krever to ledige USB IN-endepunkter.',
         mouseJiggler: {
+          noMouse: 'Musebevegelse kan ikke simuleres med dette oppsettet. Velg en musemodus eller slå av modusen med ett endepunkt.',
           title: 'Mus Jiggler',
           description: 'Hindre den eksterne verten fra å sove',
           disable: 'Deaktiver',

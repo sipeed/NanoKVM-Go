@@ -930,7 +930,10 @@ const id = {
           okBtn: 'Oke',
           cancelBtn: 'Batal'
         },
+        webcamUsbDisplay: 'Matikan mode layar USB sebelum mengaktifkan webcam.',
+        webcamEndpoints: 'Webcam memerlukan dua endpoint USB IN yang kosong.',
         mouseJiggler: {
+          noMouse: 'Penggerak mouse tidak dapat berjalan dengan konfigurasi ini. Pilih mode mouse atau matikan mode satu endpoint.',
           title: 'Tikus Jiggler',
           description: 'Mencegah host jarak jauh tertidur',
           disable: 'Nonaktifkan',

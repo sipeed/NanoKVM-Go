@@ -925,7 +925,10 @@ const da = {
           okBtn: 'Okay',
           cancelBtn: 'Annuller'
         },
+        webcamUsbDisplay: 'Slå USB-skærmtilstand fra, før du aktiverer webkameraet.',
+        webcamEndpoints: 'Webkameraet kræver to ledige USB IN-endepunkter.',
         mouseJiggler: {
+          noMouse: 'Musen kan ikke holdes i bevægelse med denne opsætning. Vælg en musetilstand, eller slå tilstanden med ét endepunkt fra.',
           title: 'Mus Jiggler',
           description: 'Forhindrer fjernværten i at sove',
           disable: 'Deaktiver',

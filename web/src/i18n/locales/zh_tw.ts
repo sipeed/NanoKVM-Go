@@ -867,7 +867,10 @@ const zh_tw = {
           okBtn: '好的',
           cancelBtn: '取消'
         },
+        webcamUsbDisplay: '請先關閉 USB 顯示模式，再啟用網路攝影機。',
+        webcamEndpoints: '網路攝影機需要兩個可用的 USB IN 端點。',
         mouseJiggler: {
+          noMouse: '目前的設定無法使用滑鼠抖動器。請選擇滑鼠模式或關閉單一端點模式。',
           title: '滑鼠抖動模式 (Mouse Jiggler)',
           description: '避免遠端主機進入休眠狀態',
           disable: '停用',

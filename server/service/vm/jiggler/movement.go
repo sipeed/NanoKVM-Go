@@ -28,15 +28,25 @@ func absoluteReport(x, y int) []byte {
 	return r
 }
 
-func planMovement(mode string, curved bool) *movement {
+func mouseReportMode(mode string, layout hid.PointerMode) string {
 	// Follow the only available mouse without overwriting the saved preference.
-	switch hid.GetPointerModeStatus().Mode {
+	switch layout {
 	case hid.PointerModeSingleRelative:
-		mode = "relative"
+		return "relative"
 	case hid.PointerModeSingleAbsolute:
-		mode = "absolute"
+		return "absolute"
 	case hid.PointerModeSingleStylus, hid.PointerModeSingleTouch:
 		// Sending a contact would interact with the foreground application.
+		return ""
+	case hid.PointerModeDigitizerStylus, hid.PointerModeTouchScreen:
+		return "relative"
+	}
+	return mode
+}
+
+func planMovement(mode string, curved bool) *movement {
+	mode = mouseReportMode(mode, hid.GetPointerModeStatus().Mode)
+	if mode == "" {
 		return nil
 	}
 	if !curved {

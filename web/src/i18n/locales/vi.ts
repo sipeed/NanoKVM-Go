@@ -914,7 +914,10 @@ const vi = {
           okBtn: 'Được rồi',
           cancelBtn: 'Hủy'
         },
+        webcamUsbDisplay: 'Tắt chế độ màn hình USB trước khi bật webcam.',
+        webcamEndpoints: 'Webcam cần hai điểm cuối USB IN còn trống.',
         mouseJiggler: {
+          noMouse: 'Không thể tự động di chuyển chuột với cấu hình này. Hãy chọn chế độ chuột hoặc tắt chế độ một điểm cuối.',
           title: 'Máy lắc lư chuột',
           description: 'Ngăn máy chủ từ xa ngủ',
           disable: 'Tắt',

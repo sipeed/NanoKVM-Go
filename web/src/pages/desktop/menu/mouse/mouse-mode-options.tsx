@@ -61,6 +61,11 @@ export const MouseModeOptions = ({
           disabled={switching || !deviceStatus.ready}
           onChange={(enabled) => void selectMode(mouseMode, enabled)} />
       </label>
+      {deviceStatus.singleEndpoint && (mouseMode === 'digitizer-stylus' || mouseMode === 'touch-screen') && (
+        <span role="status" className="block max-w-64 px-2 text-xs text-neutral-400">
+          {t('settings.device.mouseJiggler.noMouse')}
+        </span>
+      )}
       {mouseModes.map((mode) => (
         <div
           key={mode.value}

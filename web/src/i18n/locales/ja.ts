@@ -928,7 +928,10 @@ const ja = {
           okBtn: 'わかりました',
           cancelBtn: 'キャンセル'
         },
+        webcamUsbDisplay: 'ウェブカメラを有効にする前に USB ディスプレイモードをオフにしてください。',
+        webcamEndpoints: 'ウェブカメラには空き USB IN エンドポイントが 2 つ必要です。',
         mouseJiggler: {
+          noMouse: 'この構成ではマウスジグラーを使用できません。マウスモードを選択するか、単一エンドポイントモードをオフにしてください。',
           title: 'マウスジグラー',
           description: 'リモートホストの休止を防ぐ',
           disable: '閉じる',

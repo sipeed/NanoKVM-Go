@@ -6,7 +6,7 @@ import { getSavedVideoVolume, getUnmuteVolume } from '@/lib/localstorage.ts';
 import { isWebrtcMode } from '@/lib/video.ts';
 import { client } from '@/lib/websocket.ts';
 import { videoModeAtom, videoVolumeAtom } from '@/jotai/screen.ts';
-import { connectPreferencesAtom } from '@/jotai/settings.ts';
+import { connectPreferencesAtom, connectStartsAtom, refreshConnectStartsAtom } from '@/jotai/settings.ts';
 import { useMouseJiggler } from '@/hooks/useMouseJiggler.ts';
 
 import { useWebcamShare } from './menu/webcam.tsx';
@@ -31,6 +31,7 @@ function useConnectStart(session: number, checked: boolean, ready: boolean, star
 
 export function ConnectFeatures({ children }: { children: ReactNode }) {
   const store = useStore();
+  const starts = useAtomValue(connectStartsAtom);
   const preferences = useAtomValue(connectPreferencesAtom);
   const videoMode = useAtomValue(videoModeAtom);
   const setVolume = useSetAtom(videoVolumeAtom);
@@ -43,7 +44,7 @@ export function ConnectFeatures({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     function open() {
-      if (!store.get(connectPreferencesAtom).volume) setVolume(0);
+      if (!store.set(refreshConnectStartsAtom).volume) setVolume(0);
       setSession(++sequence.current);
     }
     const unsubscribe = client.onConnectionState((state) => {
@@ -57,16 +58,16 @@ export function ConnectFeatures({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, [disable, setVolume, store]);
 
-  useConnectStart(session, preferences.volume, isWebrtcMode(videoMode), () => {
+  useConnectStart(session, starts.volume, preferences.volume && isWebrtcMode(videoMode), () => {
     setVolume(getSavedVideoVolume() || getUnmuteVolume());
   });
-  useConnectStart(session, preferences.microphone, microphone.canEnable, () => {
+  useConnectStart(session, starts.microphone, preferences.microphone && microphone.canEnable, () => {
     void microphone.requestEnable();
   });
-  useConnectStart(session, preferences.webcam, webcam.enabled, () => {
+  useConnectStart(session, starts.webcam, preferences.webcam && webcam.enabled, () => {
     void webcam.start('', (message) => feedback.error(message, { key: 'connect-webcam' }));
   });
-  useConnectStart(session, preferences.mouseJiggler, true, () => void jiggler.update('enable'));
+  useConnectStart(session, starts.mouseJiggler, preferences.mouseJiggler, () => void jiggler.update('enable'));
 
   return <WebcamContext.Provider value={webcam}>{children}</WebcamContext.Provider>;
 }

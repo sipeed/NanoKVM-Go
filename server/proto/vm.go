@@ -154,6 +154,7 @@ type DeleteScriptReq struct {
 }
 
 type GetVirtualDeviceRsp struct {
+	IsUSBDisplayEnabled bool   `json:"isUsbDisplayEnabled"`
 	USBInEndpointsUsed  *int   `json:"usbInEndpointsUsed"`
 	USBInEndpointsTotal int    `json:"usbInEndpointsTotal"`
 	IsWebcamEnabled     bool   `json:"isWebcamEnabled"`
