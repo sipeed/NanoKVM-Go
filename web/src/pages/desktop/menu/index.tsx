@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { Divider } from 'antd';
 import clsx from 'clsx';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
@@ -106,6 +106,11 @@ export const Menu = () => {
 
   const { isMenuExpanded, isMenuHidden, handleHovered, handleMoved, setIsMenuExpanded } =
     useMenuVisibility();
+
+  function syncToolbarInteraction({ currentTarget }: SyntheticEvent<HTMLDivElement>) {
+    // Closing a dialog can restore focus to its button even when the mouse is elsewhere.
+    handleHovered(currentTarget.matches(':hover') || !!currentTarget.querySelector(':focus-visible'));
+  }
 
   // While the onboarding tour runs the rail is pinned: useMenuVisibility
   // forces it expanded and suspends auto-hide; dragging and mobile-rail
@@ -497,10 +502,10 @@ export const Menu = () => {
         >
           <div
             className="relative -translate-x-1/2"
-            onMouseEnter={() => handleHovered(true)}
-            onMouseLeave={() => handleHovered(false)}
-            onFocus={() => handleHovered(true)}
-            onBlur={() => handleHovered(false)}
+            onMouseEnter={syncToolbarInteraction}
+            onMouseLeave={syncToolbarInteraction}
+            onFocus={syncToolbarInteraction}
+            onBlur={syncToolbarInteraction}
           >
             {/* Trigger area for auto-show when hidden */}
             {isMenuExpanded && (
