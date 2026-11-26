@@ -49,7 +49,7 @@ export const Speed = () => {
         }}
         range={false}
         included={false}
-        step={10}
+        step={1}
         defaultValue={scrollSpeed}
         onChange={update}
       />

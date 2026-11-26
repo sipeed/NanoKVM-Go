@@ -6,6 +6,7 @@ const VIDEO_PARAMETERS_KEY = 'nano-kvm-video-parameters';
 export const MOUSE_MODE_KEY = 'nano-kvm-mouse-mode';
 const MOUSE_SCROLL_DIRECTION_KEY = 'nanokvm-kvm-mouse-scroll-direction';
 const MOUSE_SCROLL_INTERVAL_KEY = 'nanokvm-kvm-mouse-scroll-interval';
+const MOUSE_SCROLL_STEP_KEY = 'nanokvm-kvm-mouse-scroll-step';
 const SKIP_UPDATE_KEY = 'nano-kvm-check-update';
 const KEYBOARD_SYSTEM_KEY = 'nano-kvm-keyboard-system';
 const KEYBOARD_LANGUAGE_KEY = 'nano-kvm-keyboard-language';
@@ -145,6 +146,15 @@ export function getMouseScrollInterval() {
 
 export function setMouseScrollInterval(interval: number): void {
   localStorage.setItem(MOUSE_SCROLL_INTERVAL_KEY, String(interval));
+}
+
+export function getMouseScrollStep(): number | null {
+  const step = Number(localStorage.getItem(MOUSE_SCROLL_STEP_KEY));
+  return step > 0 ? step : null;
+}
+
+export function setMouseScrollStep(step: number): void {
+  localStorage.setItem(MOUSE_SCROLL_STEP_KEY, String(step));
 }
 
 export function getSkipUpdate() {

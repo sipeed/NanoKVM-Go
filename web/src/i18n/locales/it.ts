@@ -375,9 +375,10 @@ const it = {
       touchScreen: 'Schermo multi-touch',
       relative: 'Mouse esclusivo',
       direction: 'Direzione della rotellina',
-      scrollUp: "Scorri verso l'alto",
-      scrollDown: 'Scorri verso il basso',
+      scrollNatural: 'Naturale',
+      scrollConventional: 'Convenzionale',
       speed: 'Velocità della rotellina',
+      scrollStep: 'Scorrimento touchpad',
       fast: 'Veloce',
       slow: 'Lento',
       requestPointer:

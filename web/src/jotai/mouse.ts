@@ -1,5 +1,7 @@
 import { atom } from 'jotai';
 
+import { WHEEL_PIXELS_PER_NOTCH } from '@/lib/wheel.ts';
+
 // mouse mode: absolute (GD mouse), digitizer-stylus (stylus), touchscreen, or relative
 export type MouseMode = 'absolute' | 'digitizer-stylus' | 'touch-screen' | 'relative';
 export type PointerMode = Exclude<MouseMode, 'relative'>;
@@ -49,6 +51,9 @@ export const pointerModeInputEnabledAtom = atom((get) => {
 
 // mouse scroll direction: -1 or 1
 export const scrollDirectionAtom = atom(-1);
+
+// browser scroll distance per wheel notch for touchpads / smooth scrolling (unit: px)
+export const scrollStepAtom = atom(WHEEL_PIXELS_PER_NOTCH);
 
 // mouse scroll interval (unit: ms)
 export const scrollIntervalAtom = atom(0);

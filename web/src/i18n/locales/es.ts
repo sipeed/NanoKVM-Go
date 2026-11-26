@@ -378,9 +378,10 @@ const es = {
       touchScreen: 'Pantalla multitáctil',
       relative: 'Ratón exclusivo',
       direction: 'Dirección de la rueda de desplazamiento',
-      scrollUp: 'Desplazarse hacia arriba',
-      scrollDown: 'Desplácese hacia abajo',
+      scrollNatural: 'Natural',
+      scrollConventional: 'Convencional',
       speed: 'Velocidad de la rueda de desplazamiento',
+      scrollStep: 'Desplazamiento del touchpad',
       fast: 'Rápida',
       slow: 'Lenta',
       requestPointer:

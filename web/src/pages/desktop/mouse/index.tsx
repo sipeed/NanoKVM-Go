@@ -10,6 +10,7 @@ import { InputRegion } from './input-region.tsx';
 import { PointerEventsCap } from './pointer-events-cap.tsx';
 import { Relative } from './relative.tsx';
 import { TouchScreen } from './touch-screen.tsx';
+import { WheelDebug } from './wheel-debug.tsx';
 
 export const Mouse = () => {
   const mouseMode = useAtomValue(mouseModeAtom);
@@ -24,6 +25,7 @@ export const Mouse = () => {
       <InputProfileController />
       <InputRegion />
       <CalibrationOverlay />
+      <WheelDebug />
       {inputEnabled && (
         <>
           <PointerEventsCap />

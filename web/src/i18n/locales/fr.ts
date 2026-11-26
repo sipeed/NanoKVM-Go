@@ -378,9 +378,10 @@ const fr = {
       touchScreen: 'Écran tactile multipoint',
       relative: 'Souris exclusive',
       direction: 'Sens de la molette',
-      scrollUp: 'Faire défiler vers le haut',
-      scrollDown: 'Faites défiler vers le bas',
+      scrollNatural: 'Naturel',
+      scrollConventional: 'Classique',
       speed: 'Vitesse de la molette',
+      scrollStep: 'Défilement du pavé tactile',
       fast: 'Rapide',
       slow: 'Lent',
       requestPointer:

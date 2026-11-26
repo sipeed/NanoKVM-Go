@@ -376,9 +376,10 @@ const ja = {
       touchScreen: 'マルチタッチスクリーン',
       relative: '排他式マウス',
       direction: 'ホイール方向',
-      scrollUp: '上',
-      scrollDown: '下',
+      scrollNatural: 'ナチュラル',
+      scrollConventional: '標準',
       speed: 'ホイール速度',
+      scrollStep: 'タッチパッドのスクロール',
       fast: '速い',
       slow: '遅い',
       requestPointer:

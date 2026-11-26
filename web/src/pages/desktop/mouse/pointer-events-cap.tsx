@@ -98,6 +98,7 @@ export const PointerEventsCap = () => {
         deltaX: event.deltaX,
         deltaY: event.deltaY,
         deltaZ: event.deltaZ,
+        deltaMode: event.deltaMode,
         target: eventTarget
       });
     }

@@ -376,9 +376,10 @@ const id = {
       touchScreen: 'Layar sentuh multipoin',
       relative: 'Mouse eksklusif',
       direction: 'Arah roda gulir',
-      scrollUp: 'Gulir ke atas',
-      scrollDown: 'Gulir ke bawah',
+      scrollNatural: 'Alami',
+      scrollConventional: 'Konvensional',
       speed: 'Kecepatan roda gulir',
+      scrollStep: 'Gulir touchpad',
       fast: 'Cepat',
       slow: 'Lambat',
       requestPointer:

@@ -378,9 +378,10 @@ const hu = {
       touchScreen: 'Többérintéses képernyő',
       relative: 'Exkluzív egér',
       direction: 'Görgő iránya',
-      scrollUp: 'Görgessen felfelé',
-      scrollDown: 'Görgessen le',
+      scrollNatural: 'Természetes',
+      scrollConventional: 'Hagyományos',
       speed: 'Görgő sebessége',
+      scrollStep: 'Touchpad görgetés',
       fast: 'Gyors',
       slow: 'Lassú',
       requestPointer:

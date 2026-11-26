@@ -372,9 +372,10 @@ const uk = {
       touchScreen: 'Мультитач-екран',
       relative: 'Ексклюзивна миша',
       direction: 'Напрямок коліщатка',
-      scrollUp: 'Прокрутіть вгору',
-      scrollDown: 'Прокрутіть вниз',
+      scrollNatural: 'Природна',
+      scrollConventional: 'Звичайна',
       speed: 'Швидкість коліщатка',
+      scrollStep: 'Прокрутка тачпадом',
       fast: 'Швидко',
       slow: 'Повільно',
       requestPointer:

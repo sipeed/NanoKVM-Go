@@ -380,9 +380,10 @@ const de = {
       touchScreen: 'Multi-Touchscreen',
       relative: 'Exklusive Maus',
       direction: 'Scrollrichtung',
-      scrollUp: 'Nach oben scrollen',
-      scrollDown: 'Scrollen Sie nach unten',
+      scrollNatural: 'Natürlich',
+      scrollConventional: 'Klassisch',
       speed: 'Scrollgeschwindigkeit',
+      scrollStep: 'Touchpad-Scrollen',
       fast: 'Schnell',
       slow: 'Langsam',
       requestPointer:
