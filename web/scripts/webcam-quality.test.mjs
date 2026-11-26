@@ -145,12 +145,22 @@ test('joint probes reach both ceilings in ten seconds despite occasional misses'
   assert.deepEqual(capped.target, { mbps: 10, fps: 25 });
 });
 
-test('3% misses, growing queues, rising grant delay and slow capture each hold a probe', () => {
+test('bitrate recovers after congestion with a camera capped at 20 fps', () => {
+  const auto = new WebcamQuality();
+  samples(auto, 3, { received: 12, missed: 8 });
+  assert.deepEqual(auto.target, { mbps: 4, fps: 20 });
+
+  samples(auto, 15, { received: 20 }, 3000);
+  assert.deepEqual(auto.target, { mbps: 5.29, fps: 24 });
+  samples(auto, 30, { received: 20 }, 18000);
+  assert.deepEqual(auto.target, { mbps: 10, fps: 24 });
+});
+
+test('3% misses, growing queues and rising grant delay each hold a probe', () => {
   for (const [first, last] of [
     [{ received: 40 }, { received: 38, missed: 2 }],
     [{}, { queueGrew: true }],
-    [{ ms: 10 }, { ms: 25 }],
-    [{ received: 20 }, { received: 20 }]
+    [{ ms: 10 }, { ms: 25 }]
   ]) {
     const auto = new WebcamQuality();
     samples(auto, 2, first);

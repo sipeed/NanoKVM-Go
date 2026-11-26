@@ -187,12 +187,12 @@ export class WebcamQuality {
     const early = delivery(this.samples.slice(0, 2));
     const late = delivery(this.samples.slice(2));
     if (!early.received || !late.received || late.grantMs > early.grantMs * 1.15 + 3) return;
-    if (window.fps < fps * 0.9) return;
     this.beforeProbe = undefined;
     if (now < this.nextProbeAt) return;
 
     const previous = this.target;
-    if (this.change(mbps * 1.15, Math.round(fps * 1.1))) this.beforeProbe = previous;
+    const nextFps = window.fps >= fps * 0.9 ? Math.round(fps * 1.1) : fps;
+    if (this.change(mbps * 1.15, nextFps)) this.beforeProbe = previous;
   }
 }
 
