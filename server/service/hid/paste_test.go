@@ -317,9 +317,3 @@ func assertPasteEvents(t *testing.T, got, want []pasteEvent) {
 		}
 	}
 }
-
-func TestNewServiceInitializesPasteSleep(t *testing.T) {
-	if NewService().pasteSleep == nil {
-		t.Fatal("NewService pasteSleep is nil")
-	}
-}

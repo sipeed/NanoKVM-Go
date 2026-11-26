@@ -46,7 +46,7 @@ before(async () => {
     root: webRoot,
     appType: 'custom',
     logLevel: 'error',
-    server: { middlewareMode: true, hmr: false }
+    server: { middlewareMode: true, hmr: false, ws: false }
   });
 
   const [onboarding, keyboard, inputProfile, screen, settings] = await Promise.all([

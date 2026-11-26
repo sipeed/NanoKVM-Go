@@ -14,7 +14,7 @@ before(async () => {
     root: webRoot,
     appType: 'custom',
     logLevel: 'error',
-    server: { middlewareMode: true, hmr: false }
+    server: { middlewareMode: true, hmr: false, ws: false }
   });
   [model, warning] = await Promise.all([
     vite.ssrLoadModule('/src/pages/desktop/menu/settings/ai/screen-timelapse-retention-model.ts'),

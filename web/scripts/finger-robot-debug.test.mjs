@@ -35,7 +35,7 @@ before(async () => {
     root: webRoot,
     appType: 'custom',
     logLevel: 'error',
-    server: { middlewareMode: true, hmr: false }
+    server: { middlewareMode: true, hmr: false, ws: false }
   });
   [model, locale, settingSource, panelSource] = await Promise.all([
     vite.ssrLoadModule('/src/pages/desktop/menu/settings/device/finger-robot-debug-model.ts'),

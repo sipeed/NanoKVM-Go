@@ -1,51 +1,21 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
-import vm from 'node:vm';
-import ts from 'typescript';
 
-import { createHookHarness } from './hook-harness.mjs';
+import { loadComponent } from './hook-harness.mjs';
 
 const file = path.resolve(
   import.meta.dirname,
   '../src/pages/desktop/menu/settings/update/server.tsx'
 );
-const output = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
-  compilerOptions: {
-    jsx: ts.JsxEmit.ReactJSX,
-    module: ts.ModuleKind.CommonJS,
-    target: ts.ScriptTarget.ES2022
-  },
-  fileName: file
-}).outputText;
-
 function harness(api) {
-  const component = createHookHarness();
   const busy = [];
   let checks = 0;
   let pending = false;
-  const jsx = (type, props) => ({ type, props });
-  const modules = {
-    react: component.hooks,
-    'react/jsx-runtime': { jsx, jsxs: jsx },
+  const component = loadComponent(file, 'UpdateServer', {
     antd: { Button: 'Button', Input: 'Input', Switch: 'Switch' },
-    'react-i18next': { useTranslation: () => ({ t: (key) => key }) },
     '@/api/application.ts': api
-  };
-  const module = { exports: {} };
-  vm.runInNewContext(
-    output,
-    {
-      module,
-      exports: module.exports,
-      require(id) {
-        if (!(id in modules)) throw new Error(`Unexpected module ${id}`);
-        return modules[id];
-      }
-    },
-    { filename: file }
-  );
+  });
   const props = {
     disabled: false,
     onBusyChange: (value) => busy.push(value),
@@ -67,15 +37,7 @@ function harness(api) {
     },
     cleanup: component.cleanup,
     render() {
-      const tree = component.render(() => module.exports.UpdateServer(props));
-      const nodes = [];
-      function visit(node) {
-        if (Array.isArray(node)) return node.forEach(visit);
-        if (!node || typeof node !== 'object') return;
-        nodes.push(node);
-        visit(node.props?.children);
-      }
-      visit(tree);
+      const nodes = component.render(props);
       return {
         input: nodes.find((node) => node.type === 'Input')?.props,
         toggle: nodes.find((node) => node.type === 'Switch').props,

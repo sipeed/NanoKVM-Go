@@ -96,7 +96,9 @@ test('connect preferences snapshot the old volume and remain independent of tool
 
 test('new browsers start with all four preferences off and invalid capture flags never opt in', () => {
   const { localStorage, values } = loadLocalStorageModule();
-  assert.ok(Object.values(localStorage.getConnectPreferences()).every((value) => value === false));
+  assert.deepEqual({ ...localStorage.getConnectPreferences() }, {
+    volume: false, microphone: false, webcam: false, mouseJiggler: false
+  });
   values.set('nano-kvm-activate-on-connect', '{"webcam":"true","microphone":1}');
   assert.equal(localStorage.getConnectPreferences().webcam, false);
   assert.equal(localStorage.getConnectPreferences().microphone, false);

@@ -156,8 +156,7 @@ TEST_CASE("SSID raster worker renders real font bytes without LVGL")
 {
 	const std::filesystem::path font_path = test_font_path();
 	if (!std::filesystem::exists(font_path)) {
-		WARN("No host TrueType font is available for the worker smoke test");
-		return;
+		SKIP("No host TrueType font is available for the worker smoke test");
 	}
 #if defined(__linux__)
 	const auto initial_mappings = font_mapping_count(font_path);
@@ -252,8 +251,7 @@ TEST_CASE("SSID raster worker releases font mappings when loading fails")
 {
 	const std::filesystem::path font_path = test_font_path();
 	if (!std::filesystem::exists(font_path)) {
-		WARN("No host TrueType font is available for the worker failure test");
-		return;
+		SKIP("No host TrueType font is available for the worker failure test");
 	}
 
 	struct TempDir {

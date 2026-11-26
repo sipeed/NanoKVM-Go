@@ -12,6 +12,6 @@ TEST_CASE("simulator display configuration fixes the logical canvas and zoom",
 	CHECK(lvgl_main::simulator_build_config::kLogicalHeight == 240);
 	CHECK(lvgl_main::simulator_build_config::kWindowZoom == 2);
 #else
-	SUCCEED("The simulator display configuration is not selected");
+	SKIP("The simulator display configuration is not selected");
 #endif
 }

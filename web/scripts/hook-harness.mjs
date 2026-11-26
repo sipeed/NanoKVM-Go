@@ -1,3 +1,7 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+
 // Render a component and flush effects when their dependencies change.
 // Tests call render again after completing the operation that updates state.
 export function createHookHarness() {
@@ -6,7 +10,10 @@ export function createHookHarness() {
   const effects = [];
   let cursor = 0;
   const sameDependencies = (left, right) =>
-    left?.length === right.length && right.every((value, index) => Object.is(value, left[index]));
+    left !== undefined &&
+    right !== undefined &&
+    left.length === right.length &&
+    right.every((value, index) => Object.is(value, left[index]));
 
   function schedule(queue, effect, dependencies) {
     const slot = cursor++;
@@ -24,8 +31,13 @@ export function createHookHarness() {
     hooks: {
       useState(initial) {
         const slot = cursor++;
-        if (!(slot in slots)) slots[slot] = initial;
-        return [slots[slot], (value) => { slots[slot] = value; }];
+        if (!(slot in slots)) slots[slot] = typeof initial === 'function' ? initial() : initial;
+        return [
+          slots[slot],
+          (value) => {
+            slots[slot] = typeof value === 'function' ? value(slots[slot]) : value;
+          }
+        ];
       },
       useRef(initial) {
         const slot = cursor++;
@@ -51,6 +63,52 @@ export function createHookHarness() {
     },
     cleanup() {
       slots.forEach((slot) => slot?.cleanup?.());
+    }
+  };
+}
+
+export function loadComponent(file, name, modules) {
+  const harness = createHookHarness();
+  const jsx = (type, props) => ({ type, props });
+  const imports = {
+    react: harness.hooks,
+    'react/jsx-runtime': { jsx, jsxs: jsx },
+    'react-i18next': { useTranslation: () => ({ t: (key) => key }) },
+    ...modules
+  };
+  const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
+    compilerOptions: {
+      jsx: ts.JsxEmit.ReactJSX,
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022
+    },
+    fileName: file
+  }).outputText;
+  const exports = {};
+  vm.runInNewContext(
+    code,
+    {
+      exports,
+      require(id) {
+        if (!Object.hasOwn(imports, id)) throw new Error(`Unexpected module ${id}`);
+        return imports[id];
+      }
+    },
+    { filename: file }
+  );
+
+  return {
+    cleanup: harness.cleanup,
+    render(props) {
+      const nodes = [];
+      function visit(node) {
+        if (Array.isArray(node)) return node.forEach(visit);
+        if (!node || typeof node !== 'object') return;
+        nodes.push(node);
+        visit(node.props?.children);
+      }
+      visit(harness.render(() => exports[name](props)));
+      return nodes;
     }
   };
 }
