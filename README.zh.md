@@ -1,20 +1,20 @@
 # NanoKVM-Go Nomad
 
-使用 Nomad，可在连接到 NanoKVM Go+ 的远程电脑上调用笔记本摄像头参加视频会议。远程电脑会将它识别为标准的 720p USB 摄像头。[English](README.md)
+通过 NanoKVM Go+，远程电脑可将浏览器端的摄像头用作 720p USB 摄像头。Build #2 适用于 Go+ 固件 v1.0.10。[English](README.md) · [Build #2 更新记录](CHANGELOG.md)
 
 ## 控制台
 
-- **菜单栏。** 点击 **Screen** 切换只读模式，点击 **Volume** 静音或恢复音量，点击 **Terminal** 在新标签页打开终端。将指针悬停在图标上或轻点旁边的箭头，可查看更多选项。
-- **摄像头。** 通过 HTTPS 打开控制台，在 **Settings → Device → Webcam** 中启用摄像头，再点击工具栏的 **Webcam** 开始共享。视频流会根据上行带宽自动调整。[摄像头指南](docs/remote-webcam.md)
-- **显示器。** 在 **Settings → Screen → EDID** 中选择配置，即可同时设置显示器名称和支持的显示模式，无需单独设置 **Monitor Name**。
-- **鼠标抖动器。** 在 **Settings → Device** 中启用 **Mouse Jiggler**，关闭浏览器后仍可保持远程电脑唤醒。默认运行 8 小时。
-- **USB 设备。** 在 **Settings → Device** 中查看可用 USB 端点。启用 **Mouse → Mouse mode → Use one USB pointer endpoint** 可释放一个端点。
-- **连接时启用。** 在 **Settings → Appearance** 中选择浏览器连接时是否自动启用音频、摄像头共享或鼠标抖动器。
+- **摄像头。** 通过 HTTPS 打开控制台，在 **Settings → Device → Webcam** 中启用摄像头。点击工具栏的 **Webcam** 开始或停止共享，悬停或轻点箭头可选择摄像头。[设置与上传数据](docs/remote-webcam.md)
+- **画面。** 点击 **Screen** 切换只读模式。**Screen → Cropping** 可自动去除黑边，也可手动选择区域。在 **Settings → Screen → EDID** 中选择配置，可同时设置显示器名称和支持的显示模式。
+- **工具栏。** 点击 **Volume** 静音或恢复原音量，点击 **Microphone** 开始或停止共享麦克风，点击 **Terminal** 在新标签页打开终端。用鼠标关闭设置后，只要指针在工具栏外，自动隐藏的五秒倒计时就会恢复。
+- **连接时启用。** 在 **Settings → Appearance** 中，可为音量、麦克风、摄像头和鼠标抖动器分别设置 **Show icon** 和 **Activate on Connect**。
+- **鼠标抖动器。** 在 **Settings → Device** 中启用 **Mouse Jiggler**。工具栏菜单显示剩余时间，默认运行 **8 小时**，设为 **0** 表示不限时。断开连接后仍会运行。
+- **USB。** **Settings → Device** 显示可用的 USB IN 端点数。摄像头需要两个。启用 **Mouse → Mouse mode → Use one USB pointer endpoint** 可释放一个。在 **Device → Advanced → USB Device Identity** 中可修改 USB ID、设备标识字符串和配置名称。
 
 ## 安装
 
-1. 下载离线更新包（`.tar.gz`），并查看发布说明中要求的 Sipeed 固件版本。无需解压。[最新 Nomad 版本](https://github.com/maxhabra/NanoKVM-go-Nomad/releases/latest)
-2. 打开 **Settings → Check for Updates → Offline update** 并上传更新包。若更新包未签名，可暂时关闭 **Update signature verification**。
-3. 安装完成后重启 Go+。如果关闭了签名验证，请重新启用。
+1. 下载与固件匹配的离线更新包，保留 `.tar.gz` 压缩格式。[已发布的版本](https://github.com/maxhabra/NanoKVM-go-Nomad/releases/latest)
+2. 通过 **Settings → Check for Updates → Offline update** 上传更新包。若更新包未签名，可暂时关闭 **Update signature verification**。
+3. 重启 Go+。如果关闭了签名验证，请重新启用。
 
-[从源码构建](docs/build-packaging.md) · [Sipeed 使用指南](https://wiki.sipeed.com/hardware/zh/kvm/NanoKVM_Go/user_guide.html) · [许可证](LICENSE)
+[构建 Nomad 更新包](docs/build-packaging.md#nomad-go-offline-bundle) · [Sipeed 使用指南](https://wiki.sipeed.com/hardware/zh/kvm/NanoKVM_Go/user_guide.html) · [许可证](LICENSE)

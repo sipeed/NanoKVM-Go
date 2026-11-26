@@ -1,13 +1,13 @@
 # Share a browser webcam with the Go+
 
-Open the Go+ dashboard over HTTPS. Under **Settings → Device**, enable **Webcam** to present a USB camera to the attached computer. Changing this setting briefly reconnects the USB devices. Eject and detach virtual media first. The feature requires two free USB IN endpoints, USB display mode turned off, and the Nomad UVC-enabled kernel. The Nomad Normal update includes the kernel, feeder and scripts. Reboot after replacing the kernel. [Kernel support](../support/patches/maix_ax620e_sdk_kernel/README.md)
+Open the Go+ dashboard over HTTPS. Under **Settings → Device**, enable **Webcam** to present a USB camera to the attached computer. Changing this setting briefly reconnects the USB devices. Eject and detach virtual media first. The webcam requires two free USB IN endpoints, USB display mode turned off, and the Nomad UVC-enabled kernel. **Settings → Device** shows the endpoint count. If you are short by one, **Mouse → Mouse mode → Use one USB pointer endpoint** frees one. The Nomad Normal update includes the kernel, feeder and scripts. Reboot after replacing the kernel. [Kernel support](../support/patches/maix_ax620e_sdk_kernel/README.md#uvc-webcam-gadget-on-the-go)
 
-Click the toolbar webcam icon to start sharing the default camera. To choose a camera before sharing, hover over the icon or tap its menu arrow. To share the default camera automatically when this browser connects, check **Activate on Connect** in the **Webcam** row under **Settings → Appearance**. Grant camera access in the browser. One dashboard can publish at a time. The remote computer can open the USB webcam before or after calibration. Microphone sharing has a separate control.
+Click the toolbar webcam icon to start sharing the default camera. To choose a camera before sharing, hover over the icon or tap its menu arrow. To share the default camera automatically when this browser connects, check **Activate on Connect** in the **Webcam** row under **Settings → Appearance**. Grant camera access in the browser. One dashboard can publish at a time. The remote computer can open the USB webcam before or after calibration. Microphone sharing has a separate control. If startup reports that no frames reached the Go+, check the selected camera and its browser permission, then start sharing again.
 
 | Menu state | What the numbers mean |
 | --- | --- |
 | Calibrating | Received JPEG Mbps, acknowledged frames per second and average time from upload to the next grant, in milliseconds. |
-| Ready | The calibrated bitrate and frame-rate target. The remote computer is idle. |
+| Ready | The calibrated bitrate and frame-rate target. No application on the remote computer is requesting frames. |
 | Streaming | Live received Mbps, acknowledged frames per second and average upload-to-grant delay. |
 
 ## How calibration works
