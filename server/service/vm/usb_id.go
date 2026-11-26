@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -18,25 +19,28 @@ import (
 )
 
 const (
-	usbVidFile          = "/boot/usb.vid"
-	usbPidFile          = "/boot/usb.pid"
-	usbBcdDeviceFile    = "/boot/usb.bcddevice"
-	usbSerialnumberFile = "/boot/usb.serialnumber"
-	usbManufacturerFile = "/boot/usb.manufacturer"
-	usbProductFile      = "/boot/usb.product"
+	usbVidFile           = "/boot/usb.vid"
+	usbPidFile           = "/boot/usb.pid"
+	usbBcdDeviceFile     = "/boot/usb.bcddevice"
+	usbSerialnumberFile  = "/boot/usb.serialnumber"
+	usbManufacturerFile  = "/boot/usb.manufacturer"
+	usbProductFile       = "/boot/usb.product"
+	usbConfigurationFile = "/boot/usb.configuration"
 
 	usbIdentityStringMaxLen = 64
 )
 
 var (
-	usbIdHexBody     = regexp.MustCompile(`(?i)^[0-9a-f]{1,4}$`)
-	usbIdentityFiles = []string{
+	errUsbIdentityRestart = errors.New("restart usb failed")
+	usbIdHexBody          = regexp.MustCompile(`(?i)^[0-9a-f]{1,4}$`)
+	usbIdentityFiles      = []string{
 		usbVidFile,
 		usbPidFile,
 		usbBcdDeviceFile,
 		usbSerialnumberFile,
 		usbManufacturerFile,
 		usbProductFile,
+		usbConfigurationFile,
 	}
 )
 
@@ -51,8 +55,9 @@ func (s *Service) GetUsbId(c *gin.Context) {
 	serialnumber, serialOK := readUsbIdFile(usbSerialnumberFile)
 	manufacturer, mfgOK := readUsbIdFile(usbManufacturerFile)
 	product, productOK := readUsbIdFile(usbProductFile)
+	configurationName, configOK := readUsbIdFile(usbConfigurationFile)
 
-	if vidOK || pidOK || bcdOK || serialOK || mfgOK || productOK {
+	if vidOK || pidOK || bcdOK || serialOK || mfgOK || productOK || configOK {
 		data.Enabled = true
 		data.Vid = vid
 		data.Pid = pid
@@ -60,6 +65,7 @@ func (s *Service) GetUsbId(c *gin.Context) {
 		data.Serialnumber = serialnumber
 		data.Manufacturer = manufacturer
 		data.Product = product
+		data.ConfigurationName = configurationName
 	}
 
 	rsp.OkRspWithData(c, data)
@@ -78,6 +84,7 @@ func (s *Service) SetUsbId(c *gin.Context) {
 	hid.LockUsbGadgetMutation()
 	defer hid.UnlockUsbGadgetMutation()
 
+	values := map[string]string{}
 	if req.Enabled {
 		vid, err := normalizeUsbIdHex(req.Vid)
 		if err != nil {
@@ -115,79 +122,56 @@ func (s *Service) SetUsbId(c *gin.Context) {
 			return
 		}
 
-		writes := []struct {
-			path  string
-			value string
-		}{
-			{usbVidFile, vid},
-			{usbPidFile, pid},
-		}
-		optionals := []struct {
-			path  string
-			value string
-		}{
-			{usbBcdDeviceFile, bcdDevice},
-			{usbSerialnumberFile, serialnumber},
-			{usbManufacturerFile, manufacturer},
-			{usbProductFile, product},
+		configurationName, err := normalizeUsbIdentityString(req.ConfigurationName)
+		if err != nil {
+			rsp.ErrRsp(c, -2, "invalid configurationName")
+			return
 		}
 
-		var written []string
-		rollback := func() {
-			for _, path := range written {
-				_ = os.Remove(path)
-			}
-		}
-
-		for _, item := range writes {
-			if err := os.WriteFile(item.path, []byte(item.value+"\n"), 0644); err != nil {
-				log.Errorf("failed to write %s: %v", item.path, err)
-				rollback()
-				rsp.ErrRsp(c, -3, "write usb id failed")
-				return
-			}
-			written = append(written, item.path)
-		}
-
-		for _, item := range optionals {
-			if item.value == "" {
-				if err := os.Remove(item.path); err != nil && !os.IsNotExist(err) {
-					log.Errorf("failed to remove %s: %v", item.path, err)
-					rollback()
-					rsp.ErrRsp(c, -3, "write usb id failed")
-					return
-				}
-				continue
-			}
-			if err := os.WriteFile(item.path, []byte(item.value+"\n"), 0644); err != nil {
-				log.Errorf("failed to write %s: %v", item.path, err)
-				rollback()
-				rsp.ErrRsp(c, -3, "write usb id failed")
-				return
-			}
-			written = append(written, item.path)
-		}
-	} else {
-		for _, path := range usbIdentityFiles {
-			if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-				log.Errorf("failed to remove %s: %v", path, err)
-				rsp.ErrRsp(c, -4, "disable usb id failed")
-				return
-			}
+		values = map[string]string{
+			usbVidFile: vid, usbPidFile: pid, usbBcdDeviceFile: bcdDevice,
+			usbSerialnumberFile: serialnumber, usbManufacturerFile: manufacturer,
+			usbProductFile: product, usbConfigurationFile: configurationName,
 		}
 	}
 
-	if err := restartUsbGadget(); err != nil {
-		log.Errorf("failed to restart usb gadget after set usb id: %v", err)
-		rsp.ErrRsp(c, -5, "restart usb failed")
+	if err := applyUsbIdentity(usbIdentityFiles, values, restartUsbGadget); err != nil {
+		log.Errorf("apply USB identity: %v", err)
+		switch {
+		case errors.Is(err, errUsbIdentityRestart):
+			rsp.ErrRsp(c, -5, "restart usb failed")
+		case !req.Enabled:
+			rsp.ErrRsp(c, -4, "disable usb id failed")
+		default:
+			rsp.ErrRsp(c, -3, "write usb id failed")
+		}
 		return
 	}
 
 	rsp.OkRsp(c)
 	log.Debugf(
-		"set usb id: enabled=%v vid=%q pid=%q bcdDevice=%q serialnumber=%q manufacturer=%q product=%q",
-		req.Enabled, req.Vid, req.Pid, req.BcdDevice, req.Serialnumber, req.Manufacturer, req.Product,
+		"set usb id: enabled=%v vid=%q pid=%q bcdDevice=%q serialnumber=%q manufacturer=%q product=%q configurationName=%q",
+		req.Enabled, req.Vid, req.Pid, req.BcdDevice, req.Serialnumber, req.Manufacturer, req.Product, req.ConfigurationName,
 	)
+}
+
+func applyUsbIdentity(paths []string, values map[string]string, restart func() error) error {
+	before, err := snapshotUsbFiles(paths...)
+	if err != nil {
+		return err
+	}
+	for i, path := range paths {
+		if err := writeOptionalUsbFile(path, values[path]); err != nil {
+			return errors.Join(err, restoreUsbFiles(before[:i+1]))
+		}
+	}
+	if err := restart(); err != nil {
+		if rollbackErr := restoreUsbFiles(before); rollbackErr != nil {
+			return errors.Join(errUsbIdentityRestart, err, rollbackErr)
+		}
+		return errors.Join(errUsbIdentityRestart, err, restart())
+	}
+	return nil
 }
 
 func readUsbIdFile(path string) (string, bool) {

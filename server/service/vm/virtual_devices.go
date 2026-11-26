@@ -14,6 +14,7 @@ import (
 	"NanoKVM-Server/service/hid"
 	"NanoKVM-Server/service/stream/opus"
 	"NanoKVM-Server/storageguard"
+	"NanoKVM-Server/usbgadget"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -101,16 +102,23 @@ func (s *Service) GetVirtualDevice(c *gin.Context) {
 		diskMaxSizeMiB = 0
 	}
 
+	var usedEndpoints *int
+	if used, err := usbgadget.INEndpoints(usbgadget.ConfigDir); err == nil {
+		usedEndpoints = &used
+	}
 	rsp.OkRspWithData(c, &proto.GetVirtualDeviceRsp{
-		IsWebcamEnabled:  isFileExists("/boot/usb.webcam") && isFileExists("/run/nanokvm-webcam/live.sock"),
-		IsNetworkEnabled: isVirtualNetworkMounted(),
-		IsDiskEnabled:    virtualDiskRuntimeMounted(),
-		DiskMinSizeMiB:   diskMinSizeMiB,
-		DiskMaxSizeMiB:   diskMaxSizeMiB,
-		IsMicEnabled:     isVirtualMicMounted(),
-		IsSpeakerEnabled: isVirtualSpeakerMounted(),
-		AudioMode:        getVirtualAudioMode(),
-		IsSdCardExist:    virtualDiskImagePresent(),
+		IsUSBDisplayEnabled: isFileExists(usbgadget.ConfigDir + "/Loopback.0"),
+		USBInEndpointsUsed:  usedEndpoints,
+		USBInEndpointsTotal: usbgadget.INEndpointLimit,
+		IsWebcamEnabled:     isFileExists("/boot/usb.webcam") && isFileExists("/run/nanokvm-webcam/live.sock"),
+		IsNetworkEnabled:    isVirtualNetworkMounted(),
+		IsDiskEnabled:       virtualDiskRuntimeMounted(),
+		DiskMinSizeMiB:      diskMinSizeMiB,
+		DiskMaxSizeMiB:      diskMaxSizeMiB,
+		IsMicEnabled:        isVirtualMicMounted(),
+		IsSpeakerEnabled:    isVirtualSpeakerMounted(),
+		AudioMode:           getVirtualAudioMode(),
+		IsSdCardExist:       virtualDiskImagePresent(),
 	})
 
 	log.Debug("get virtual device success")
@@ -153,7 +161,7 @@ func (s *Service) UpdateVirtualDevice(c *gin.Context) {
 		case req.Device == "disk" && !isVirtualDiskMounted():
 			requestedLink = "mass_storage.disk1"
 		}
-		if requestedLink != "" && !webcamEndpointsAvailable("/sys/kernel/config/usb_gadget/g0/configs/c.1", requestedLink) {
+		if requestedLink != "" && !webcamEndpointsAvailable(usbgadget.ConfigDir, requestedLink) {
 			rsp.ErrRsp(c, -3, "USB endpoints are in use. Disable Webcam or another virtual device first.")
 			return
 		}
@@ -243,33 +251,8 @@ func (s *Service) UpdateVirtualDevice(c *gin.Context) {
 }
 
 func webcamEndpointsAvailable(configDir, requestedLink string) bool {
-	links, err := os.ReadDir(configDir)
-	if err != nil {
-		return false
-	}
-	// An ejected disk can still have a linked USB function and consume an endpoint.
-	functions := []string{requestedLink}
-	for _, link := range links {
-		if link.Type()&os.ModeSymlink == 0 {
-			continue
-		}
-		if link.Name() != requestedLink {
-			functions = append(functions, link.Name())
-		}
-	}
-	used := 0
-	for _, function := range functions {
-		kind, _, _ := strings.Cut(function, ".")
-		switch kind {
-		case "hid", "uac2", "mass_storage":
-			used++
-		case "uvc", "rndis", "ncm", "acm":
-			used += 2
-		default:
-			return false
-		}
-	}
-	return used <= 7
+	used, err := usbgadget.INEndpoints(configDir, requestedLink)
+	return err == nil && used <= usbgadget.INEndpointLimit
 }
 
 func (s *Service) RefreshVirtualDevice(c *gin.Context) {

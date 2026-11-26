@@ -40,6 +40,11 @@ function getVirtualDeviceResponse(state: MockState) {
       : 'mic';
 
   return {
+    isUsbDisplayEnabled: false,
+    usbInEndpointsTotal: 7,
+    usbInEndpointsUsed: (state.hid.pointerMode.singleEndpoint ? 2 : 3)
+      + 2 * Number(state.virtualDevice.isWebcamEnabled) + 2 * Number(state.virtualDevice.isNetworkEnabled)
+      + Number(state.virtualDevice.isMicEnabled) + Number(state.virtualDevice.isDiskEnabled),
     isWebcamEnabled: state.virtualDevice.isWebcamEnabled,
     isNetworkEnabled: state.virtualDevice.isNetworkEnabled,
     isDiskEnabled: state.virtualDevice.isDiskEnabled,
@@ -293,6 +298,17 @@ const fingerRobotDebugTestFields = new Set([
 ]);
 
 export function createDeviceHandlers(origin: string, state: MockState) {
+  function jigglerStatus() {
+    const config = state.vm.mouseJiggler;
+    const remainingMs = config.enabled && config.maxHours > 0
+      ? Math.max(0, config.startedAt + config.maxHours * 3600000 - Date.now())
+      : 0;
+    if (config.maxHours > 0 && !remainingMs) config.enabled = false;
+    const pointer = state.hid.pointerMode;
+    const blockedByPointerMode = !!pointer.singleEndpoint && (pointer.mode === 'touch-screen' || pointer.mode === 'digitizer-stylus');
+    return { ...config, blockedByPointerMode, remainingMs, elapsedMs: config.enabled ? Date.now() - config.startedAt : 0 };
+  }
+
   return [
     http.get(`${origin}/api/vm/info`, () =>
       ok({
@@ -581,14 +597,25 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       state.vm.mdnsEnabled = false;
       return ok({ enabled: false });
     }),
-    http.get(`${origin}/api/vm/mouse-jiggler`, () => ok(state.vm.mouseJiggler)),
+    http.get(`${origin}/api/vm/mouse-jiggler`, () => ok(jigglerStatus())),
     http.post(`${origin}/api/vm/mouse-jiggler`, async ({ request }) => {
       const body = await readJsonObject(request);
       const enabled = readBoolean(body, 'enabled');
       const mode = readString(body, 'mode');
-      if (enabled !== null) state.vm.mouseJiggler.enabled = enabled;
-      if (mode) state.vm.mouseJiggler.mode = mode;
-      return ok(state.vm.mouseJiggler);
+      const hours = readNumber(body, 'maxHours');
+      const config = state.vm.mouseJiggler;
+      const status = jigglerStatus();
+      if (status.blockedByPointerMode && enabled === true) {
+        return fail(-3, 'Mouse Jiggler requires a USB mouse endpoint.', status);
+      }
+      if (enabled === true && !config.enabled) config.startedAt = Date.now();
+      if (enabled !== null) config.enabled = enabled;
+      if (mode) config.mode = mode;
+      if (hours !== null && hours !== config.maxHours) {
+        config.maxHours = hours;
+        if (config.enabled) config.startedAt = Date.now();
+      }
+      return ok(jigglerStatus());
     }),
     http.get(`${origin}/api/vm/hostname`, () => ok({ hostname: state.vm.hostname })),
     http.post(`${origin}/api/vm/hostname`, async ({ request }) => {
@@ -620,17 +647,6 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       const edid = readString(await readJsonObject(request), 'edid');
       if (edid) state.stream.edid = edid;
       return ok({ edid: state.stream.edid });
-    }),
-    http.get(`${origin}/api/vm/edid/monitor-name`, () =>
-      ok({ monitorName: state.stream.monitorName })
-    ),
-    http.post(`${origin}/api/vm/edid/monitor-name`, async ({ request }) => {
-      const monitorName = readString(await readJsonObject(request), 'monitorName');
-      if (monitorName === null || !/^[\x20-\x7e]{0,13}$/.test(monitorName)) {
-        return fail(-1, 'invalid monitor name', { monitorName: state.stream.monitorName });
-      }
-      state.stream.monitorName = monitorName;
-      return ok({ monitorName: state.stream.monitorName });
     }),
     http.get(`${origin}/api/vm/edid/custom`, () => ok({ edidList: state.stream.customEdids })),
     http.post(`${origin}/api/vm/edid/delete`, async ({ request }) => {
@@ -768,12 +784,15 @@ export function createDeviceHandlers(origin: string, state: MockState) {
     }),
     http.get(`${origin}/api/hid/pointer-mode`, () => ok(state.hid.pointerMode)),
     http.post(`${origin}/api/hid/pointer-mode`, async ({ request }) => {
-      const mode = readString(await readJsonObject(request), 'mode');
-      if (mode !== 'absolute' && mode !== 'digitizer-stylus' && mode !== 'touch-screen') {
+      const body = await readJsonObject(request);
+      const mode = readString(body, 'mode');
+      const singleEndpoint = body.singleEndpoint === true;
+      if (!(singleEndpoint && mode === 'relative') && mode !== 'absolute' && mode !== 'digitizer-stylus' && mode !== 'touch-screen') {
         return fail(-1, 'invalid pointer mode', state.hid.pointerMode);
       }
       state.hid.pointerMode = {
         mode,
+        singleEndpoint,
         switching: false,
         degraded: false,
         error: ''
@@ -825,6 +844,7 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       const serialnumber = readString(body, 'serialnumber');
       const manufacturer = readString(body, 'manufacturer');
       const product = readString(body, 'product');
+      const configurationName = readString(body, 'configurationName');
       if (enabled !== null) state.vm.usbId.enabled = enabled;
       if (vid !== null) state.vm.usbId.vid = vid;
       if (pid !== null) state.vm.usbId.pid = pid;
@@ -832,6 +852,7 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       if (serialnumber !== null) state.vm.usbId.serialnumber = serialnumber;
       if (manufacturer !== null) state.vm.usbId.manufacturer = manufacturer;
       if (product !== null) state.vm.usbId.product = product;
+      if (configurationName !== null) state.vm.usbId.configurationName = configurationName;
       if (enabled === false) {
         state.vm.usbId.vid = '';
         state.vm.usbId.pid = '';
@@ -839,6 +860,7 @@ export function createDeviceHandlers(origin: string, state: MockState) {
         state.vm.usbId.serialnumber = '';
         state.vm.usbId.manufacturer = '';
         state.vm.usbId.product = '';
+        state.vm.usbId.configurationName = '';
       }
       return ok(state.vm.usbId);
     }),

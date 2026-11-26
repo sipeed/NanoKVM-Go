@@ -43,7 +43,7 @@ enum MouseButton {
   Forward = 4
 }
 
-export const Absolute = () => {
+export const Absolute = ({ singleEndpoint }: { singleEndpoint: boolean }) => {
   const mouseMode = useAtomValue(mouseModeAtom);
   const scrollDirection = useAtomValue(scrollDirectionAtom);
   const scrollInterval = useAtomValue(scrollIntervalAtom);
@@ -206,37 +206,41 @@ export const Absolute = () => {
     switch (event.type) {
       case 'mousedown':
         buttons.down(event.button);
-        // EXPERIMENT(hybrid click): send button transitions through the relative
-        // pointer; some hosts (iPadOS AssistiveTouch, some BIOS) ignore or
-        // mishandle buttons carried by the absolute device
-        if (!stylus) {
+        // Some hosts need relative clicks when both mouse interfaces are exposed.
+        if (!stylus && !singleEndpoint) {
           sendRelativePointerProxy(source, buttons.value);
           return;
         }
         break;
       case 'mouseup':
         buttons.up(event.button);
-        if (!stylus) {
+        if (!stylus && !singleEndpoint) {
           sendRelativePointerProxy(source, buttons.value);
           return;
         }
         break;
-      case 'wheel':
-        if (!stylus) {
-          sendRelativePointerProxy(source, buttons.value, 0, 0, event.deltaY > 0 ? 1 : -1);
+      case 'wheel': {
+        if (stylus) return;
+        const wheel = event.deltaY > 0 ? 1 : -1;
+        if (!singleEndpoint) {
+          sendRelativePointerProxy(source, buttons.value, 0, 0, wheel);
+        } else if (lastPosRef.current) {
+          sendPointerState(false, source, lastPosRef.current.x, lastPosRef.current.y, wheel);
         }
         return;
+      }
       case 'move': {
         lastPosRef.current = { x: event.x, y: event.y };
         sendPointerState(stylus, source, event.x, event.y);
         return;
       }
-      default:
+      default: {
+        const releaseOnAbsolute = singleEndpoint && buttons.value !== 0;
         buttons.reset();
         if (!stylus) {
           releaseRelativePointerProxy(source);
         }
-        if (stylus && lastPosRef.current) {
+        if ((stylus || releaseOnAbsolute) && lastPosRef.current) {
           sendPointerState(
             stylus,
             source,
@@ -248,6 +252,7 @@ export const Absolute = () => {
           );
         }
         return;
+      }
     }
 
     if (lastPosRef.current) {
@@ -265,9 +270,7 @@ export const Absolute = () => {
     force = false
   ) {
     if (isPreviewModeRef.current && !force) return;
-    // EXPERIMENT(hybrid click): the absolute report always carries buttons=0;
-    // button state lives on the relative pointer (see handleMouseEvent)
-    const buttons = stylus ? buttonsRef.current.value : 0;
+    const buttons = stylus || singleEndpoint ? buttonsRef.current.value : 0;
     const viewport =
       (frozenTouchPortRef.current ?? latestTouchPortRef.current)?.viewport ??
       createInputViewport(effectiveScreenAreaRef.current);
@@ -484,7 +487,7 @@ export const Absolute = () => {
 
   function relinquishPointerRoutes() {
     return (
-      INPUT_ROUTER_RELEASE_RELATIVE_POINTER |
+      (singleEndpoint ? 0 : INPUT_ROUTER_RELEASE_RELATIVE_POINTER) |
       (outputStylusRef.current
         ? INPUT_ROUTER_RELEASE_STYLUS
         : INPUT_ROUTER_RELEASE_ABSOLUTE_POINTER)

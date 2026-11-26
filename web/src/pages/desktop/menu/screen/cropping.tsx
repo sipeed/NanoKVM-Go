@@ -1,56 +1,43 @@
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import {
-  Button,
-  InputNumber,
-  Modal,
-  Popover,
-  Segmented,
-  Select,
-  Space,
-  Tooltip,
-  Typography
-} from 'antd';
-import clsx from 'clsx';
+import { Button, InputNumber, Modal, Select, Space, Tooltip, Typography } from 'antd';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { ScanSearchIcon, SmartphoneIcon } from 'lucide-react';
+import { CheckIcon, ChevronRightIcon, CropIcon, ScanSearchIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useMediaQuery } from 'react-responsive';
 
 import { setPortalConfig } from '@/api/vm.ts';
 import { feedback } from '@/lib/feedback.tsx';
-import { LAYER_DESKTOP_MENU_POPOVER, LAYER_MOBILE_MENU_POPOVER } from '@/lib/layers.ts';
 import * as storage from '@/lib/localstorage.ts';
 import { PortalConfig, PortalMode } from '@/lib/screen-crop.ts';
 import { isKeyboardEnableAtom } from '@/jotai/keyboard.ts';
 import { portalConfigAtom, portalDetectionPhaseAtom, portalSelectingAtom } from '@/jotai/screen.ts';
-import { useSubmenuOpenCounter } from '@/hooks/useSubmenuOpenCounter.ts';
-import { MobileMenuPanel } from '@/components/menu-item.tsx';
-import { MobileMenuItemContext } from '@/components/mobile-menu-context.ts';
+import { MenuSubmenu } from '@/components/menu-item.tsx';
+import { ButtonBase } from '@/components/ui/button-base.tsx';
 
-type PortalProps = {
-  tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right';
+type CroppingProps = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  dismissMenus: () => void;
 };
 
-export const Portal = ({ tooltipPlacement = 'bottom' }: PortalProps) => {
+export const Cropping = ({ open, setOpen, dismissMenus }: CroppingProps) => {
   const { t } = useTranslation();
   const [config, setConfig] = useAtom(portalConfigAtom);
+  const canHover = useMediaQuery({ query: '(hover: hover)' });
   const phase = useAtomValue(portalDetectionPhaseAtom);
   const setSelecting = useSetAtom(portalSelectingAtom);
   const setKeyboardEnabled = useSetAtom(isKeyboardEnableAtom);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [tooltipOpen, setTooltipOpen] = useState(false);
   const [resolutionModalOpen, setResolutionModalOpen] = useState(false);
   const [resolutionWidth, setResolutionWidth] = useState<number | null>(null);
   const [resolutionHeight, setResolutionHeight] = useState<number | null>(null);
-  const { setOpen: setPopoverVisibility } = useSubmenuOpenCounter();
-  const { mobilePlacement, mobilePopoverClassName, dismissMenuKey } =
-    useContext(MobileMenuItemContext);
-  const previousDismissMenuKey = useRef(dismissMenuKey);
+  const editing = open || resolutionModalOpen;
 
   useEffect(() => {
-    setKeyboardEnabled(!popoverOpen && !resolutionModalOpen);
+    if (!editing) return;
+    setKeyboardEnabled(false);
     return () => setKeyboardEnabled(true);
-  }, [popoverOpen, resolutionModalOpen, setKeyboardEnabled]);
+  }, [editing, setKeyboardEnabled]);
 
   async function save(nextConfig: PortalConfig) {
     try {
@@ -132,70 +119,37 @@ export const Portal = ({ tooltipPlacement = 'bottom' }: PortalProps) => {
   }
 
   function startSelection() {
-    updatePopoverOpen(false);
+    dismissMenus();
     setSelecting(true);
   }
 
-  const updatePopoverOpen = useCallback(
-    (open: boolean) => {
-      setTooltipOpen(false);
-      setPopoverOpen(open);
-      setPopoverVisibility(open);
-    },
-    [setPopoverVisibility]
-  );
-
-  function updateTooltipOpen(open: boolean) {
-    if (popoverOpen) return;
-    setTooltipOpen(open);
-  }
-
-  // Match MenuItem: close the popover when the menu rail asks items to dismiss.
-  useEffect(() => {
-    if (dismissMenuKey === previousDismissMenuKey.current) {
-      return;
-    }
-
-    previousDismissMenuKey.current = dismissMenuKey;
-    updatePopoverOpen(false);
-  }, [dismissMenuKey, updatePopoverOpen]);
-
-  const status =
-    config.mode === 'auto'
-      ? phase === 'active'
-        ? t('portal.statusActive')
-        : phase === 'learning'
-          ? t('portal.statusLearning')
-          : t('portal.statusFull')
-      : config.mode === 'manual'
-        ? t('portal.manual')
-        : t('portal.off');
-  const iconClassName =
-    config.mode === 'off'
-      ? 'text-red-400'
-      : config.mode === 'manual'
-        ? 'text-green-400'
-        : phase === 'active'
-          ? 'text-blue-400'
-          : 'text-red-400';
-
+  const autoStatus =
+    phase === 'active' ? 'portal.statusActive' :
+    phase === 'learning' ? 'portal.statusLearning' : 'portal.statusFull';
+  const title = t('portal.title');
   const content = (
-    <div className="w-[280px] max-w-full">
+    <div className={config.mode === 'manual' ? 'w-[260px] max-w-full' : 'max-w-[230px]'}>
       <Space direction="vertical" size="small" className="w-full">
-        <Segmented<PortalMode>
-          block
-          value={config.mode}
-          options={[
-            { label: t('portal.auto'), value: 'auto' },
-            { label: t('portal.manual'), value: 'manual' },
-            { label: t('portal.off'), value: 'off' }
-          ]}
-          onChange={updateMode}
-        />
+        <div role="group" aria-label={title} className="flex flex-col">
+          {(['auto', 'manual', 'off'] as const).map((mode) => (
+            <ButtonBase
+              key={mode}
+              type="button"
+              aria-pressed={config.mode === mode}
+              onClick={() => void updateMode(mode)}
+              className="flex h-[30px] items-center gap-2 rounded px-2 text-left text-sm text-neutral-200 hover:bg-neutral-700/70 hover:text-white"
+            >
+              <span className="w-4">
+                {config.mode === mode && <CheckIcon size={16} className="text-blue-500" />}
+              </span>
+              {t(`portal.${mode}`)}
+            </ButtonBase>
+          ))}
+        </div>
         <Typography.Text type="secondary" className="text-xs">
           {config.mode === 'auto' ? t('portal.autoDescription') : t('portal.description')}
         </Typography.Text>
-        {config.mode === 'auto' && <Typography.Text className="text-xs">{status}</Typography.Text>}
+        {config.mode === 'auto' && <Typography.Text className="text-xs">{t(autoStatus)}</Typography.Text>}
         {config.mode === 'manual' && (
           <>
             <Button
@@ -281,58 +235,29 @@ export const Portal = ({ tooltipPlacement = 'bottom' }: PortalProps) => {
 
   return (
     <>
-      <Popover
-        trigger="click"
-        arrow={false}
-        placement={
-          tooltipPlacement === 'left'
-            ? 'leftTop'
-            : tooltipPlacement === 'right'
-              ? 'rightTop'
-              : 'bottomLeft'
-        }
-        zIndex={mobilePlacement ? LAYER_MOBILE_MENU_POPOVER : LAYER_DESKTOP_MENU_POPOVER}
-        overlayClassName={mobilePopoverClassName}
-        content={
-          mobilePlacement ? (
-            <MobileMenuPanel
-              content={content}
-              open={popoverOpen}
-              onClose={() => updatePopoverOpen(false)}
-            />
-          ) : (
-            content
-          )
-        }
-        open={popoverOpen}
-        onOpenChange={updatePopoverOpen}
+      <MenuSubmenu
+        title={title}
+        content={content}
+        popoverProps={{
+          placement: 'rightTop',
+          arrow: false,
+          trigger: canHover ? ['hover', 'click'] : 'click',
+          mouseLeaveDelay: 0.3,
+          open,
+          onOpenChange: setOpen
+        }}
       >
-        <Tooltip
-          title={`${t('portal.title')}: ${status}`}
-          placement={tooltipPlacement}
-          mouseEnterDelay={0.6}
-          open={tooltipOpen}
-          onOpenChange={updateTooltipOpen}
+        <ButtonBase
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          className="flex h-[30px] items-center gap-2 rounded pl-3 pr-2 text-left text-neutral-200 hover:bg-neutral-700/70 hover:text-white"
         >
-          <div
-            role="button"
-            tabIndex={0}
-            className={clsx(
-              'flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded hover:bg-neutral-700/80 hover:text-white',
-              iconClassName
-            )}
-            aria-label={`${t('portal.title')}: ${status}`}
-            aria-expanded={popoverOpen}
-            onKeyDown={(event) => {
-              if (event.key !== 'Enter' && event.key !== ' ') return;
-              event.preventDefault();
-              updatePopoverOpen(!popoverOpen);
-            }}
-          >
-            <SmartphoneIcon size={18} />
-          </div>
-        </Tooltip>
-      </Popover>
+          <CropIcon size={18} />
+          <span className="flex-1 text-sm">{title}</span>
+          <ChevronRightIcon size={14} />
+        </ButtonBase>
+      </MenuSubmenu>
       <Modal
         title={t('portal.addResolution')}
         open={resolutionModalOpen}

@@ -1,13 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, ColorPicker, Modal, Tooltip } from 'antd';
 import clsx from 'clsx';
 import { useAtom, useAtomValue } from 'jotai';
-import { FrameIcon, MonitorIcon, RotateCcwIcon } from 'lucide-react';
+import { EyeIcon, FrameIcon, MonitorIcon, RotateCcwIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import * as api from '@/api/stream.ts';
 import { VideoParameters } from '@/types';
 import * as storage from '@/lib/localstorage.ts';
+import { isPreviewModeAtom } from '@/jotai/preview.ts';
 import {
   portalBorderColorAtom,
   portalBorderEnabledAtom,
@@ -18,6 +19,7 @@ import { MenuItem } from '@/components/menu-item.tsx';
 
 import { Advanced } from './advanced.tsx';
 import { Bitrate } from './bitrate.tsx';
+import { Cropping } from './cropping.tsx';
 import { Edid } from './edid.tsx';
 import { Scale } from './scale.tsx';
 import { VideoMode } from './video-mode.tsx';
@@ -114,9 +116,11 @@ function isEncoderSettings(data: unknown): data is api.EncoderSettings {
   );
 }
 
-export const Screen = () => {
+export const Screen = ({ dismissMenus }: { dismissMenus: () => void }) => {
+  const [cropOpen, setCropOpen] = useState(false);
   const { t } = useTranslation();
 
+  const [preview, setPreview] = useAtom(isPreviewModeAtom);
   const videoMode = useAtomValue(videoModeAtom);
   const [, setVideoParameters] = useAtom(videoParametersAtom);
   const [borderEnabled, setBorderEnabled] = useAtom(portalBorderEnabledAtom);
@@ -208,6 +212,7 @@ export const Screen = () => {
   const content = (
     <div className="flex flex-col space-y-1">
       <VideoMode />
+      <Cropping open={cropOpen} setOpen={setCropOpen} dismissMenus={dismissMenus} />
       <Edid />
       <Bitrate />
       <Scale />
@@ -260,7 +265,20 @@ export const Screen = () => {
   return (
     <>
       {modalContextHolder}
-      <MenuItem title={t('screen.title')} icon={<MonitorIcon size={18} />} content={content} />
+      <MenuItem
+        fresh
+        onOpenChange={(open) => {
+          if (!open) setCropOpen(false);
+        }}
+        title={t('screen.title')}
+        icon={preview ? <EyeIcon size={18} className="text-red-400" /> : <MonitorIcon size={18} />}
+        action={{
+          label: `${t('screen.title')} · ${t('preview.title')}`,
+          pressed: preview,
+          toggle: () => setPreview((value) => !value)
+        }}
+        content={content}
+      />
     </>
   );
 };

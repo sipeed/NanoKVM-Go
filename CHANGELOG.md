@@ -2,6 +2,16 @@
 
 Notable changes to NanoKVM-Go, with the newest version first.
 
+## NanoKVM-Go Nomad 0.2.7, build 2 (unreleased)
+
+- **Webcam.** The host sees a 1280 × 720 MJPEG camera. Calibration starts at 8 Mbps and 25 fps. During a call, bitrate and frame rate rise and fall together within 2–10 Mbps and 15–30 fps. The dashboard reports an error if the camera delivers no frames during startup. [Setup and calibration](docs/remote-webcam.md)
+- **Toolbar and cropping.** Click Screen for view-only mode, Volume to mute or restore the last audible level, Webcam or Microphone to toggle sharing, and Terminal to open a tab. Hover or use the menu arrow for secondary controls. Cropping is under Screen, with automatic black-border removal and saved manual regions. Closing Settings with the mouse resumes auto-hide when the pointer is outside the bar. Keyboard focus keeps it visible.
+- **Activate on Connect.** Each browser can start playback, microphone sharing, webcam sharing and Mouse Jiggler independently, including when their icons are hidden. Changing a toolbar control during a session leaves its startup preference intact.
+- **Mouse Jiggler.** The toolbar shows time remaining. Set a runtime in whole hours (8 by default, 0 for unlimited). Changing the duration restarts the countdown immediately. A timed run survives a reboot until its original deadline. After 30–60 seconds without KVM input, the Go+ nudges the pointer. Once all desktop viewers have been disconnected for more than five minutes, it uses smooth 5–8 second curves that steer inward near the screen edges.
+- **USB and pointer modes.** Device settings show used and free USB IN endpoints out of seven. Single-endpoint mode frees one by exposing only the selected pointer. Switching layouts briefly reconnects USB and other viewers resync. Mouse Jiggler uses the available mouse in this layout and is unavailable with a stylus-only or touch-only layout.
+- **USB identity.** The default composite device identifies as Logitech P710e (VID `046D`, PID `0A4E`). Advanced device settings now include the USB configuration name. Saved overrides take precedence. Failed identity or network changes restore the previous settings. The webcam has a separate host-visible name, Anker Powerconf C200 by default.
+- **Display profiles.** The five built-in EDIDs supply the monitor name, resolution and refresh rate together. For example, 1080p60 identifies as Dell U2414H and 4K50 as Acer XV273K. To use a different identity, select or upload an EDID with that name in its monitor descriptor. Upgrading ignores the former standalone monitor-name override.
+
 ## NanoKVM-Go Nomad 0.2.7, build 1
 
 - Share a browser camera with the Go+ USB host as a 1024 × 600 MJPEG webcam. The device setting is optional and persists across restarts. Each browser session starts sharing explicitly. The USB output returns to black when the publisher stops.

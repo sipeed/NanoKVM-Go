@@ -154,15 +154,18 @@ type DeleteScriptReq struct {
 }
 
 type GetVirtualDeviceRsp struct {
-	IsWebcamEnabled  bool   `json:"isWebcamEnabled"`
-	IsNetworkEnabled bool   `json:"isNetworkEnabled"`
-	IsDiskEnabled    bool   `json:"isDiskEnabled"`
-	DiskMinSizeMiB   int64  `json:"diskMinSizeMiB"`
-	DiskMaxSizeMiB   int64  `json:"diskMaxSizeMiB"`
-	IsMicEnabled     bool   `json:"isMicEnabled"`
-	IsSpeakerEnabled bool   `json:"isSpeakerEnabled"`
-	AudioMode        string `json:"audioMode"`
-	IsSdCardExist    bool   `json:"isSdCardExist"`
+	IsUSBDisplayEnabled bool   `json:"isUsbDisplayEnabled"`
+	USBInEndpointsUsed  *int   `json:"usbInEndpointsUsed"`
+	USBInEndpointsTotal int    `json:"usbInEndpointsTotal"`
+	IsWebcamEnabled     bool   `json:"isWebcamEnabled"`
+	IsNetworkEnabled    bool   `json:"isNetworkEnabled"`
+	IsDiskEnabled       bool   `json:"isDiskEnabled"`
+	DiskMinSizeMiB      int64  `json:"diskMinSizeMiB"`
+	DiskMaxSizeMiB      int64  `json:"diskMaxSizeMiB"`
+	IsMicEnabled        bool   `json:"isMicEnabled"`
+	IsSpeakerEnabled    bool   `json:"isSpeakerEnabled"`
+	AudioMode           string `json:"audioMode"`
+	IsSdCardExist       bool   `json:"isSdCardExist"`
 }
 
 type UpdateVirtualDeviceReq struct {
@@ -189,14 +192,10 @@ type GetSSHStateRsp struct {
 	Enabled bool `json:"enabled"`
 }
 
-type GetMouseJigglerRsp struct {
-	Enabled bool   `json:"enabled"`
-	Mode    string `json:"mode"`
-}
-
 type SetMouseJigglerReq struct {
-	Enabled bool   `validate:"omitempty"`
-	Mode    string `validate:"omitempty"`
+	Enabled  *bool  `json:"enabled" form:"enabled"`
+	Mode     string `json:"mode" form:"mode" validate:"omitempty,oneof=relative absolute"`
+	MaxHours *int32 `json:"maxHours" form:"maxHours" validate:"omitempty,gte=0"`
 }
 
 type GetMdnsStateRsp struct {
@@ -220,23 +219,25 @@ type SetSwapReq struct {
 }
 
 type GetUsbIdRsp struct {
-	Enabled      bool   `json:"enabled"`
-	Vid          string `json:"vid"`
-	Pid          string `json:"pid"`
-	BcdDevice    string `json:"bcdDevice"`
-	Serialnumber string `json:"serialnumber"`
-	Manufacturer string `json:"manufacturer"`
-	Product      string `json:"product"`
+	Enabled           bool   `json:"enabled"`
+	Vid               string `json:"vid"`
+	Pid               string `json:"pid"`
+	BcdDevice         string `json:"bcdDevice"`
+	Serialnumber      string `json:"serialnumber"`
+	Manufacturer      string `json:"manufacturer"`
+	Product           string `json:"product"`
+	ConfigurationName string `json:"configurationName"`
 }
 
 type SetUsbIdReq struct {
-	Enabled      bool   `json:"enabled" form:"enabled"`
-	Vid          string `json:"vid" form:"vid" validate:"omitempty"`
-	Pid          string `json:"pid" form:"pid" validate:"omitempty"`
-	BcdDevice    string `json:"bcdDevice" form:"bcdDevice" validate:"omitempty"`
-	Serialnumber string `json:"serialnumber" form:"serialnumber" validate:"omitempty"`
-	Manufacturer string `json:"manufacturer" form:"manufacturer" validate:"omitempty"`
-	Product      string `json:"product" form:"product" validate:"omitempty"`
+	Enabled           bool   `json:"enabled" form:"enabled"`
+	Vid               string `json:"vid" form:"vid" validate:"omitempty"`
+	Pid               string `json:"pid" form:"pid" validate:"omitempty"`
+	BcdDevice         string `json:"bcdDevice" form:"bcdDevice" validate:"omitempty"`
+	Serialnumber      string `json:"serialnumber" form:"serialnumber" validate:"omitempty"`
+	Manufacturer      string `json:"manufacturer" form:"manufacturer" validate:"omitempty"`
+	Product           string `json:"product" form:"product" validate:"omitempty"`
+	ConfigurationName string `json:"configurationName" form:"configurationName" validate:"omitempty"`
 }
 
 type GetUsbNetworkRsp struct {
@@ -285,14 +286,6 @@ type GetEdidRsp struct {
 
 type SwitchEdidReq struct {
 	Edid string `form:"edid" validate:"required"`
-}
-
-type GetEdidMonitorNameRsp struct {
-	MonitorName string `json:"monitorName"`
-}
-
-type SetEdidMonitorNameReq struct {
-	MonitorName string `json:"monitorName" form:"monitorName"`
 }
 
 type GetCustomEdidListRsp struct {

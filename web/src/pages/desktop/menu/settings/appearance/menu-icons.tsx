@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Switch } from 'antd';
+import { Fragment, useEffect, useId, useState } from 'react';
+import { Button, Checkbox, Switch } from 'antd';
 import { useAtom } from 'jotai';
 import {
   FileJsonIcon,
@@ -20,9 +20,13 @@ import { useTranslation } from 'react-i18next';
 
 import * as aiAPI from '@/api/ai.ts';
 import * as api from '@/api/vm.ts';
+import { connectFeatures } from '@/lib/localstorage.ts';
 import { isPictureInPictureSupported } from '@/lib/picture-in-picture.ts';
-import { menuDisabledItemsAtom } from '@/jotai/settings.ts';
+import { connectPreferencesAtom, menuDisabledItemsAtom } from '@/jotai/settings.ts';
 import { useResponsiveDevice } from '@/hooks/useResponsiveDevice.ts';
+
+import { useDesktopWebcam } from '../../../connect-features.tsx';
+import { useMicrophone } from '../../../microphone-context.tsx';
 
 import { filterMenuIconItems, getSupportedServiceIDs } from './menu-icon-items.ts';
 
@@ -30,6 +34,11 @@ export const MenuIcons = () => {
   const { t } = useTranslation();
 
   const [menuDisabledItems, setMenuDisabledItems] = useAtom(menuDisabledItemsAtom);
+
+  const [preferences, setPreference] = useAtom(connectPreferencesAtom);
+  const webcam = useDesktopWebcam();
+  const microphone = useMicrophone();
+  const id = useId();
 
   const [loadingItem, setLoadingItem] = useState('');
   const [supportedServiceIDs, setSupportedServiceIDs] = useState<Set<string>>(new Set());
@@ -144,23 +153,55 @@ export const MenuIcons = () => {
         </span>
       </div>
 
-      <div className="mt-5 flex flex-col space-y-5">
-        {items.map((item) => (
-          <div key={item.key} className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 text-neutral-400">
-              {item.icon}
-              <span className="text-neutral-300">
-                {item.label ? t(item.label) : t(`${item.key}.title`)}
-              </span>
-            </div>
-
-            <Switch
-              value={!menuDisabledItems.includes(item.key)}
-              loading={item.key === loadingItem}
-              onChange={() => updateItems(item.key)}
-            />
-          </div>
-        ))}
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(3rem,16%)_minmax(4.5rem,22%)] items-center gap-x-2 gap-y-4">
+        <span />
+        <span id={id + '-show'} className="text-center text-xs text-neutral-400">
+          {t('settings.appearance.menuBar.showIcon')}
+        </span>
+        <span id={id + '-connect'} className="text-center text-xs text-neutral-400">
+          {t('settings.appearance.menuBar.activateOnConnect')}
+        </span>
+        {items.map((item) => {
+          const feature = connectFeatures.find((key) => key === item.key);
+          const labelId = id + '-' + item.key;
+          const hidden = menuDisabledItems.includes(item.key);
+          const stop = hidden && item.key === 'webcam' && webcam.status !== 'off'
+            ? webcam.stop
+            : hidden && item.key === 'microphone' && microphone.status !== 'disabled'
+              ? microphone.disable
+              : undefined;
+          return (
+            <Fragment key={item.key}>
+              <div className="flex flex-wrap items-center gap-2 text-neutral-400">
+                {item.icon}
+                <span id={labelId} className="text-neutral-300">
+                  {item.label ? t(item.label) : t(`${item.key}.title`)}
+                </span>
+                {stop && (
+                  <Button size="small" onClick={() => void stop()}>
+                    {t('settings.appearance.menuBar.stopSharing')}
+                  </Button>
+                )}
+              </div>
+              <Switch
+                className="justify-self-center"
+                aria-labelledby={labelId + ' ' + id + '-show'}
+                value={!hidden}
+                loading={item.key === loadingItem}
+                onChange={() => updateItems(item.key)}
+              />
+              <div className="justify-self-center">
+                {feature && (
+                  <Checkbox
+                    aria-labelledby={labelId + ' ' + id + '-connect'}
+                    checked={preferences[feature]}
+                    onChange={(event) => setPreference(feature, event.target.checked)}
+                  />
+                )}
+              </div>
+            </Fragment>
+          );
+        })}
       </div>
     </div>
   );

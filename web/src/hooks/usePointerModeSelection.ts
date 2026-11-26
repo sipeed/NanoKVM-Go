@@ -43,7 +43,7 @@ export function usePointerModeSelection() {
   );
 
   const selectMode = useCallback(
-    async (mode: MouseMode): Promise<boolean> => {
+    async (mode: MouseMode, singleEndpoint = !!deviceStatusRef.current.singleEndpoint): Promise<boolean> => {
       if (operationRef.current || deviceStatusRef.current.switching) return false;
 
       return performPointerModeSelection(mouseModeRef.current, deviceStatusRef.current, mode, {
@@ -87,7 +87,7 @@ export function usePointerModeSelection() {
         requestSync: requestPointerModeSync,
         reportError: (error) => feedback.error(error || t('error.title')),
         fallbackError: t('error.title')
-      });
+      }, singleEndpoint);
     },
     [setDeviceStatus, setMouseMode, setOperation, t]
   );

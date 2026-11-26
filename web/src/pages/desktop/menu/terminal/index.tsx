@@ -1,31 +1,24 @@
-import { Divider } from 'antd';
+import { Tooltip } from 'antd';
 import { SquareTerminalIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { MenuItem } from '@/components/menu-item.tsx';
-
-import { Nanokvm } from './nanokvm';
-
-export const Terminal = () => {
+export const Terminal = ({ tooltipPlacement }: { tooltipPlacement: 'bottom' | 'left' | 'right' }) => {
   const { t } = useTranslation();
-
-  const content = (
-    <div className="min-w-[200px]">
-      <div className="flex items-center justify-between px-1">
-        <span className="text-base font-bold text-neutral-300">{t('terminal.title')}</span>
-      </div>
-
-      <Divider style={{ margin: '10px 0 15px 0' }} />
-
-      <Nanokvm />
-    </div>
-  );
+  const title = t('terminal.title');
 
   return (
-    <MenuItem
-      title={t('terminal.title')}
-      icon={<SquareTerminalIcon size={18} />}
-      content={content}
-    />
+    <Tooltip title={title} placement={tooltipPlacement} mouseEnterDelay={0.6}>
+      <a
+        href="/#terminal"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={title}
+        className="flex size-[30px] items-center justify-center rounded text-neutral-300 hover:bg-neutral-700/80 hover:text-white"
+        onKeyDown={(event) => event.stopPropagation()}
+        onKeyUp={(event) => event.stopPropagation()}
+      >
+        <SquareTerminalIcon size={18} />
+      </a>
+    </Tooltip>
   );
 };

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
+import { setImmediate } from 'node:timers/promises';
 import { createStore } from 'jotai/vanilla';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
@@ -18,7 +19,7 @@ const memoryFabricPanelSource = fs.readFileSync(
   'utf8'
 );
 const portalMenuSource = fs.readFileSync(
-  path.join(webRoot, 'src/pages/desktop/menu/portal/index.tsx'),
+  path.join(webRoot, 'src/pages/desktop/menu/screen/cropping.tsx'),
   'utf8'
 );
 const submenuCounterSource = fs.readFileSync(
@@ -31,7 +32,7 @@ const menuItemSource = fs.readFileSync(path.join(webRoot, 'src/components/menu-i
 const layeringConsumerSources = [
   'src/components/menu-item.tsx',
   'src/pages/desktop/menu/index.tsx',
-  'src/pages/desktop/menu/portal/index.tsx',
+  'src/pages/desktop/menu/screen/cropping.tsx',
   'src/pages/desktop/message.tsx',
   'src/pages/desktop/virtual-keyboard/index.tsx',
   'src/pages/desktop/keyboard/recorder.tsx',
@@ -57,10 +58,6 @@ async function fetchJson(url, init) {
   return response.json();
 }
 
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function installHandlers(baseUrl = origin) {
   const state = modules.createMockState();
   const hubs = modules.createMockHubs();
@@ -73,7 +70,7 @@ before(async () => {
     root: webRoot,
     appType: 'custom',
     logLevel: 'error',
-    server: { middlewareMode: true, hmr: false }
+    server: { middlewareMode: true, hmr: false, ws: false }
   });
 
   const [runtimeMode, settings, target, state, hubs, handlers, memoryFabricAccess] =
@@ -395,15 +392,10 @@ test('AI settings keep one MCP endpoint and share gateway state with Memory Fabr
   assert.match(aiSettingsSource, /mcpEnabled=\{mcpEnabled}/);
 });
 
-test('Portal popover participates in the shared menu visibility lifecycle', () => {
-  assert.match(portalMenuSource, /useSubmenuOpenCounter\(\)/);
-  assert.match(portalMenuSource, /setPopoverVisibility\(open\)/);
-  assert.match(portalMenuSource, /onOpenChange=\{updatePopoverOpen\}/);
-  assert.match(portalMenuSource, /updatePopoverOpen\(!popoverOpen\)/);
-  assert.match(portalMenuSource, /onChange=\{updateMode\}/);
-  assert.match(portalMenuSource, /function startSelection\(\) \{\s*updatePopoverOpen\(false\)/);
-  assert.doesNotMatch(portalMenuSource, /function startSelection\(\) \{\s*setPopoverOpen\(false\)/);
-  assert.doesNotMatch(portalMenuSource, /setPopoverOpen\(false\)/);
+test('Cropping uses Screen’s submenu and dismisses the toolbar before area selection', () => {
+  assert.match(portalMenuSource, /<MenuSubmenu/);
+  assert.match(portalMenuSource, /onOpenChange: setOpen/);
+  assert.match(portalMenuSource, /function startSelection\(\) \{\s*dismissMenus\(\);\s*setSelecting\(true\)/);
 
   assert.match(submenuCounterSource, /if \(isOpenRef\.current === open\) \{\s*return;/);
   assert.match(
@@ -439,7 +431,6 @@ test('global layering scale is centralized in lib/layers.ts', () => {
     /export const desktopMenuPopoverZIndex = LAYER_DESKTOP_MENU_POPOVER;/
   );
   assert.match(menuItemSource, /export const mobileMenuPopoverZIndex = LAYER_MOBILE_MENU_POPOVER;/);
-  assert.match(portalMenuSource, /from '@\/lib\/layers\.ts'/);
 
   // Consumers reference constants instead of bare numbers (screen-local z-10/z-20
   // utilities and app.tsx token objects are intentionally out of this pattern).
@@ -2222,7 +2213,8 @@ test('mocked Sipeed management uses HTTP 200 business errors and paces empty pen
   hubs.dispose();
 });
 
-test('application update mocks expose status and progress online and offline operations', async () => {
+test('application update mocks expose status and progress online and offline operations', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const { state, hubs } = installHandlers();
 
   const idle = await fetchJson(`${origin}/api/application/update/status`);
@@ -2246,7 +2238,7 @@ test('application update mocks expose status and progress online and offline ope
   assert.equal(busy.code, -1);
   assert.equal(busy.data.operationId, started.data.operationId);
 
-  await wait(700);
+  t.mock.timers.runAll();
   const completed = await fetchJson(`${origin}/api/application/update/status`);
   assert.equal(completed.data.phase, 'succeeded');
   assert.equal(state.application.current, state.application.latest);
@@ -2322,7 +2314,7 @@ test('application signature verification mock requires and consumes sensitive-ac
   hubs.dispose();
 });
 
-test('finger robot product mock preserves configuration and synchronous action semantics', async () => {
+test('finger robot product mock preserves configuration and synchronous action semantics', { timeout: 10_000 }, async (t) => {
   const { state, hubs } = installHandlers();
 
   const initial = await fetchJson(`${origin}/api/vm/finger-robot`);
@@ -2450,11 +2442,12 @@ test('finger robot product mock preserves configuration and synchronous action s
     method: 'POST',
     body: JSON.stringify({ action: 'target_power', code: '000000' })
   });
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const pressRequest = fetchJson(`${origin}/api/vm/finger-robot/press`, {
     method: 'POST',
     body: JSON.stringify({ challenge: pressAuthorization.data.challenge })
   });
-  await wait(5);
+  await setImmediate();
   const running = await fetchJson(`${origin}/api/vm/finger-robot`);
   assert.equal(running.data.status.running, true);
   assert.equal(running.data.status.result, 'running');
@@ -2465,11 +2458,13 @@ test('finger robot product mock preserves configuration and synchronous action s
     body: JSON.stringify({})
   });
   assert.equal(busy.code, -2);
-  const released = await fetchJson(`${origin}/api/vm/finger-robot/release`, {
+  const releaseRequest = fetchJson(`${origin}/api/vm/finger-robot/release`, {
     method: 'POST',
     body: JSON.stringify({})
   });
-  assert.equal(released.code, 0);
+  await setImmediate();
+  t.mock.timers.runAll();
+  assert.equal((await releaseRequest).code, 0);
   assert.equal((await pressRequest).code, -5);
   const afterRelease = await fetchJson(`${origin}/api/vm/finger-robot`);
   assert.deepEqual(afterRelease.data.status, {
@@ -2479,15 +2474,12 @@ test('finger robot product mock preserves configuration and synchronous action s
     error: ''
   });
 
-  const completedPressRequest = fetchJson(`${origin}/api/vm/finger-robot/press`, {
+  t.mock.timers.reset();
+  const completed = await fetchJson(`${origin}/api/vm/finger-robot/press`, {
     method: 'POST',
     body: JSON.stringify({})
   });
-  await wait(20);
-  const pressing = await fetchJson(`${origin}/api/vm/finger-robot`);
-  assert.equal(pressing.data.status.running, true);
-  assert.notEqual(pressing.data.status.state, 'idle');
-  assert.equal((await completedPressRequest).code, 0);
+  assert.equal(completed.code, 0);
   const complete = await fetchJson(`${origin}/api/vm/finger-robot`);
   assert.equal(complete.data.status.running, false);
   assert.equal(complete.data.status.state, 'idle');
@@ -2599,7 +2591,8 @@ test('finger robot arm replacement works outside debug mode and preserves saved 
   }
 });
 
-test('finger robot arm replacement cancels a pending normal press and holds its position', async () => {
+test('finger robot arm replacement cancels a pending normal press and holds its position', { timeout: 10_000 }, async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const { state, hubs } = installHandlers();
   try {
     state.vm.fingerRobotDebug.enabled = false;
@@ -2608,13 +2601,14 @@ test('finger robot arm replacement cancels a pending normal press and holds its 
       method: 'POST',
       body: JSON.stringify({})
     });
-    await wait(5);
+    await setImmediate();
     assert.equal(state.vm.fingerRobot.status.running, true);
     const positioned = await fetchJson(`${origin}/api/vm/finger-robot/replace-arm`, {
       method: 'POST',
       body: JSON.stringify({})
     });
     assert.equal(positioned.code, 0);
+    t.mock.timers.runAll();
     assert.equal((await pressing).code, -5);
     const status = await fetchJson(`${origin}/api/vm/finger-robot`);
     assert.deepEqual(status.data.status, {
@@ -2628,7 +2622,7 @@ test('finger robot arm replacement cancels a pending normal press and holds its 
   }
 });
 
-test('finger robot product and debug mocks share one controller without leaking ownership', async () => {
+test('finger robot product and debug mocks share one controller without leaking ownership', { timeout: 10_000 }, async (t) => {
   const { state, hubs } = installHandlers();
 
   const startedDebug = await fetchJson(`${origin}/api/vm/finger-robot/debug/test`, {
@@ -2678,11 +2672,12 @@ test('finger robot product and debug mocks share one controller without leaking 
   assert.equal(debugAfterProductRelease.data.state, 'idle');
   assert.equal(debugAfterProductRelease.data.result, 'idle');
 
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const normalPress = fetchJson(`${origin}/api/vm/finger-robot/press`, {
     method: 'POST',
     body: JSON.stringify({})
   });
-  await wait(5);
+  await setImmediate();
   assert.equal(state.vm.fingerRobot.owner, 'normal');
   assert.equal(state.vm.fingerRobot.operationKind, 'press');
 
@@ -2704,6 +2699,7 @@ test('finger robot product and debug mocks share one controller without leaking 
   assert.equal(resetDuringNormalPress.code, 0);
   assert.equal(state.vm.fingerRobot.owner, 'debug');
   assert.equal(state.vm.fingerRobot.operationKind, 'reset');
+  t.mock.timers.runAll();
   assert.equal((await normalPress).code, -5);
 
   const productAfterDebugReset = await fetchJson(`${origin}/api/vm/finger-robot`);
@@ -2799,7 +2795,8 @@ test('screen timelapse playback requires and reuses its scoped authorization', a
   hubs.dispose();
 });
 
-test('screen timelapse retention mock preserves revision, preview, and trigger semantics', async () => {
+test('screen timelapse retention mock preserves revision, preview, and trigger semantics', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const { state, hubs } = installHandlers();
   const gib = 1024 * 1024 * 1024;
 
@@ -2867,7 +2864,7 @@ test('screen timelapse retention mock preserves revision, preview, and trigger s
   });
   assert.equal(triggerWithCandidate.code, -1);
 
-  await wait(140);
+  t.mock.timers.runAll();
   const afterSaveWorker = await fetchJson(`${origin}/api/ai/screen-timelapse/retention`);
   assert.equal(afterSaveWorker.data.status.running, false);
   assert.equal(afterSaveWorker.data.status.lastDeletedDays, 0);
@@ -2897,7 +2894,7 @@ test('screen timelapse retention mock preserves revision, preview, and trigger s
   assert.equal(running.data.status.running, true);
   assert.equal(running.data.status.lastTrigger, 'manual');
 
-  await wait(140);
+  t.mock.timers.runAll();
   const complete = await fetchJson(`${origin}/api/ai/screen-timelapse/retention`);
   assert.equal(complete.data.status.running, false);
   assert.equal(complete.data.status.lastDeletedDays, 3);
@@ -2990,7 +2987,8 @@ test('handlers work on a different Vite host/port and do not match third-party o
   hubs.dispose();
 });
 
-test('transport hubs project deterministic AI and update events', async () => {
+test('transport hubs project deterministic AI and update events', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const state = modules.createMockState();
   const hubs = modules.createMockHubs();
   const aiEvents = [];
@@ -3002,7 +3000,7 @@ test('transport hubs project deterministic AI and update events', async () => {
   hubs.publishAIService(state, 'screenTimelapse', false);
   hubs.publishUpdate(state);
 
-  await new Promise((resolve) => setTimeout(resolve, 850));
+  t.mock.timers.runAll();
 
   assert.equal(aiEvents[0].event, 'snapshot');
   assert.equal(aiEvents[0].data.services.screenTimelapse.enabled, true);

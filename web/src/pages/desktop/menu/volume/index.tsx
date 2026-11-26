@@ -55,5 +55,15 @@ export const Volume = () => {
     </div>
   );
 
-  return <MenuItem title={t('volume.title')} icon={icon} content={content} />;
+  return (
+    <MenuItem
+      title={t('volume.title')}
+      icon={icon}
+      action={{
+        pressed: videoVolume > 0,
+        toggle: () => updateVolume(videoVolume > 0 ? 0 : localstorage.getUnmuteVolume())
+      }}
+      content={content}
+    />
+  );
 };

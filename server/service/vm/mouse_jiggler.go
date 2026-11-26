@@ -11,14 +11,7 @@ import (
 func (s *Service) GetMouseJiggler(c *gin.Context) {
 	var rsp proto.Response
 
-	mouseJiggler := jiggler.GetJiggler()
-
-	data := &proto.GetMouseJigglerRsp{
-		Enabled: mouseJiggler.IsEnabled(),
-		Mode:    mouseJiggler.GetMode(),
-	}
-
-	rsp.OkRspWithData(c, data)
+	rsp.OkRspWithData(c, jiggler.GetJiggler().Status())
 }
 
 func (s *Service) SetMouseJiggler(c *gin.Context) {
@@ -31,19 +24,15 @@ func (s *Service) SetMouseJiggler(c *gin.Context) {
 		return
 	}
 
-	mouseJiggler := jiggler.GetJiggler()
-
-	if req.Enabled {
-		err = mouseJiggler.Enable(req.Mode)
-	} else {
-		err = mouseJiggler.Disable()
-	}
-
+	state, err := jiggler.GetJiggler().Configure(req.Enabled, req.Mode, req.MaxHours)
 	if err != nil {
+		if err == jiggler.ErrNoMouseEndpoint {
+			rsp.ErrRsp(c, -3, err.Error())
+			return
+		}
+		log.Warnf("set mouse jiggler: %v", err)
 		rsp.ErrRsp(c, -2, "operation failed")
 		return
 	}
-
-	rsp.OkRsp(c)
-	log.Debugf("set mouse jiggler: %t", req.Enabled)
+	rsp.OkRspWithData(c, state)
 }

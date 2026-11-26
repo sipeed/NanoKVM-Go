@@ -1,11 +1,6 @@
-#include <string>
-
 #include <catch2/catch_test_macros.hpp>
 
 #include "libkvm/kvm_vision.h"
-
-TEST_CASE("Name is libkvm", "[library]")
-{ REQUIRE(std::string("libkvm") == "libkvm"); }
 
 TEST_CASE("HDMI control gates image reads", "[library]")
 {

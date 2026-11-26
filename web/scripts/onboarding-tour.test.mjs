@@ -69,7 +69,7 @@ test('default rail (power disabled, non-WebRTC) yields the full grouped tour', (
   });
 
   assert.deepEqual(keysOf(steps), ['welcome', 'display', 'input', 'tools', 'system', 'finish']);
-  assert.deepEqual(stepByKey(steps, 'display').items, ['screen', 'portal', 'pictureInPicture']);
+  assert.deepEqual(stepByKey(steps, 'display').items, ['screen', 'pictureInPicture']);
   assert.deepEqual(stepByKey(steps, 'tools').items, ['image', 'script', 'terminal', 'wol']);
   assert.deepEqual(stepByKey(steps, 'system').items, ['settings', 'fullscreen', 'collapse']);
   assert.equal(stepByKey(steps, 'welcome').group, undefined);
@@ -153,7 +153,7 @@ test('everything disabled still yields welcome, display, input, system, finish',
     isMobilePortrait: false
   });
   assert.deepEqual(keysOf(steps), ['welcome', 'display', 'input', 'system', 'finish']);
-  assert.deepEqual(stepByKey(steps, 'display').items, ['screen', 'portal']);
+  assert.deepEqual(stepByKey(steps, 'display').items, ['screen']);
   assert.deepEqual(stepByKey(steps, 'system').items, ['settings']);
 });
 
@@ -265,14 +265,12 @@ test('tour steps type-check against the i18n module shape', () => {
   const i18nSource = fs.readFileSync(path.join(webRoot, 'src/i18n/onboarding.ts'), 'utf8');
   for (const item of [
     'screen',
-    'portal',
     'pictureInPicture',
     'volume',
     'microphone',
     'mouseJiggler',
     'keyboard',
     'mouse',
-    'preview',
     'image',
     'script',
     'terminal',

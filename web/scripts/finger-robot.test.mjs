@@ -51,7 +51,7 @@ before(async () => {
     root: webRoot,
     appType: 'custom',
     logLevel: 'error',
-    server: { middlewareMode: true, hmr: false }
+    server: { middlewareMode: true, hmr: false, ws: false }
   });
 
   [model, locale, images, panelSource, imagesSource, apiSource, menuSource] = await Promise.all([
@@ -492,8 +492,6 @@ test('top menu uses the new APIs, one shared gate, and a five-stop commit action
 
   assert.match(panelSource, /step=\{null\}/);
   assert.match(panelSource, /step=\{100\}/);
-  assert.match(panelSource, /className="!mt-2 grid grid-cols-2 gap-3"/);
-  assert.match(panelSource, /className="whitespace-nowrap"/);
   assert.match(panelSource, /onChangeComplete=\{updateStrength\}/);
   assert.match(
     panelSource,
@@ -536,13 +534,6 @@ test('arm cards follow preview strength, preload five states, and fall back to t
     /const showImage = imageSource && !failedImageSources\.has\(imageSource\)/
   );
   assert.match(panelSource, /onError=\{\(\) => \{/);
-  assert.match(panelSource, /!showImage && 'px-3 py-2'/);
-  assert.match(panelSource, /className="mt-2 block aspect-\[8\/5\]/);
-  assert.match(panelSource, /bg-\[#202225\]/);
-  assert.doesNotMatch(panelSource, /bg-neutral-950/);
-  assert.match(panelSource, /className="h-full w-full object-contain"/);
-  assert.match(panelSource, /'flex items-center justify-between gap-2'/);
-  assert.match(panelSource, /className="shrink-0 text-xs text-neutral-500"/);
   assert.match(
     panelSource,
     /const armName = profile\.id === 'long' \? text\.longArm : text\.shortArm/
@@ -551,10 +542,8 @@ test('arm cards follow preview strength, preload five states, and fall back to t
   assert.doesNotMatch(panelSource, /\{profile\.displayName\}/);
   assert.match(
     panelSource,
-    /<fieldset\s+disabled=\{formDisabled\}\s+className="[^"]*border-0[^"]*"/
+    /<fieldset\s+disabled=\{formDisabled\}/
   );
-  assert.match(panelSource, /border-blue-500/);
-  assert.match(panelSource, /border-neutral-700/);
 });
 
 test('normal API wiring uses only the finger robot endpoints', () => {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -39,7 +40,7 @@ func TestSwitchEdidRejectsInvalidSourceBeforeHardwareWrite(t *testing.T) {
 	path := filepath.Join(CustomEdidDir, name)
 	invalid := makeEdidTestData(31)
 	invalid[0] = 1
-	updateEdidBlockChecksum(invalid[:edidBlockSize])
+	updateEdidChecksum(invalid[:edidBlockSize])
 	writeEdidTestFile(t, path, invalid)
 
 	oldWrite := writeEdidHardware
@@ -56,36 +57,6 @@ func TestSwitchEdidRejectsInvalidSourceBeforeHardwareWrite(t *testing.T) {
 	}
 	if got := decodeEdidTestReason(t, rsp); got != edidReasonInvalidHeader {
 		t.Fatalf("reason = %q, want %q", got, edidReasonInvalidHeader)
-	}
-	if writes != 0 {
-		t.Fatalf("hardware writes = %d, want 0", writes)
-	}
-}
-
-func TestSetEdidMonitorNameReturnsValidationReasonBeforeHardwareWrite(t *testing.T) {
-	setupEdidTestPaths(t)
-
-	name := "invalid.bin"
-	path := filepath.Join(CustomEdidDir, name)
-	invalid := makeEdidTestData(32)
-	invalid[20]++
-	writeEdidTestFile(t, path, invalid)
-	writeEdidTestState(t, edidState{Name: name, Source: edidSourceCustom, File: path})
-
-	oldWrite := writeEdidHardware
-	writes := 0
-	writeEdidHardware = func([]byte) error {
-		writes++
-		return nil
-	}
-	t.Cleanup(func() { writeEdidHardware = oldWrite })
-
-	rsp := postEdidTestForm(t, NewService().SetEdidMonitorName, url.Values{"monitorName": {"Desk-KVM"}})
-	if rsp.Code == 0 {
-		t.Fatal("SetEdidMonitorName accepted invalid current source")
-	}
-	if got := decodeEdidTestReason(t, rsp); got != edidReasonInvalidChecksum {
-		t.Fatalf("reason = %q, want %q", got, edidReasonInvalidChecksum)
 	}
 	if writes != 0 {
 		t.Fatalf("hardware writes = %d, want 0", writes)
@@ -134,98 +105,75 @@ func TestApplyCurrentEdidInvalidSourceDoesNotWriteHardwareOrResetAudio(t *testin
 	}
 }
 
-func TestReadEffectiveEdidValidatesProcessedMonitorNameAndAudioResult(t *testing.T) {
-	setupEdidTestPaths(t)
+func TestSwitchEdidHonorsVirtualSpeakerMarker(t *testing.T) {
+	for _, speakerEnabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("speakerEnabled=%t", speakerEnabled), func(t *testing.T) {
+			setupEdidTestPaths(t)
+			source := readEdidTestFile(t, "../../../debhelper/packages/kvmcomm/rootfs/kvmcomm/edid/nanokvm-go-1920x1080-60.bin")
+			writeDefaultEdidTestFile(t, makeEdidTestData(1))
+			name := "selected.bin"
+			path := filepath.Join(CustomEdidDir, name)
+			writeEdidTestFile(t, path, source)
+			oldMarker := virtualSpeakerMarkerExists
+			virtualSpeakerMarkerExists = func() bool { return speakerEnabled }
+			t.Cleanup(func() { virtualSpeakerMarkerExists = oldMarker })
+			if err := os.MkdirAll(filepath.Dir(LT7911Edid), 0o755); err != nil {
+				t.Fatal(err)
+			}
 
-	path := filepath.Join(EdidDir, "processed.bin")
-	source := makeMonitorNameTestEdid(2, 90)
-	cta := source[edidBlockSize:]
-	cta[0] = 0x02
-	cta[2] = 8
-	cta[3] = 0x40
-	cta[4] = 0x23 // Audio data block with a three-byte payload.
-	copy(cta[5:8], []byte{1, 2, 3})
-	updateEdidBlockChecksum(cta)
-	writeEdidTestFile(t, path, source)
-
-	processed, err := readEffectiveEdid(path, "Desk-KVM", false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := validateEdid(processed); err != nil {
-		t.Fatalf("processed EDID failed validation: %v", err)
-	}
-	if bytes.Equal(processed, source) {
-		t.Fatal("monitor-name and audio processing did not change the EDID")
+			rsp := postEdidTestForm(t, NewService().SwitchEdid, url.Values{"edid": {name}})
+			if rsp.Code != 0 {
+				t.Fatalf("switch failed: %s", rsp.Msg)
+			}
+			got := readEdidTestFile(t, LT7911Edid)
+			if !bytes.Equal(got[:edidBlockSize], source[:edidBlockSize]) {
+				t.Fatal("profile identity changed")
+			}
+			if hasBasicAudio := got[edidBlockSize+3]&0x40 != 0; hasBasicAudio == speakerEnabled {
+				t.Fatalf("unexpected display audio capability: %t", hasBasicAudio)
+			}
+			if !bytes.Equal(readEdidTestFile(t, path), source) {
+				t.Fatal("source EDID was modified")
+			}
+		})
 	}
 }
 
-func TestReadEffectiveEdidRejectsInvalidPostProcessingResults(t *testing.T) {
+func TestRestoreLegacyEdidRetriesAndRestoresSelectedProfileOnce(t *testing.T) {
 	setupEdidTestPaths(t)
+	name := "selected.bin"
+	path := filepath.Join(CustomEdidDir, name)
+	source := makeEdidTestData(37)
+	writeEdidTestFile(t, path, source)
+	writeEdidTestState(t, edidState{Name: name, Source: edidSourceCustom, File: path})
+	legacy := filepath.Join(CustomEdidDir, "config.json")
+	writeEdidTestFile(t, legacy, []byte(`{"monitorName":"Old override"}`))
 
-	path := filepath.Join(EdidDir, "source.bin")
-	writeEdidTestFile(t, path, makeEdidTestData(38))
-
-	originalMonitorAction := applyMonitorNameAction
-	originalAudioAction := stripEdidAudioAction
-	originalWriter := writeEdidHardware
-	t.Cleanup(func() {
-		applyMonitorNameAction = originalMonitorAction
-		stripEdidAudioAction = originalAudioAction
-		writeEdidHardware = originalWriter
-	})
-
-	tests := []struct {
-		name           string
-		monitorName    string
-		dpAudioEnabled bool
-		inject         func()
-	}{
-		{
-			name:           "monitor name result",
-			monitorName:    "Desk-KVM",
-			dpAudioEnabled: true,
-			inject: func() {
-				applyMonitorNameAction = func(data []byte, _ string) ([]byte, error) {
-					result := append([]byte(nil), data...)
-					result[20]++
-					return result, nil
-				}
-			},
-		},
-		{
-			name:           "audio result",
-			dpAudioEnabled: false,
-			inject: func() {
-				stripEdidAudioAction = func(data []byte) ([]byte, error) {
-					result := append([]byte(nil), data...)
-					result[20]++
-					return result, nil
-				}
-			},
-		},
+	// The hardware path is unavailable on the first attempt.
+	if err := RestoreLegacyEdid(); err == nil {
+		t.Fatal("expected hardware write to fail")
+	}
+	if _, err := os.Stat(legacy); err != nil {
+		t.Fatal("lost migration marker after failed write", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(LT7911Edid), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := RestoreLegacyEdid(); err != nil {
+		t.Fatal(err)
+	}
+	if got := readEdidTestFile(t, LT7911Edid); !bytes.Equal(got, source) {
+		t.Fatal("selected profile was not restored")
+	}
+	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
+		t.Fatalf("legacy config stat = %v, want file removed", err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			applyMonitorNameAction = originalMonitorAction
-			stripEdidAudioAction = originalAudioAction
-			tt.inject()
-
-			_, err := readEffectiveEdid(path, tt.monitorName, tt.dpAudioEnabled)
-			assertEdidValidationReason(t, err, edidReasonInvalidChecksum)
-
-			writes := 0
-			writeEdidHardware = func([]byte) error {
-				writes++
-				return nil
-			}
-			err = applyEdidFile(path, tt.monitorName, tt.dpAudioEnabled)
-			assertEdidValidationReason(t, err, edidReasonInvalidChecksum)
-			if writes != 0 {
-				t.Fatalf("hardware writes = %d, want 0", writes)
-			}
-		})
+	oldWrite := writeEdidHardware
+	writeEdidHardware = func([]byte) error { return errors.New("unexpected repeat write") }
+	t.Cleanup(func() { writeEdidHardware = oldWrite })
+	if err := RestoreLegacyEdid(); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -413,5 +361,38 @@ func TestWriteValidatedEdidHardwareRejectsInvalidDataBeforeWriter(t *testing.T) 
 	}
 	if writes != 0 {
 		t.Fatalf("hardware writer calls = %d, want 0", writes)
+	}
+}
+
+func TestBuild2EdidMigrationWithoutNameOverride(t *testing.T) {
+	for _, profile := range []string{"stock", "custom"} {
+		t.Run(profile, func(t *testing.T) {
+			setupEdidTestPaths(t)
+			source := makeEdidTestData(41)
+			writeDefaultEdidTestFile(t, source)
+			if profile == "custom" {
+				path := filepath.Join(CustomEdidDir, "selected.bin")
+				writeEdidTestFile(t, path, source)
+				writeEdidTestState(t, edidState{Name: "selected.bin", Source: edidSourceCustom, File: path})
+			}
+			old := writeEdidHardware
+			writes := 0
+			writeEdidHardware = func(data []byte) error {
+				if !bytes.Equal(data, source) {
+					t.Fatal("wrong profile")
+				}
+				writes++
+				return nil
+			}
+			t.Cleanup(func() { writeEdidHardware = old })
+			for i := 0; i < 2; i++ {
+				if err := RestoreLegacyEdid(); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if (profile == "custom" && writes != 0) || (profile == "stock" && writes != 1) {
+				t.Fatalf("hardware writes = %d", writes)
+			}
+		})
 	}
 }

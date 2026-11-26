@@ -19,8 +19,8 @@ import (
 const (
 	cameraRuntime     = "/run/nanokvm-webcam/"
 	cameraFrameLimit  = 128 * 1024
-	cameraFrameWidth  = 1024
-	cameraFrameHeight = 600
+	cameraFrameWidth  = 1280
+	cameraFrameHeight = 720
 	cameraFrameIndex  = 1
 )
 
@@ -115,14 +115,14 @@ func connectWebcam(c *gin.Context, runtime string) {
 		}
 		command := "idle"
 		fps := 25
-		if supports30 && selected != "600p25" {
+		if supports30 && selected != "720p25" {
 			fps = 30
 		}
 		switch selected {
-		case "600p25", "600p30":
-			command = "600p25" // Older dashboards only recognize the 25 fps grant.
+		case "720p25", "720p30":
+			command = "720p25" // Use the lower cadence unless the publisher advertises 30 fps.
 			if fps == 30 {
-				command = "600p30"
+				command = "720p30"
 			}
 			calibrateUntil = time.Time{}
 		default:

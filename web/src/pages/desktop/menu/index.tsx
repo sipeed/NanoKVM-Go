@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { Divider } from 'antd';
 import clsx from 'clsx';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
@@ -24,6 +24,8 @@ import { useResponsiveDevice } from '@/hooks/useResponsiveDevice.ts';
 import { MobileMenuItemProvider } from '@/components/menu-item.tsx';
 import { ButtonBase } from '@/components/ui/button-base.tsx';
 
+import { useDesktopWebcam } from '../connect-features.tsx';
+
 import { FingerRobot } from './finger-robot';
 import { Fullscreen } from './fullscreen';
 import { Keyboard } from './keyboard';
@@ -32,8 +34,6 @@ import { Mouse } from './mouse';
 import { MouseJigglerButton } from './mouse-jiggler.tsx';
 import { Collapse, Expand } from './operations';
 import { PictureInPicture } from './picture-in-picture';
-import { Portal } from './portal';
-import { Preview } from './preview';
 import { Screen } from './screen';
 import { Script } from './script';
 import { Settings } from './settings';
@@ -41,7 +41,7 @@ import { ScreenTimelapse } from './settings/ai/screen-timelapse';
 import { Storage } from './storage';
 import { Terminal } from './terminal';
 import { Volume } from './volume';
-import { useWebcamShare, Webcam } from './webcam';
+import { Webcam } from './webcam';
 import { Wol } from './wol';
 
 const screenTimelapseServiceID = 'screenTimelapse';
@@ -89,7 +89,7 @@ export const Menu = () => {
 
   const videoMode = useAtomValue(videoModeAtom);
   const menuDisabledItems = useAtomValue(menuDisabledItemsAtom);
-  const webcam = useWebcamShare(!menuDisabledItems.includes('webcam'));
+  const webcam = useDesktopWebcam();
   const setMenuDisabledItems = useSetAtom(menuDisabledItemsAtom);
   const [isInitialized, setIsInitialized] = useAtom(menuConfigInitializedAtom);
   const [isScreenTimelapseEnabled, setIsScreenTimelapseEnabled] = useAtom(
@@ -106,6 +106,11 @@ export const Menu = () => {
 
   const { isMenuExpanded, isMenuHidden, handleHovered, handleMoved, setIsMenuExpanded } =
     useMenuVisibility();
+
+  function syncToolbarInteraction({ currentTarget }: SyntheticEvent<HTMLDivElement>) {
+    // Closing a dialog can restore focus to its button even when the mouse is elsewhere.
+    handleHovered(currentTarget.matches(':hover') || !!currentTarget.querySelector(':focus-visible'));
+  }
 
   // While the onboarding tour runs the rail is pinned: useMenuVisibility
   // forces it expanded and suspends auto-hide; dragging and mobile-rail
@@ -306,8 +311,7 @@ export const Menu = () => {
       renderGroup(
         'display',
         <>
-          <Screen key="screen" />
-          <Portal key="portal" tooltipPlacement={tooltipPlacement} />
+          <Screen key="screen" dismissMenus={dismissMenus} />
           {isEnabled('pictureInPicture') && (
             <PictureInPicture key="picture-in-picture" tooltipPlacement={tooltipPlacement} />
           )}
@@ -334,8 +338,7 @@ export const Menu = () => {
         <>
           <Keyboard key="keyboard" />
           <Mouse key="mouse" />
-          <Preview key="preview" />
-          {isEnabled('mouseJiggler') && <MouseJigglerButton tooltipPlacement={tooltipPlacement} />}
+          {isEnabled('mouseJiggler') && <MouseJigglerButton />}
         </>
       )
     );
@@ -348,7 +351,7 @@ export const Menu = () => {
           <>
             {isEnabled('image') && <Storage key="image" />}
             {isEnabled('script') && <Script key="script" />}
-            {isEnabled('terminal') && <Terminal key="terminal" />}
+            {isEnabled('terminal') && <Terminal key="terminal" tooltipPlacement={tooltipPlacement} />}
             {isEnabled('wol') && <Wol key="wol" />}
           </>
         )
@@ -499,10 +502,10 @@ export const Menu = () => {
         >
           <div
             className="relative -translate-x-1/2"
-            onMouseEnter={() => handleHovered(true)}
-            onMouseLeave={() => handleHovered(false)}
-            onFocus={() => handleHovered(true)}
-            onBlur={() => handleHovered(false)}
+            onMouseEnter={syncToolbarInteraction}
+            onMouseLeave={syncToolbarInteraction}
+            onFocus={syncToolbarInteraction}
+            onBlur={syncToolbarInteraction}
           >
             {/* Trigger area for auto-show when hidden */}
             {isMenuExpanded && (

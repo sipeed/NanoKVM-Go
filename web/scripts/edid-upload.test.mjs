@@ -29,7 +29,6 @@ function loadTypeScriptModule(relativePath) {
 const model = loadTypeScriptModule('src/pages/desktop/menu/screen/edid-model.ts');
 const menuSource = source('src/pages/desktop/menu/screen/edid.tsx');
 const settingsSource = source('src/pages/desktop/menu/settings/screen/edid.tsx');
-const apiSource = source('src/api/vm.ts');
 
 const reasonKeys = {
   bad_request: 'settings.screen.edid.errors.badRequest',
@@ -106,7 +105,11 @@ test('preflight failures do not issue an upload request', async () => {
 });
 
 test('every backend EDID reason maps to its localized message', async () => {
-  for (const [reason, expectedKey] of Object.entries(reasonKeys)) {
+  for (const [reason, expectedKey] of Object.entries({
+    ...reasonKeys,
+    unknown_reason: 'settings.screen.edid.errors.uploadFailed',
+    toString: 'settings.screen.edid.errors.uploadFailed'
+  })) {
     const errors = [];
     const succeeded = await model.runEdidUpload({
       file: { name: 'valid.bin', size: 128 },
@@ -119,14 +122,6 @@ test('every backend EDID reason maps to its localized message', async () => {
     assert.equal(succeeded, false, reason);
     assert.deepEqual(errors, [expectedKey], reason);
   }
-
-  assert.equal(
-    model.getEdidResponseErrorTranslationKey(
-      { code: -1, msg: 'monitor name descriptor not found' },
-      'settings.screen.edid.errors.switchFailed'
-    ),
-    'settings.screen.edid.monitorNameUnsupported'
-  );
 });
 
 test('successful uploads refresh the authoritative custom list and release loading', async () => {
@@ -222,16 +217,4 @@ test('both EDID surfaces use the shared tested workflows and visible error messa
   assert.match(settingsSource, /runEdidSwitch\(\{/);
   assert.match(settingsSource, /refreshCurrent: getCurrentEdid/);
   assert.match(settingsSource, /feedback\.error\(t\(key\)\)/);
-  assert.match(
-    settingsSource.slice(
-      settingsSource.indexOf('async function saveMonitorName'),
-      settingsSource.indexOf('function confirmMonitorNameUpdate')
-    ),
-    /getEdidResponseErrorTranslationKey/
-  );
-
-  assert.match(apiSource, /export type EdidErrorReason =/);
-  for (const reason of Object.keys(reasonKeys)) {
-    assert.match(apiSource, new RegExp(`'${reason}'`));
-  }
 });

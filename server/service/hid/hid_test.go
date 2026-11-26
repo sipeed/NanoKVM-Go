@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"testing"
 	"time"
@@ -79,13 +80,13 @@ func wrappedHIDTimeout() error {
 	return fmt.Errorf("fake HID write: %w", os.ErrDeadlineExceeded)
 }
 
-func TestWriteHid0ReturnsKeyboardWriteError(t *testing.T) {
+func TestWriteKeyboardReportReturnsWriteError(t *testing.T) {
 	writeErr := errors.New("keyboard write failed")
 	h := &Hid{g0: hidEndpoint{file: &fakeHIDFile{defaultWriteErr: writeErr}}}
 
-	err := h.WriteHid0([]byte{0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00})
+	err := h.WriteKeyboardReport([]byte{0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00})
 	if !errors.Is(err, writeErr) {
-		t.Fatalf("WriteHid0 error = %v, want %v", err, writeErr)
+		t.Fatalf("WriteKeyboardReport error = %v, want %v", err, writeErr)
 	}
 }
 
@@ -912,4 +913,34 @@ func TestHIDWriteClosedFileRetryUsesFreshDeadline(t *testing.T) {
 	if len(nowValues) != 0 {
 		t.Fatalf("unused now values = %v", nowValues)
 	}
+}
+
+func TestEstimatedCursorTracksDeliveredMotion(t *testing.T) {
+	relative := &fakeHIDFile{}
+	h := &Hid{g1: hidEndpoint{file: relative}, g2: hidEndpoint{file: &fakeHIDFile{}}}
+	check := func(wantX, wantY float64) {
+		t.Helper()
+		x, y, w, height := h.EstimatedMousePosition(2560, 1440)
+		if math.Abs(x-wantX) > 0.01 || math.Abs(y-wantY) > 0.01 || w != 2560 || height != 1440 {
+			t.Fatalf("position (%v,%v), want (%v,%v)", x, y, wantX, wantY)
+		}
+	}
+	check(1279.5, 719.5)
+	if err := h.WriteAbsoluteMouseReport([]byte{AbsoluteReportIDMouse, 0, 0xff, 0x7f, 0, 0, 0}); err != nil {
+		t.Fatal(err)
+	}
+	check(2559, 0)
+	if err := h.WriteRelativeMouseReport([]byte{0, 100, 0xff, 0}); err != nil {
+		t.Fatal(err)
+	}
+	check(2559, 0)
+	if err := h.WriteRelativeMouseReport([]byte{0, 0xf6, 30, 0}); err != nil {
+		t.Fatal(err)
+	}
+	check(2549, 30)
+	relative.defaultWriteErr = errors.New("failed")
+	if err := h.WriteRelativeMouseReport([]byte{0, 6, 15, 0}); err == nil {
+		t.Fatal("expected failure")
+	}
+	check(2549, 30)
 }

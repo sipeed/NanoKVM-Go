@@ -14,8 +14,8 @@ const SKIP_MODIFY_PASSWORD_KEY = 'nano-kvm-skip-modify-password';
 const SKIP_BROWSER_NOTIFICATION_KEY = 'nano-kvm-skip-browser-notification';
 const MENU_DISABLED_ITEMS_KEY = 'nano-kvm-menu-disabled-items';
 const MENU_AUTO_HIDE_KEY = 'nano-kvm-menu-auto-hide';
-const POWER_CONFIRM_KEY = 'nano-kvm-power-confirm';
 const VIDEO_VOLUME_KEY = 'nano-kvm-video-volume';
+const LAST_AUDIBLE_VOLUME_KEY = 'nano-kvm-last-audible-volume';
 const PORTAL_MODE_KEY = 'nano-kvm-portal-mode';
 const WIFI_PORTAL_VIEW_MODE_KEY = 'nanokvm-wifi-view-mode';
 const PORTAL_BORDER_ENABLED_KEY = 'nano-kvm-portal-border-enabled';
@@ -230,26 +230,69 @@ export function setMenuDisplayMode(mode: string) {
   localStorage.setItem(MENU_AUTO_HIDE_KEY, mode);
 }
 
-export function getPowerConfirm() {
-  const enabled = localStorage.getItem(POWER_CONFIRM_KEY);
-  return enabled === 'true';
-}
-
-export function setPowerConfirm(enabled: boolean) {
-  localStorage.setItem(POWER_CONFIRM_KEY, String(enabled));
-}
-
-export function getSavedVideoVolume(): number | null {
-  const stored = localStorage.getItem(VIDEO_VOLUME_KEY);
+function readVolume(key: string): number | null {
+  const stored = localStorage.getItem(key);
   if (!stored?.trim()) return null;
 
   const volume = Number(stored);
   return Number.isFinite(volume) && volume >= 0 && volume <= 100 ? volume : null;
 }
 
+export const connectFeatures = ['volume', 'microphone', 'webcam', 'mouseJiggler'] as const;
+export type ConnectFeature = (typeof connectFeatures)[number];
+export type ConnectPreferences = Record<ConnectFeature, boolean>;
+export const CONNECT_PREFERENCES_KEY = 'nano-kvm-activate-on-connect';
+
+export function getConnectPreferences(): ConnectPreferences {
+  const defaults = {
+    volume: false,
+    microphone: false,
+    webcam: false,
+    mouseJiggler: false
+  };
+  try {
+    defaults.volume = (getSavedVideoVolume() ?? 0) > 0;
+    const saved = localStorage.getItem(CONNECT_PREFERENCES_KEY);
+    if (saved === null) {
+      // Keep the pre-Nomad volume preference as the migration default.
+      localStorage.setItem(CONNECT_PREFERENCES_KEY, JSON.stringify(defaults));
+    }
+    let legacy;
+    try {
+      legacy = JSON.parse(saved ?? '{}');
+    } catch {
+      legacy = {};
+    }
+    for (const feature of connectFeatures) {
+      const value = localStorage.getItem(CONNECT_PREFERENCES_KEY + '.' + feature);
+      if (value !== null) defaults[feature] = value === 'true';
+      else if (typeof legacy?.[feature] === 'boolean') defaults[feature] = legacy[feature];
+    }
+  } catch {
+    // Storage can be unavailable in a restricted browser.
+  }
+  return defaults;
+}
+
+export function setConnectPreference(feature: ConnectFeature, checked: boolean) {
+  // Independent keys let simultaneous edits in different tabs both survive.
+  localStorage.setItem(CONNECT_PREFERENCES_KEY + '.' + feature, String(checked));
+}
+
+export function getSavedVideoVolume(): number | null {
+  return readVolume(VIDEO_VOLUME_KEY);
+}
+
+export function getUnmuteVolume(): number {
+  return readVolume(LAST_AUDIBLE_VOLUME_KEY) || 50;
+}
+
 export function setSavedVideoVolume(volume: number) {
   if (!Number.isFinite(volume) || volume < 0 || volume > 100) return;
 
+  // Remember the previous level when muting a volume saved by an older build.
+  const audible = volume || getSavedVideoVolume();
+  if (audible) localStorage.setItem(LAST_AUDIBLE_VOLUME_KEY, String(audible));
   localStorage.setItem(VIDEO_VOLUME_KEY, String(volume));
 }
 

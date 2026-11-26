@@ -19,10 +19,10 @@ export function webcamFrames(input: MediaStreamTrack | ReadableStream<VideoFrame
   const video = 'getReader' in input ? undefined : document.createElement('video');
   const canvas =
     typeof OffscreenCanvas === 'function'
-      ? new OffscreenCanvas(1024, 600)
+      ? new OffscreenCanvas(1280, 720)
       : document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 600;
+  canvas.width = 1280;
+  canvas.height = 720;
   const ctx = canvas.getContext('2d', { alpha: false }) as
     | CanvasRenderingContext2D
     | OffscreenCanvasRenderingContext2D

@@ -17,6 +17,8 @@ export const VirtualDevices = () => {
   const [isHidOnlyMode, setIsHidOnlyMode] = useState(false);
   const [isImageMounted, setIsImageMounted] = useState(false);
 
+  const [endpoints, setEndpoints] = useState<{ used: number; total: number } | null>(null);
+  const [usbDisplayEnabled, setUsbDisplayEnabled] = useState<boolean | null>(null);
   const [webcamEnabled, setWebcamEnabled] = useState(false);
   const [webcamBusy, setWebcamBusy] = useState(false);
   const [webcamError, setWebcamError] = useState('');
@@ -62,6 +64,9 @@ export const VirtualDevices = () => {
       return;
     }
 
+    const { usbInEndpointsUsed: used, usbInEndpointsTotal: total } = rsp.data;
+    setEndpoints(Number.isInteger(used) && Number.isInteger(total) ? { used, total } : null);
+    setUsbDisplayEnabled(!!rsp.data.isUsbDisplayEnabled);
     setWebcamEnabled(!!rsp.data.isWebcamEnabled);
     setIsNetworkEnabled(rsp.data.isNetworkEnabled);
     setIsDiskEnabled(rsp.data.isDiskEnabled);
@@ -80,6 +85,12 @@ export const VirtualDevices = () => {
     }
   }
 
+  const webcamBlockReason = usbDisplayEnabled
+    ? t('settings.device.webcamUsbDisplay')
+    : endpoints && endpoints.total - endpoints.used < 2
+      ? t('settings.device.webcamEndpoints')
+      : '';
+
   return (
     <>
       {isHidOnlyMode ? (
@@ -90,11 +101,21 @@ export const VirtualDevices = () => {
         )
       )}
 
+      <div className="text-sm text-neutral-400" aria-live="polite">
+        {endpoints
+          ? t('settings.device.usbEndpointUsage', {
+              defaultValue: 'USB IN endpoints: {{used}} of {{total}} used · {{free}} free',
+              ...endpoints,
+              free: Math.max(0, endpoints.total - endpoints.used)
+            })
+          : t('settings.device.usbEndpointUnknown', 'USB IN endpoint count unavailable')}
+      </div>
+
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <span>{t('webcam.title', 'Webcam')}</span>
           <span className="text-xs text-neutral-500">
-            Expose a USB camera to the connected computer. Start sharing from the menu bar.
+            {(!webcamEnabled && webcamBlockReason) || 'Expose a USB camera to the connected computer.'}
           </span>
           {webcamError && (
             <span role="alert" className="text-xs text-red-400">
@@ -106,7 +127,7 @@ export const VirtualDevices = () => {
           aria-label="Webcam"
           checked={webcamEnabled}
           loading={webcamBusy}
-          disabled={isHidOnlyMode || isImageMounted}
+          disabled={isHidOnlyMode || isImageMounted || usbDisplayEnabled === null || (!webcamEnabled && !!webcamBlockReason)}
           onChange={async (enabled) => {
             setWebcamBusy(true);
             setWebcamError('');

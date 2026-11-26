@@ -1,10 +1,11 @@
 import { http } from '@/lib/http.ts';
-import type { PointerMode } from '@/jotai/mouse.ts';
+import type { MouseMode } from '@/jotai/mouse.ts';
 
 export const POINTER_MODES = ['absolute', 'digitizer-stylus', 'touch-screen'] as const;
 
 export type PointerModeStatusResponse = {
-  mode: PointerMode | 'unknown';
+  mode: MouseMode | 'unknown';
+  singleEndpoint?: boolean;
   switching: boolean;
   degraded?: boolean;
   error?: string;
@@ -43,8 +44,8 @@ export function getPointerMode() {
   return http.get('/api/hid/pointer-mode') as Promise<HidApiResponse<PointerModeStatusResponse>>;
 }
 
-export function setPointerMode(mode: PointerMode) {
-  return http.post('/api/hid/pointer-mode', { mode }) as Promise<
+export function setPointerMode(mode: MouseMode, singleEndpoint = false) {
+  return http.post('/api/hid/pointer-mode', { mode, singleEndpoint }) as Promise<
     HidApiResponse<PointerModeStatusResponse>
   >;
 }

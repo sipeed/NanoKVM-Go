@@ -10,6 +10,9 @@ type pointerModeStatusProvider func() hid.PointerModeStatus
 
 func pointerModeEventGate(status pointerModeStatusProvider) EventGate {
 	return func(kind Kind) error {
+		if kind == KindRelativePointer && !status().Mode.SupportsRelative() {
+			return fmt.Errorf("%w: relative pointer is disabled", hid.ErrPointerModeMismatch)
+		}
 		reportID, ok := hid2ReportIDForKind(kind)
 		if !ok {
 			return nil

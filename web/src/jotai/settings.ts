@@ -1,6 +1,12 @@
 import { atom } from 'jotai';
 
-import { getDefaultMenuDisabledItems } from '@/lib/localstorage.ts';
+import {
+  CONNECT_PREFERENCES_KEY,
+  getConnectPreferences,
+  getDefaultMenuDisabledItems,
+  setConnectPreference,
+  type ConnectFeature
+} from '@/lib/localstorage.ts';
 
 export const settingTabIDs = [
   'about',
@@ -45,3 +51,31 @@ export const screenTimelapseEnabledAtom = atom(false);
 
 // menu display mode: 'off' | 'auto' | 'always'
 export const menuDisplayModeAtom = atom<string>('auto');
+
+const savedConnectPreferencesAtom = atom(getConnectPreferences());
+savedConnectPreferencesAtom.onMount = (set) => {
+  function sync(event: StorageEvent) {
+    if (event.key === null || event.key.startsWith(CONNECT_PREFERENCES_KEY)) set(getConnectPreferences());
+  }
+  window.addEventListener('storage', sync);
+  set(getConnectPreferences());
+  return () => window.removeEventListener('storage', sync);
+};
+
+// Only a reconnect or a checkbox in this tab may start local capture.
+export const connectStartsAtom = atom(getConnectPreferences());
+export const connectPreferencesAtom = atom(
+  (get) => get(savedConnectPreferencesAtom),
+  (_get, set, feature: ConnectFeature, checked: boolean) => {
+    setConnectPreference(feature, checked);
+    set(savedConnectPreferencesAtom, getConnectPreferences());
+    set(connectStartsAtom, (previous) => ({ ...previous, [feature]: checked }));
+  }
+);
+
+export const refreshConnectStartsAtom = atom(null, (_get, set) => {
+  const saved = getConnectPreferences();
+  set(savedConnectPreferencesAtom, saved);
+  set(connectStartsAtom, saved);
+  return saved;
+});

@@ -85,12 +85,15 @@ func initialize() {
 
 	// sync HDMI hardware with persisted capture state
 	syncHDMICaptureState()
+	if err := vm.RestoreLegacyEdid(); err != nil {
+		log.Printf("failed to restore the selected EDID profile on upgrade: %v", err)
+	}
 
 	// init screen parameters
 	_ = common.GetScreen()
 
 	// run mouse jiggler
-	jiggler.GetJiggler().Run()
+	jiggler.GetJiggler()
 
 	// Register shutdown handling before PWM initialization, which may need to
 	// wait for device nodes or an external devmem command.

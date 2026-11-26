@@ -26,7 +26,6 @@ add_executable(kvm_vin_test
     ../source/timelapse_index.cpp
     ../source/timelapse_ts_muxer.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/subtest/catch/catch_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/subtest/capture/capture_coordinator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/subtest/capture/ocr_latest_frame_store.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/subtest/capture/snapshot_http_server.cpp

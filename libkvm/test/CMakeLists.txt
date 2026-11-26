@@ -10,7 +10,6 @@ include(Catch)
 
 add_executable(libkvm_test
     source/libkvm_test.cpp
-    #source/libkvm_mjpeg_test.cpp
 )
 target_link_libraries(
     libkvm_test PRIVATE

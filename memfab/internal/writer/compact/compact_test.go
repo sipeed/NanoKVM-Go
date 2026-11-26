@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -87,6 +86,7 @@ memfab compact preserves durable architecture facts about classifier tool loops 
 }
 
 func TestFileAcceptsValidCompactionAndReindexes(t *testing.T) {
+	t.Chdir(t.TempDir()) // Exercise the built-in prompt without an external prompt file.
 	db := compactTestDB(t)
 	writeCompactMemory(t, "project-compact.md", compactOriginal())
 	if err := db.ReindexMemoryFile(paths.MemoryDir(), "project-compact.md"); err != nil {
@@ -96,6 +96,9 @@ func TestFileAcceptsValidCompactionAndReindexes(t *testing.T) {
 	callText = func(ctx context.Context, cfg config.ModelConfig, messages []llm.Message) (string, error) {
 		if cfg.ResolvedAPIKey() != "" {
 			t.Fatalf("compact should not require an API key, got %q", cfg.ResolvedAPIKey())
+		}
+		if len(messages) != 2 || messages[0].Role != "system" || strings.TrimSpace(messages[0].Content) == "" {
+			t.Fatalf("missing compaction system prompt: %#v", messages)
 		}
 		if !strings.Contains(messages[1].Content, "Compress this file") {
 			t.Fatalf("prompt=%s", messages[1].Content)
@@ -242,14 +245,5 @@ func TestFileRejectsDroppedSupersedeHistory(t *testing.T) {
 	result, err := File(context.Background(), db, compactConfig(), "project-compact.md", time.Now())
 	if err != nil || result.Accepted || !strings.Contains(result.Note, "supersede") {
 		t.Fatalf("result=%+v err=%v", result, err)
-	}
-}
-
-func TestPromptFallbackDoesNotRequirePythonFile(t *testing.T) {
-	if compactPrompt() == "" {
-		t.Fatal("empty prompt")
-	}
-	if filepath.Base(paths.Root()) == "" {
-		t.Fatal("paths root empty")
 	}
 }

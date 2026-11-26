@@ -1,6 +1,6 @@
 import { useAtomValue } from 'jotai';
 
-import { mouseModeAtom, pointerModeInputEnabledAtom } from '@/jotai/mouse.ts';
+import { mouseModeAtom, pointerModeDeviceStatusAtom, pointerModeInputEnabledAtom } from '@/jotai/mouse.ts';
 import { onboardingActiveAtom } from '@/jotai/onboarding.ts';
 
 import { Absolute } from './absolute.tsx';
@@ -13,6 +13,7 @@ import { TouchScreen } from './touch-screen.tsx';
 
 export const Mouse = () => {
   const mouseMode = useAtomValue(mouseModeAtom);
+  const { singleEndpoint = false } = useAtomValue(pointerModeDeviceStatusAtom);
   const pointerInputEnabled = useAtomValue(pointerModeInputEnabledAtom);
   const onboardingActive = useAtomValue(onboardingActiveAtom);
   // The onboarding tour shields host-bound pointer input by unmounting the
@@ -32,7 +33,7 @@ export const Mouse = () => {
           ) : mouseMode === 'touch-screen' ? (
             <TouchScreen />
           ) : (
-            <Absolute />
+            <Absolute key={singleEndpoint ? 'single' : 'dual'} singleEndpoint={singleEndpoint} />
           )}
         </>
       )}

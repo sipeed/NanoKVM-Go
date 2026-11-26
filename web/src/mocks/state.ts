@@ -184,7 +184,6 @@ export type MockState = {
     fps: number;
     mode: string;
     edid: string;
-    monitorName: string;
     customEdids: string[];
   };
   vm: {
@@ -193,7 +192,7 @@ export type MockState = {
     sshEnabled: boolean;
     mdnsEnabled: boolean;
     hdmiCaptureEnabled: boolean;
-    mouseJiggler: { enabled: boolean; mode: string };
+    mouseJiggler: { enabled: boolean; mode: string; maxHours: number; startedAt: number };
     lowPowerEnabled: boolean;
     swapEnabled: boolean;
     timezone: string;
@@ -207,6 +206,7 @@ export type MockState = {
       serialnumber: string;
       manufacturer: string;
       product: string;
+      configurationName: string;
     };
     usbNetwork: {
       mode: 'server' | 'client';
@@ -240,7 +240,8 @@ export type MockState = {
   hid: {
     mode: string;
     pointerMode: {
-      mode: 'absolute' | 'digitizer-stylus' | 'touch-screen' | 'unknown';
+      mode: 'absolute' | 'digitizer-stylus' | 'touch-screen' | 'relative' | 'unknown';
+      singleEndpoint?: boolean;
       switching: boolean;
       degraded: boolean;
       error: string;
@@ -431,7 +432,6 @@ export function createMockState(): MockState {
       fps: 60,
       mode: 'h264-webrtc',
       edid: 'nanokvm-go-1920x1080-60',
-      monitorName: '',
       customEdids: ['mock-development-display.bin']
     },
     vm: {
@@ -440,7 +440,7 @@ export function createMockState(): MockState {
       sshEnabled: true,
       mdnsEnabled: true,
       hdmiCaptureEnabled: true,
-      mouseJiggler: { enabled: false, mode: 'relative' },
+      mouseJiggler: { enabled: false, mode: 'relative', maxHours: 8, startedAt: 0 },
       lowPowerEnabled: false,
       swapEnabled: true,
       timezone: 'Asia/Hong_Kong',
@@ -448,21 +448,22 @@ export function createMockState(): MockState {
       staticIp: { enabled: false, ip: '192.0.2.20/24' },
       usbId: {
         enabled: false,
-        vid: '0x359F',
-        pid: '0x3305',
-        bcdDevice: '0x0101',
-        serialnumber: '0123456789ABCDEF',
-        manufacturer: 'sipeed',
-        product: 'NanoKVM-Go'
+        vid: '',
+        pid: '',
+        bcdDevice: '',
+        serialnumber: '',
+        manufacturer: '',
+        product: '',
+        configurationName: ''
       },
       usbNetwork: {
         mode: 'server',
         ipv4: '',
         forwarding: false
       },
-      diskInquiry: { enabled: false, value: 'sipeed  Flash Drive     1.00' },
-      diskInquiryCdrom: { enabled: false, value: 'sipeed  Optical Drive   1.00' },
-      uac2FunctionName: { enabled: false, value: 'NanoKVM-Go Audio' },
+      diskInquiry: { enabled: false, value: 'LogitechFlash Drive     1.00' },
+      diskInquiryCdrom: { enabled: false, value: 'LogitechOptical Drive   1.00' },
+      uac2FunctionName: { enabled: false, value: '' },
       webcamFunctionName: { enabled: false, value: '' },
       dialBackground: {
         current: 'mock-grid.bmp',

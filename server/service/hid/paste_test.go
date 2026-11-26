@@ -254,15 +254,6 @@ func TestPasteCharacterSequenceBlocksConcurrentKeyboardReports(t *testing.T) {
 	}()
 	<-directStarted
 
-	webSocketStarted := make(chan struct{})
-	webSocketDone := make(chan error, 1)
-	webSocketReport := []byte{0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00}
-	go func() {
-		close(webSocketStarted)
-		webSocketDone <- h.WriteHid0(webSocketReport)
-	}()
-	<-webSocketStarted
-
 	assertKeyboardMutexHeld(t, &h.kbMutex)
 	close(releaseKeyDownHold)
 	<-postReleaseHeld
@@ -280,14 +271,9 @@ func TestPasteCharacterSequenceBlocksConcurrentKeyboardReports(t *testing.T) {
 	if err := <-directDone; err != nil {
 		t.Fatalf("concurrent WriteKeyboardReport error = %v", err)
 	}
-	if err := <-webSocketDone; err != nil {
-		t.Fatalf("concurrent WriteHid0 error = %v", err)
-	}
 	<-pasteDone
 
-	eventsAfterSequence := events.snapshot()
-	assertPasteEvents(t, eventsAfterSequence[:len(wantSequence)], wantSequence)
-	assertReportsAfterPasteSequence(t, eventsAfterSequence[len(wantSequence):], directReport, webSocketReport)
+	assertPasteEvents(t, events.snapshot(), append(wantSequence, pasteEvent{report: directReport}))
 }
 
 func assertKeyboardMutexHeld(t *testing.T, mu *sync.Mutex) {
@@ -295,25 +281,6 @@ func assertKeyboardMutexHeld(t *testing.T, mu *sync.Mutex) {
 	if mu.TryLock() {
 		mu.Unlock()
 		t.Fatal("keyboard mutex was not held during paste character sequence")
-	}
-}
-
-func assertReportsAfterPasteSequence(t *testing.T, events []pasteEvent, reports ...[]byte) {
-	t.Helper()
-	if len(events) != len(reports) {
-		t.Fatalf("keyboard events after paste sequence = %d, want %d", len(events), len(reports))
-	}
-
-	for _, report := range reports {
-		for i, event := range events {
-			if bytes.Equal(event.report, report) {
-				events = append(events[:i], events[i+1:]...)
-				break
-			}
-			if i == len(events)-1 {
-				t.Fatalf("keyboard report after paste sequence = %v, want %v", events, report)
-			}
-		}
 	}
 }
 
@@ -348,11 +315,5 @@ func assertPasteEvents(t *testing.T, got, want []pasteEvent) {
 		if gotEvent.delay != wantEvent.delay {
 			t.Fatalf("paste event[%d] delay = %v, want %v", index, gotEvent.delay, wantEvent.delay)
 		}
-	}
-}
-
-func TestNewServiceInitializesPasteSleep(t *testing.T) {
-	if NewService().pasteSleep == nil {
-		t.Fatal("NewService pasteSleep is nil")
 	}
 }

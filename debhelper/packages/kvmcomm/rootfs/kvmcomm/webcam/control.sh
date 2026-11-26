@@ -43,17 +43,21 @@ create() {
     budget
     install_rule
     mkdir "$f" || fail "The installed kernel must support ConfigFS UVC."
-    if [[ -e $f/function_name && -f /boot/uvc.function_name ]]; then
-        cat /boot/uvc.function_name > "$f/function_name"
+    if [[ -e $f/function_name ]]; then
+        if [[ -f /boot/uvc.function_name ]]; then
+            cat /boot/uvc.function_name > "$f/function_name"
+        else
+            echo 'Anker Powerconf C200' > "$f/function_name"
+        fi
     fi
-    mkdir -p "$f/control/header/h" "$f/streaming/header/h" "$m/600p"
-    echo 1024 > "$m/600p/wWidth"
-    echo 600 > "$m/600p/wHeight"
-    echo 333333 > "$m/600p/dwFrameInterval"
-    echo 333333 > "$m/600p/dwDefaultFrameInterval"
-    echo 131072 > "$m/600p/dwMaxVideoFrameBufferSize"
-    echo 1 > "$m/600p/dwMinBitRate"
-    echo 31457280 > "$m/600p/dwMaxBitRate"
+    mkdir -p "$f/control/header/h" "$f/streaming/header/h" "$m/720p"
+    echo 1280 > "$m/720p/wWidth"
+    echo 720 > "$m/720p/wHeight"
+    echo 333333 > "$m/720p/dwFrameInterval"
+    echo 333333 > "$m/720p/dwDefaultFrameInterval"
+    echo 131072 > "$m/720p/dwMaxVideoFrameBufferSize"
+    echo 1 > "$m/720p/dwMinBitRate"
+    echo 31457280 > "$m/720p/dwMaxBitRate"
     echo 1 > "$m/bDefaultFrameIndex"
     echo 0x0100 > "$f/control/header/h/bcdUVC"
     echo 512 > "$f/streaming_maxpacket"
@@ -69,7 +73,8 @@ remove() {
     for item in "$c/uvc.nomad" "$f"/streaming/class/{ss,hs,fs}/h "$f"/control/class/{ss,fs}/h "$f/streaming/header/h/m"; do
         if [[ -L $item ]]; then unlink "$item"; fi
     done
-    for item in "$m/600p" "$m" "$f/streaming/header/h" "$f/control/header/h" "$f"; do
+    # An upgrade can leave the previous 600p descriptor bound until teardown.
+    for item in "$m/720p" "$m/600p" "$m" "$f/streaming/header/h" "$f/control/header/h" "$f"; do
         if [[ -d $item ]]; then rmdir "$item"; fi
     done
     if [[ -e $run/$rule && $override -ef $run/$rule ]]; then

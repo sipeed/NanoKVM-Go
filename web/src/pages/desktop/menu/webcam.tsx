@@ -21,7 +21,7 @@ function cameraError(err: unknown): string {
   return err instanceof Error ? err.message : 'Could not access the camera.';
 }
 
-export function useWebcamShare(visible: boolean) {
+export function useWebcamShare() {
   const [status, setStatus] = useState<Status>('off');
   const [diagnostics, setDiagnostics] = useState('');
   const [enabled, setEnabled] = useState(false);
@@ -44,7 +44,11 @@ export function useWebcamShare(visible: boolean) {
     };
     void refresh();
     const unsubscribe = client.onConnectionState((state) => {
-      if (state === 'closed') stop();
+      if (state === 'closed') {
+        ++version;
+        setEnabled(false);
+        stop();
+      }
       if (state === 'open') void refresh();
     });
     window.addEventListener(WEBCAM_CHANGED, refresh);
@@ -63,11 +67,11 @@ export function useWebcamShare(visible: boolean) {
   }, [stop]);
 
   useEffect(() => {
-    if (!enabled || !visible) stop();
-  }, [enabled, visible, stop]);
+    if (!enabled) stop();
+  }, [enabled, stop]);
 
-  async function start(deviceId: string) {
-    if (!enabled || !visible || finish.current) return;
+  async function start(deviceId: string, onError?: (reason: string) => void) {
+    if (!enabled || finish.current) return;
     let frames: ReturnType<typeof webcamFrames> | undefined;
     let media: MediaStream | undefined;
     let stopSender: (() => void) | undefined;
@@ -79,6 +83,7 @@ export function useWebcamShare(visible: boolean) {
       frames?.close();
       setStatus('off');
       setError(reason);
+      if (reason) onError?.(reason);
     }
 
     finish.current = end;
@@ -218,8 +223,17 @@ export function Webcam({ share }: { share: ReturnType<typeof useWebcamShare> }) 
     <MenuItem
       title={t('webcam.title', 'Webcam')}
       icon={
-        hasCapture ? <VideoIcon size={18} className="text-green-400" /> : <VideoOffIcon size={18} />
+        active ? <VideoIcon size={18} className="text-green-400" /> : <VideoOffIcon size={18} />
       }
+      action={{
+        pressed: active,
+        disabled: listing,
+        toggle: () => {
+          setListError('');
+          if (active) share.stop();
+          else void share.start(deviceId);
+        }
+      }}
       onOpenChange={setOpen}
       content={
         <div className="flex w-60 flex-col gap-2">
@@ -237,7 +251,7 @@ export function Webcam({ share }: { share: ReturnType<typeof useWebcamShare> }) 
           </div>
           <div className="flex items-center gap-2">
             <select
-              className="min-w-0 flex-1 rounded bg-neutral-800 p-1"
+              className="min-w-0 flex-1 rounded bg-neutral-800 p-1 text-white [color-scheme:dark] disabled:text-neutral-300 [&>option]:bg-neutral-800 [&>option]:text-white"
               aria-label={t('webcam.source', 'Camera')}
               value={deviceId}
               disabled={active || listing}
@@ -250,17 +264,6 @@ export function Webcam({ share }: { share: ReturnType<typeof useWebcamShare> }) 
                 </option>
               ))}
             </select>
-            <Button
-              className="shrink-0"
-              disabled={listing}
-              onClick={() => {
-                setListError('');
-                if (active) share.stop();
-                else void share.start(deviceId);
-              }}
-            >
-              {active ? t('webcam.stop', 'Stop') : t('webcam.start', 'Start')}
-            </Button>
           </div>
           <div aria-live="polite" className="text-xs text-neutral-400 empty:hidden">
             {listError || share.error || statusText}

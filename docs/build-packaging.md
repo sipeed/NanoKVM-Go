@@ -1,7 +1,7 @@
 # NanoKVM-go-Nomad Build and Packaging Guide
 
 This guide covers builds from the NanoKVM-go-Nomad fork.
-Use the root-level Python build driver for normal builds and release packaging.
+Use the root-level Python build driver to build the application and its Debian packages. For a numbered Go+ release, finish with the [Nomad offline bundle](#nomad-go-offline-bundle).
 
 ## Official Entry Point
 
@@ -17,9 +17,6 @@ python3 build.py release --version <version>
 The repository root does not use `build.sh` as the formal entry point. Component
 local `builder.sh` scripts and `server/build.sh` may remain as implementation
 details called by `build.py`.
-
-`support/` contains auxiliary setup resources only. It is not the release
-packaging entry point.
 
 ## Prerequisites
 
@@ -141,19 +138,6 @@ python3 build.py release --version <version> --signing-key /offline/path/update-
 supplying `--signing-key` creates a signed application bundle; omitting it
 creates an unsigned bundle and prints a warning.
 
-Each numbered NanoKVM Go+ Nomad update includes the application and matching webcam kernel. On Go+ firmware v1.0.10, upload the tar.gz through the offline application updater and reboot if the kernel changed.
-
-For **NanoKVM-Go Nomad 0.2.7, build 1**, use the Git tag `v0.2.7-nomad.1`.
-
-To make the Normal update on Linux, start with the two original application Debian packages in `build/`. The packaging script checks the approved kernel digest and builds the numbered dashboard archive, its package metadata and the two release Debian packages.
-
-```bash
-bash support/scripts/package_nomad_normal.sh 0.2.7 1 build \
-  build/kernel/NanoKVM-go-Nomad-4.19.125-uvc-name/kernel.img build/v0.2.7-nomad.1
-```
-
-The installer checks the Go+ model, firmware and SD boot layout. When the kernel changes it keeps the previous image in `/boot/kernel.img.nomad-backup-<sha256>` and replaces the boot file atomically. Reinstalling the same kernel skips the boot write. Upgrades retain the existing Webcam setting.
-
 Release and versioned `kvmcomm` packaging require an initialized, clean Apps
 submodule checkout whose commit exactly matches the superproject gitlink. This
 preflight makes the Debian bootstrap payload attributable to the reviewed
@@ -255,6 +239,23 @@ build/nanokvm-go_<version>_armhf.deb
 build/nanokvm-go_<version>_armhf.changes
 build/nanokvm-go_<version>_armhf.buildinfo
 ```
+
+### Nomad Go+ offline bundle
+
+Each numbered NanoKVM Go+ Nomad update includes the application and matching webcam kernel. On Go+ firmware v1.0.10, upload the tar.gz through the offline application updater and reboot if the kernel changed.
+
+For **NanoKVM-Go Nomad 0.2.7, build 2**, use the Git tag `v0.2.7-nomad.2`.
+
+On Linux, build the application from the release revision and run `package_kvmcomm` and `package_nanokvm_go` with `--version 0.2.7`. Use those original packages as inputs. The script copies the application package as built and adds the verified kernel to `kvmcomm`.
+
+```bash
+bash support/scripts/package_nomad_normal.sh 0.2.7 2 build \
+  build/kernel/NanoKVM-go-Nomad-4.19.125-uvc-name/kernel.img build/v0.2.7-nomad.2
+```
+
+The offline updater takes `build/v0.2.7-nomad.2/release/nanokvm-go_0.2.7-nomad.2.tar.gz`. The companion `latest.json` describes that archive.
+
+The installer checks the Go+ model, firmware and SD boot layout. When the kernel changes it keeps the previous image in `/boot/kernel.img.nomad-backup-<sha256>` and replaces the boot file atomically. Reinstalling the same kernel skips the boot write. Upgrades retain the existing Webcam setting.
 
 ## Application Update Signing
 

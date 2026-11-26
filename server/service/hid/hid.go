@@ -1,6 +1,7 @@
 package hid
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +18,7 @@ type Hid struct {
 	g2                           hidEndpoint
 	kbMutex                      sync.Mutex
 	mouseMutex                   sync.Mutex
+	cursor                       cursorEstimate // protected by mouseMutex
 	absolutePointerPositionMutex sync.Mutex
 	lastAbsolutePointerPosition  [4]byte
 	hasAbsolutePointerPosition   bool
@@ -104,7 +106,12 @@ func (h *Hid) openEndpointsNoLock() error {
 		{endpoint: &h.g1, path: HID1},
 		{endpoint: &h.g2, path: HID2},
 	}
+	// During a rebuild the new marker is installed before the manager commits.
+	mode := readPointerModeFile(PointerModeFile)
 	for _, item := range endpoints {
+		if (item.path == HID1 && !mode.SupportsRelative()) || (item.path == HID2 && mode == PointerModeSingleRelative) {
+			continue
+		}
 		if err := h.openEndpointNoLock(item.endpoint, item.path); err != nil {
 			log.Errorf("open %s failed: %s", item.path, err)
 			openErrors = append(openErrors, fmt.Errorf("open %s: %w", item.path, err))
@@ -158,40 +165,6 @@ func (h *Hid) Close() {
 	h.CloseNoLock()
 }
 
-func (h *Hid) WriteHid0(data []byte) error {
-	if err := h.WriteKeyboardReport(data); err != nil {
-		log.Errorf("write to %s failed: %s", HID0, err)
-		return err
-	}
-
-	log.Debugf("write to %s: %v", HID0, data)
-	return nil
-}
-
-func (h *Hid) WriteHid1(data []byte) {
-	if err := h.WriteRelativeMouseReport(data); err != nil {
-		log.Errorf("write to %s failed: %s", HID1, err)
-		return
-	}
-
-	log.Debugf("write to %s: %v", HID1, data)
-}
-
-func (h *Hid) WriteHid2(data []byte) {
-	var err error
-	if len(data) == TouchScreenReportSize {
-		err = h.WriteTouchScreenReport(data)
-	} else {
-		err = h.WriteAbsoluteMouseReport(data)
-	}
-	if err != nil {
-		log.Errorf("write to %s failed: %s", HID2, err)
-		return
-	}
-
-	log.Debugf("write to %s: %v", HID2, data)
-}
-
 func (h *Hid) WriteKeyboardReport(data []byte) error {
 	if len(data) != 8 {
 		return errors.New("invalid keyboard report length")
@@ -237,9 +210,15 @@ func (h *Hid) WriteRelativeMouseReport(data []byte) error {
 	if len(data) != 4 {
 		return errors.New("invalid relative mouse report length")
 	}
-	if err := h.write(&h.g1, HID1, data, &h.mouseMutex); err != nil {
+	h.mouseMutex.Lock()
+	defer h.mouseMutex.Unlock()
+	if !h.currentPointerModeStatus().Mode.SupportsRelative() {
+		return fmt.Errorf("%w: relative pointer is disabled", ErrPointerModeMismatch)
+	}
+	if err := h.writeNoLock(&h.g1, HID1, data); err != nil {
 		return err
 	}
+	h.cursor.move(int8(data[1]), int8(data[2]))
 	pushHIDMouseState(data)
 	return nil
 }
@@ -251,15 +230,16 @@ func (h *Hid) WriteAbsoluteMouseReport(data []byte) error {
 	if data[0] != AbsoluteReportIDMouse && data[0] != AbsoluteReportIDStylus {
 		return errors.New("invalid absolute pointer report id")
 	}
+	h.mouseMutex.Lock()
+	defer h.mouseMutex.Unlock()
 	if err := ValidatePointerModeReportID(h.currentPointerModeStatus().Mode, data[0]); err != nil {
 		return err
 	}
-	h.mouseMutex.Lock()
-	defer h.mouseMutex.Unlock()
 	if err := h.writeNoLock(&h.g2, HID2, data); err != nil {
 		return err
 	}
 	h.storeAbsolutePointerPosition(data)
+	h.cursor.anchor(binary.LittleEndian.Uint16(data[2:4]), binary.LittleEndian.Uint16(data[4:6]))
 	pushHIDMouseState(data[1:])
 	return nil
 }
@@ -274,20 +254,16 @@ func (h *Hid) WriteTouchScreenReport(data []byte) error {
 	if data[len(data)-1] > TouchScreenMaxContacts {
 		return errors.New("invalid touch screen contact count")
 	}
+	h.mouseMutex.Lock()
+	defer h.mouseMutex.Unlock()
 	if err := ValidatePointerModeReportID(h.currentPointerModeStatus().Mode, data[0]); err != nil {
 		return err
 	}
-	if err := h.write(&h.g2, HID2, data, &h.mouseMutex); err != nil {
+	if err := h.writeNoLock(&h.g2, HID2, data); err != nil {
 		return err
 	}
 	pushHIDMouseState(data[len(data)-1:])
 	return nil
-}
-
-func (h *Hid) ReleaseMouseButtons() {
-	if err := h.releaseMouseButtons(); err != nil {
-		log.Errorf("release mouse inputs failed: %s", err)
-	}
 }
 
 func (h *Hid) ReleaseAllInputs() error {
@@ -300,6 +276,9 @@ func (h *Hid) ReleaseAllInputs() error {
 func (h *Hid) releaseMouseButtons() error {
 	var releaseErrors []error
 	mode := h.currentPointerModeStatus().Mode
+	if mode == PointerModeSingleRelative {
+		return h.WriteRelativeMouseReport([]byte{0, 0, 0, 0})
+	}
 	reportID, ok := pointerModeReportID(mode)
 	if !ok {
 		releaseErrors = append(releaseErrors, fmt.Errorf("release %s: %w", HID2, ValidatePointerModeReportID(mode, 0)))
@@ -315,6 +294,9 @@ func (h *Hid) releaseMouseButtons() error {
 		}
 	}
 
+	if !mode.SupportsRelative() {
+		return errors.Join(releaseErrors...)
+	}
 	if err := h.WriteRelativeMouseReport([]byte{0, 0, 0, 0}); err != nil {
 		releaseErrors = append(releaseErrors, fmt.Errorf("release %s relative pointer: %w", HID1, err))
 	}
@@ -329,6 +311,42 @@ func touchScreenReleaseReport() []byte {
 	}
 	report[len(report)-1] = TouchScreenMaxContacts
 	return report
+}
+
+// EstimatedMousePosition returns pixel coordinates and the dimensions they use.
+func (h *Hid) EstimatedMousePosition(width, height uint16) (float64, float64, int, int) {
+	h.mouseMutex.Lock()
+	defer h.mouseMutex.Unlock()
+	if width > 1 && height > 1 {
+		h.cursor.width, h.cursor.height = int(width), int(height)
+	}
+	w, hgt := h.cursor.dimensions()
+	return (0.5 + h.cursor.x) * float64(w-1), (0.5 + h.cursor.y) * float64(hgt-1), w, hgt
+}
+
+// Offsets from the center in fractions of the captured screen. USB relative
+// reports are counts; treating one count as one pixel approximates host motion.
+type cursorEstimate struct {
+	x, y          float64
+	width, height int
+}
+
+func (c *cursorEstimate) dimensions() (int, int) {
+	if c.width <= 1 || c.height <= 1 {
+		return 1920, 1080
+	}
+	return c.width, c.height
+}
+
+func (c *cursorEstimate) anchor(x, y uint16) {
+	c.x = float64(min(x, 32767))/32767 - 0.5
+	c.y = float64(min(y, 32767))/32767 - 0.5
+}
+
+func (c *cursorEstimate) move(dx, dy int8) {
+	w, h := c.dimensions()
+	c.x = max(-0.5, min(0.5, c.x+float64(dx)/float64(w-1)))
+	c.y = max(-0.5, min(0.5, c.y+float64(dy)/float64(h-1)))
 }
 
 func (h *Hid) storeAbsolutePointerPosition(data []byte) {

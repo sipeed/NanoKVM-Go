@@ -66,10 +66,10 @@ test('an already-open USB camera with a stalled source exits startup with a usef
   let now = 0;
   t.mock.method(performance, 'now', () => now);
   const session = share(t);
-  session.grant('600p30');
+  session.grant('720p30');
   for (let second = 1; second <= 11; second++) {
     now = second * 1000;
-    session.grant('600p30');
+    session.grant('720p30');
     t.mock.timers.tick(1000);
   }
   assert.ok(session.ended());

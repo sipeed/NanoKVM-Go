@@ -247,9 +247,9 @@ export function sendWebcam(
       grantMs += performance.now() - inFlight.sentAt;
     }
     inFlight = undefined;
-    if (data !== 'calibrate' && data !== 'idle' && data !== '600p25' && data !== '600p30')
+    if (data !== 'calibrate' && data !== 'idle' && data !== '720p25' && data !== '720p30')
       return fail('Unexpected camera service response.');
-    control.setHostFps(data === '600p25' ? 25 : 30);
+    control.setHostFps(data === '720p25' ? 25 : 30);
     // An idle grant ends the server's complete startup probe. It also
     // acknowledges its final upload, including one from a previous target.
     if (data === 'idle' && probeGrant && !receivedAny) {

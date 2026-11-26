@@ -320,27 +320,20 @@ func cutName(name string, size int) string {
 }
 func setMediumName(lun, backing string) {
 	values := map[string]string{
-		"inquiry_string":       "sipeed  Flash Drive     1.00",
-		"inquiry_string_cdrom": "sipeed  Optical Drive   1.00",
+		"inquiry_string":       "LogitechFlash Drive     1.00",
+		"inquiry_string_cdrom": "LogitechOptical Drive   1.00",
 	}
-	product := "NanoKVM-Go"
+	product := "Logitech P710e"
 	if backing != "" {
 		name := strings.TrimSuffix(filepath.Base(backing), filepath.Ext(backing))
 		product = cutName(name, 126)
-		for attr := range values {
-			values[attr] = fmt.Sprintf("%-8s%-16s%s", "sipeed", cutName(name, 16), "1.00")
-		}
-	} else {
-		if configured, err := os.ReadFile("/boot/usb.product"); err == nil {
-			product = strings.TrimSpace(string(configured))
-		}
-		for attr := range values {
-			if configured, err := os.ReadFile("/boot/disk." + attr); err == nil {
-				values[attr] = strings.TrimSpace(string(configured))
-			}
-		}
+	} else if configured, err := os.ReadFile("/boot/usb.product"); err == nil {
+		product = strings.TrimSpace(string(configured))
 	}
 	for attr, value := range values {
+		if configured, err := os.ReadFile("/boot/disk." + attr); err == nil {
+			value = strings.TrimSpace(string(configured))
+		}
 		// Older kernels have no separate optical inquiry string.
 		path := filepath.Join(lun, attr)
 		if attr == "inquiry_string_cdrom" && !pathExists(path) {

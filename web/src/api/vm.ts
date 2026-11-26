@@ -12,11 +12,6 @@ export function getInfo() {
   return http.get('/api/vm/info');
 }
 
-// get hardware information
-export function getHardware() {
-  return http.get('/api/vm/hardware');
-}
-
 export type FingerRobotArm = 'long' | 'short';
 export type FingerRobotSpeed = 'slow' | 'fast';
 
@@ -186,8 +181,8 @@ export function getMouseJiggler() {
 }
 
 // set mouse jiggler
-export function setMouseJiggler(enabled: boolean, mode: string) {
-  return http.post('/api/vm/mouse-jiggler', { enabled, mode });
+export function setMouseJiggler(changes: { enabled?: boolean; mode?: string; maxHours?: number }) {
+  return http.post('/api/vm/mouse-jiggler', changes);
 }
 
 // get Hostname
@@ -257,6 +252,7 @@ export type UsbIdFields = {
   serialnumber: string;
   manufacturer: string;
   product: string;
+  configurationName: string;
 };
 
 // set USB device identity
@@ -329,21 +325,18 @@ export function rebootToFlashing(challenge?: string) {
     : http.post('/api/vm/system/reboot-to-flashing');
 }
 
-export const edidErrorReasons = [
-  'bad_request',
-  'invalid_file_name',
-  'edid_too_large',
-  'invalid_edid_length',
-  'invalid_edid_header',
-  'unsupported_edid_version',
-  'edid_extension_count_mismatch',
-  'invalid_edid_checksum',
-  'invalid_cta_extension',
-  'current_edid_cannot_be_overwritten',
-  'save_failed'
-] as const;
-
-export type EdidErrorReason = (typeof edidErrorReasons)[number];
+export type EdidErrorReason =
+  | 'bad_request'
+  | 'invalid_file_name'
+  | 'edid_too_large'
+  | 'invalid_edid_length'
+  | 'invalid_edid_header'
+  | 'unsupported_edid_version'
+  | 'edid_extension_count_mismatch'
+  | 'invalid_edid_checksum'
+  | 'invalid_cta_extension'
+  | 'current_edid_cannot_be_overwritten'
+  | 'save_failed';
 
 export type EdidResponse<T extends object = object> = {
   code: number;
@@ -357,25 +350,6 @@ export function updateEdid(edid: string): Promise<EdidResponse> {
   return http.post('/api/vm/edid', {
     edid
   });
-}
-
-export type EdidMonitorNameResponse = EdidResponse<{ monitorName: string }>;
-
-const edidMonitorNameUnsupportedMessages = new Set([
-  'monitor name descriptor not found',
-  'multiple monitor name descriptors found'
-]);
-
-export function isEdidMonitorNameUnsupportedError(message: string) {
-  return edidMonitorNameUnsupportedMessages.has(message);
-}
-
-export function getEdidMonitorName(): Promise<EdidMonitorNameResponse> {
-  return http.get('/api/vm/edid/monitor-name');
-}
-
-export function setEdidMonitorName(monitorName: string): Promise<EdidMonitorNameResponse> {
-  return http.post('/api/vm/edid/monitor-name', { monitorName });
 }
 
 export function uploadEdid(formData: FormData): Promise<EdidResponse<{ file: string }>> {

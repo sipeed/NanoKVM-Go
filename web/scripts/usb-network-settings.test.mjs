@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import { setImmediate } from 'node:timers/promises';
+import clsx from 'clsx';
+
+import { loadComponent } from './hook-harness.mjs';
 
 const webRoot = path.resolve(import.meta.dirname, '..');
 
@@ -10,73 +14,98 @@ function source(relativePath) {
 }
 
 const advancedSource = source('src/pages/desktop/menu/settings/device/advanced/index.tsx');
-const networkSource = source('src/pages/desktop/menu/settings/device/virtual-devices/network.tsx');
+const networkFile = path.join(
+  webRoot,
+  'src/pages/desktop/menu/settings/device/virtual-devices/network.tsx'
+);
 const usbNetworkSource = source(
   'src/pages/desktop/menu/settings/device/virtual-devices/usb-network.tsx'
 );
 
-test('USB network configuration moves out of Advanced behind an inline expand button', () => {
+function networkHarness(api = {}) {
+  const component = loadComponent(networkFile, 'Network', {
+    antd: { Switch: 'Switch', Tooltip: 'Tooltip' },
+    clsx,
+    'lucide-react': { ChevronRightIcon: 'Chevron', CircleAlertIcon: 'Alert' },
+    '@/api/virtual-device.ts': api,
+    '@/components/ui/button-base.tsx': { ButtonBase: 'Button' },
+    './usb-network.tsx': { UsbNetworkConfig: 'Config' }
+  });
+  const props = { isNetworkEnabled: false, isDisabled: false, getVirtualDevices: async () => {} };
+  return {
+    props,
+    render() {
+      const nodes = component.render(props);
+      const byType = (type) => nodes.find((node) => node.type === type)?.props;
+      const button = byType('Button');
+      return {
+        button,
+        toggle: byType('Switch'),
+        config: byType('Config'),
+        panel: nodes.find((node) => node.props.id && node.props.id === button['aria-controls'])
+          ?.props,
+        tip: byType('Tooltip').title
+      };
+    }
+  };
+}
+
+test('USB network settings open on demand, preserve the form on collapse and reset when disabled', () => {
   assert.doesNotMatch(advancedSource, /UsbNetwork|usb-network/);
-  assert.match(networkSource, /import \{ UsbNetworkConfig \} from '\.\/usb-network\.tsx';/);
-  assert.match(
-    networkSource,
-    /import \{ ButtonBase \} from '@\/components\/ui\/button-base\.tsx';/
-  );
-  assert.match(
-    networkSource,
-    /import \{ ChevronRightIcon, CircleAlertIcon \} from 'lucide-react';/
-  );
-  assert.doesNotMatch(networkSource, /\bCollapse\b/);
-  assert.match(networkSource, /<Switch[\s\S]*?<ButtonBase[\s\S]*?<ChevronRightIcon/);
-  assert.match(networkSource, /isConfigExpanded && 'rotate-90'/);
-  assert.doesNotMatch(networkSource, /rotate-180/);
-  assert.match(networkSource, /aria-expanded=\{isConfigExpanded\}/);
-  assert.match(
-    networkSource,
-    /aria-controls=\{isNetworkEnabled \? 'usb-network-config' : undefined\}/
-  );
-  assert.match(networkSource, /onClick=\{toggleConfig\}/);
+  const { props, render } = networkHarness();
+  let view = render();
+  assert.equal(view.button.disabled, true);
+  assert.equal(view.button.tabIndex, -1);
+  assert.equal(view.config, undefined);
+  props.isNetworkEnabled = true;
+  view = render();
+  assert.equal(view.button.tabIndex, 0);
+  assert.equal(view.button['aria-expanded'], false);
+  assert.equal(view.config, undefined);
+  assert.equal(view.tip, 'settings.device.usbNetwork.forwardingTip');
+  view.button.onClick();
+  view = render();
+  assert.equal(view.button['aria-expanded'], true);
+  assert.equal(view.panel.hidden, false);
+  assert.ok(view.config);
+  view.button.onClick();
+  view = render();
+  assert.equal(view.panel.hidden, true);
+  assert.ok(view.config);
+  props.isNetworkEnabled = false;
+  assert.equal(render().config, undefined);
+  props.isNetworkEnabled = true;
+  assert.equal(render().config, undefined);
 });
 
-test('enabling the device reveals a fixed-width button slot and moves the switch left', () => {
-  assert.match(
-    networkSource,
-    /transition-\[width,margin,opacity\][\s\S]*?isNetworkEnabled[\s\S]*?'ml-2 w-8 opacity-100'[\s\S]*?'ml-0 w-0 opacity-0'/
-  );
-  assert.match(networkSource, /className="flex size-8 items-center justify-center/);
-  assert.match(networkSource, /aria-hidden=\{!isNetworkEnabled\}/);
-  assert.match(networkSource, /tabIndex=\{isNetworkEnabled \? 0 : -1\}/);
-});
-
-test('the master switch waits for the authoritative refresh and only locks during a save', () => {
-  assert.match(networkSource, /getVirtualDevices: \(\) => Promise<void>/);
-  assert.match(networkSource, /await getVirtualDevices\(\);/);
-  assert.match(networkSource, /disabled=\{isDisabled \|\| isConfigSaving\}/);
-  assert.doesNotMatch(networkSource, /loadError/);
-  assert.match(networkSource, /disabled=\{isDisabled \|\| isToggleLoading\}/);
-  assert.match(networkSource, /onSavingChange=\{setIsConfigSaving\}/);
-});
-
-test('the expand button lazily mounts one bordered panel and closing the device resets it', () => {
-  assert.match(
-    networkSource,
-    /const \[isConfigExpanded, setIsConfigExpanded\] = useState\(false\)/
-  );
-  assert.match(networkSource, /const \[hasOpenedConfig, setHasOpenedConfig\] = useState\(false\)/);
-  assert.match(
-    networkSource,
-    /function toggleConfig\(\)[\s\S]*?setHasOpenedConfig\(true\);[\s\S]*?setIsConfigExpanded\(\(expanded\) => !expanded\)/
-  );
-  assert.match(
-    networkSource,
-    /useEffect\(\(\) => \{[\s\S]*?if \(!isNetworkEnabled\) \{[\s\S]*?setIsConfigExpanded\(false\);[\s\S]*?setHasOpenedConfig\(false\)/
-  );
-  assert.match(networkSource, /\{isNetworkEnabled && hasOpenedConfig && \(/);
-  assert.match(
-    networkSource,
-    /id="usb-network-config"[\s\S]*?rounded-lg border border-neutral-700\/60[\s\S]*?p-3 sm:p-4[\s\S]*?hidden=\{!isConfigExpanded\}[\s\S]*?<UsbNetworkConfig/
-  );
-  assert.equal((networkSource.match(/id="usb-network-config"/g) ?? []).length, 1);
+test('saving locks the master switch and toggling waits for the authoritative refresh', async () => {
+  let calls = 0;
+  const { props, render } = networkHarness({
+    updateVirtualDevice: async (type) => {
+      assert.equal(type, 'network');
+      calls++;
+      return { code: 0 };
+    }
+  });
+  props.isNetworkEnabled = true;
+  let finishRefresh;
+  props.getVirtualDevices = () =>
+    new Promise((resolve) => {
+      finishRefresh = resolve;
+    });
+  render().button.onClick();
+  render().config.onSavingChange(true);
+  assert.equal(render().toggle.disabled, true);
+  render().config.onSavingChange(false);
+  render().toggle.onChange();
+  await setImmediate();
+  assert.equal(calls, 1);
+  assert.equal(render().toggle.loading, true);
+  assert.equal(render().config.disabled, true);
+  finishRefresh();
+  await setImmediate();
+  assert.equal(render().toggle.loading, false);
+  assert.equal(render().config.disabled, false);
 });
 
 test('inline settings load the saved baseline and expose server and client modes', () => {
@@ -89,12 +118,6 @@ test('inline settings load the saved baseline and expose server and client modes
   assert.match(usbNetworkSource, /\{mode === 'server' && \(/);
   assert.match(usbNetworkSource, /manualIpEnabled/);
   assert.match(usbNetworkSource, /forwardingEnabled/);
-  assert.match(
-    networkSource,
-    /settings\.device\.network[\s\S]*?<Tooltip[\s\S]*?usbNetwork\.forwardingTip[\s\S]*?<CircleAlertIcon[\s\S]*?settings\.device\.networkDesc/
-  );
-  assert.match(networkSource, /text-amber-400/);
-  assert.doesNotMatch(networkSource, /border-amber-500\/30|bg-amber-500\/10/);
   assert.doesNotMatch(usbNetworkSource, /usbNetwork\.forwardingTip/);
 });
 
@@ -110,7 +133,6 @@ test('cancel restores the saved baseline and apply posts once before refreshing 
 test('load failures disable only the inline controls and saving is reported to the parent', () => {
   assert.match(usbNetworkSource, /setLoadError\(true\)/);
   assert.match(usbNetworkSource, /\) : loadError \? \([\s\S]*?usbNetwork\.loadFailed/);
-  assert.doesNotMatch(networkSource, /loadError/);
   assert.match(usbNetworkSource, /onSavingChange\(true\)/);
   assert.match(usbNetworkSource, /finally \{[\s\S]*?onSavingChange\(false\)/);
   assert.match(usbNetworkSource, /if \(disabled \|\| isSaving \|\| !hasChanges/);

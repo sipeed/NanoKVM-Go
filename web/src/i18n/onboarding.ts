@@ -6,7 +6,7 @@ import type { SupportedLanguage } from './locale.ts';
  * carries one line per rail item so the tour engine can compose a step from
  * only the items actually visible (many items are gated by server config or
  * video mode). Item names mirror the translated menu labels in locales/, the
- * portal module, the screen-timelapse service label, and the finger-robot
+ * screen-timelapse service label, and the finger-robot
  * text module (the rail's "power" key renders the Finger Robot), so the tour
  * names what the user actually sees.
  */
@@ -26,7 +26,7 @@ export type OnboardingMessages = {
   steps: {
     display: {
       title: string;
-      items: { screen: string; portal: string; pictureInPicture: string };
+      items: { screen: string; pictureInPicture: string };
     };
     media: {
       title: string;
@@ -34,7 +34,7 @@ export type OnboardingMessages = {
     };
     input: {
       title: string;
-      items: { mouseJiggler: string; keyboard: string; mouse: string; preview: string };
+      items: { mouseJiggler: string; keyboard: string; mouse: string };
     };
     tools: {
       title: string;
@@ -93,8 +93,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
       display: {
         title: 'Display',
         items: {
-          screen: '"Screen" — adjust resolution, quality, and frame rate.',
-          portal: '"Portal" — crop the view to the area that matters.',
+          screen: '"Screen" — click to toggle view-only mode. Open its menu for display settings.',
           pictureInPicture:
             '"Picture-in-Picture" — keep the desktop in a floating window while you use other apps.'
         }
@@ -111,8 +110,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '"Mouse Jiggler" — Prevent the remote host from sleeping',
           keyboard: '"Keyboard" — on-screen keys, shortcuts, and paste-as-typing.',
-          mouse: '"Mouse" — switch pointer modes and calibrate.',
-          preview: '"Preview" — watch the screen without sending any input.'
+          mouse: '"Mouse" — switch pointer modes and calibrate.'
         }
       },
       tools: {
@@ -198,7 +196,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: '画面',
         items: {
           screen: '「屏幕」调整分辨率、画质和帧率。',
-          portal: '「去黑边」把画面裁剪到需要的区域。',
           pictureInPicture: '「画中画」把远程桌面浮成小窗，可同时使用其他应用。'
         }
       },
@@ -214,8 +211,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '「鼠标抖动」 — 防止远程主机休眠',
           keyboard: '「键盘」提供屏幕键盘、快捷键和粘贴输入。',
-          mouse: '「鼠标」切换指针模式并校准。',
-          preview: '「预览」只看画面，不发送任何输入。'
+          mouse: '「鼠标」切换指针模式并校准。'
         }
       },
       tools: {
@@ -300,7 +296,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: '畫面',
         items: {
           screen: '「螢幕」調整解析度、畫質與幀率。',
-          portal: '「去黑邊」把畫面裁剪到需要的區域。',
           pictureInPicture: '「子母畫面」讓遠端桌面浮成小窗，可同時使用其他應用程式。'
         }
       },
@@ -316,8 +311,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '「滑鼠抖動模式 (Mouse Jiggler)」 — 避免遠端主機進入休眠狀態',
           keyboard: '「鍵盤」提供螢幕鍵盤、快速鍵與貼上輸入。',
-          mouse: '「滑鼠」切換指標模式並校準。',
-          preview: '「預覽」只看畫面，不傳送任何輸入。'
+          mouse: '「滑鼠」切換指標模式並校準。'
         }
       },
       tools: {
@@ -402,7 +396,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: '画面',
         items: {
           screen: '「画面」— 解像度・品質・フレームレートを調整します。',
-          portal: '「黒枠の除去」— 表示範囲を必要な領域に切り抜きます。',
           pictureInPicture:
             '「ピクチャー イン ピクチャー」— デスクトップを小窓に浮かべたまま他の作業ができます。'
         }
@@ -419,8 +412,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '「マウスジグラー」 — リモートホストの休止を防ぐ',
           keyboard: '「キーボード」— 画面上のキー、ショートカット、貼り付け入力。',
-          mouse: '「マウス」— ポインターモードを切り替え、キャリブレーションを行います。',
-          preview: '「プレビュー」— 入力を送らずに画面だけを表示します。'
+          mouse: '「マウス」— ポインターモードを切り替え、キャリブレーションを行います。'
         }
       },
       tools: {
@@ -505,7 +497,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: '화면',
         items: {
           screen: '"화면" — 해상도, 화질, 프레임 레이트를 조정합니다.',
-          portal: '"검은 테두리 제거" — 보이는 영역을 필요한 부분으로 자릅니다.',
           pictureInPicture:
             '"그림 속 그림" — 원격 바탕화면을 작은 창으로 띄워 다른 작업과 병행합니다.'
         }
@@ -522,8 +513,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '"마우스 흔들기" — 원격 호스트가 절전 모드로 진입하는 것을 방지',
           keyboard: '"키보드" — 화면에 표시되는 키, 단축키, 붙여넣기 입력을 제공합니다.',
-          mouse: '"마우스" — 포인터 모드를 전환하고 보정합니다.',
-          preview: '"미리보기" — 입력을 보내지 않고 화면만 봅니다.'
+          mouse: '"마우스" — 포인터 모드를 전환하고 보정합니다.'
         }
       },
       tools: {
@@ -609,8 +599,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Anzeige',
         items: {
           screen: '„Bildschirm“ — Auflösung, Qualität und Bildrate einstellen.',
-          portal:
-            '„Schwarze Ränder entfernen“ — die Ansicht auf den relevanten Bereich zuschneiden.',
           pictureInPicture:
             '„Bild-im-Bild“ — den entfernten Desktop in einem kleinen schwebenden Fenster behalten, während Sie andere Anwendungen nutzen.'
         }
@@ -627,8 +615,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '„Mausaktivitäts-Simulator“ — Verhindert, dass der remote Host in den Energiesparmodus wechselt',
           keyboard: '„Tastatur“ — Bildschirmtastatur, Kürzel und Einfügen als Tastatureingabe.',
-          mouse: '„Maus“ — Zeigermodi wechseln und kalibrieren.',
-          preview: '„Vorschau“ — das Bild anzeigen, ohne Eingaben zu senden.'
+          mouse: '„Maus“ — Zeigermodi wechseln und kalibrieren.'
         }
       },
       tools: {
@@ -716,7 +703,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Écran',
         items: {
           screen: "« Écran » — règle la résolution, la qualité et la fréquence d'images.",
-          portal: "« Supprimer les bordures noires » — recadre l'affichage sur la zone utile.",
           pictureInPicture:
             "« Image dans l'image » — garde le bureau distant dans une petite fenêtre flottante pendant que vous utilisez d'autres applications."
         }
@@ -733,8 +719,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '«Souris Jiggler» — Empêcher l\'hôte distant de dormir',
           keyboard: "« Clavier » — touches à l'écran, raccourcis et saisie par collage.",
-          mouse: '« Souris » — change de mode de pointeur et calibre.',
-          preview: "« Aperçu » — affiche l'écran sans envoyer aucune entrée."
+          mouse: '« Souris » — change de mode de pointeur et calibre.'
         }
       },
       tools: {
@@ -823,7 +808,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Pantalla',
         items: {
           screen: '«Pantalla» — ajusta resolución, calidad y frecuencia de imagen.',
-          portal: '«Recortar bordes negros» — recorta la vista al área importante.',
           pictureInPicture:
             '«Imagen en imagen» — mantiene el escritorio remoto en una ventana flotante mientras usas otras aplicaciones.'
         }
@@ -840,8 +824,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '«Agitador de ratón» — Evitar que el host remoto entre en reposo',
           keyboard: '«Teclado» — teclas en pantalla, atajos y pegado como tecleo.',
-          mouse: '«Ratón» — cambia los modos de puntero y calibra.',
-          preview: '«Vista previa» — muestra la imagen sin enviar ninguna entrada.'
+          mouse: '«Ratón» — cambia los modos de puntero y calibra.'
         }
       },
       tools: {
@@ -928,7 +911,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Schermo',
         items: {
           screen: '"Schermo" — regola risoluzione, qualità e frequenza dei fotogrammi.',
-          portal: '"Rimuovi bordi neri" — ritaglia la vista sull\'area che conta.',
           pictureInPicture:
             '"Modalità Picture in Picture" — mantiene il desktop remoto in una piccola finestra fluttuante mentre usi altre app.'
         }
@@ -945,8 +927,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '"Muovi il mouse" — Impedisce la sospensione dell\'host remoto',
           keyboard: '"Tastiera" — tasti su schermo, scorciatoie e incolla come digitazione.',
-          mouse: '"Mouse" — cambia le modalità del puntatore e calibra.',
-          preview: '"Anteprima" — mostra lo schermo senza inviare alcun input.'
+          mouse: '"Mouse" — cambia le modalità del puntatore e calibra.'
         }
       },
       tools: {
@@ -1035,7 +1016,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Scherm',
         items: {
           screen: '"Scherm" — pas resolutie, kwaliteit en beeldfrequentie aan.',
-          portal: '"Zwarte balken verwijderen" — snijd de weergave bij tot het relevante gebied.',
           pictureInPicture:
             '"Beeld-in-beeld" — houd het externe bureaublad in een klein zwevend venster terwijl je andere apps gebruikt.'
         }
@@ -1052,8 +1032,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '"Muisschommel" — Voorkom dat de externe host in slaap valt',
           keyboard: '"Toetsenbord" — schermtoetsen, sneltoetsen en plakken als typen.',
-          mouse: '"Muis" — schakel tussen aanwijzermodi en kalibreer.',
-          preview: '"Voorbeeld" — bekijk het scherm zonder invoer te sturen.'
+          mouse: '"Muis" — schakel tussen aanwijzermodi en kalibreer.'
         }
       },
       tools: {
@@ -1139,7 +1118,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Ekran',
         items: {
           screen: '„Ekran” — ustawia rozdzielczość, jakość i liczbę klatek.',
-          portal: '„Przytnij czarne ramki” — kadruje obraz do istotnego obszaru.',
           pictureInPicture:
             '„Obraz w obrazie” — utrzymuje zdalny pulpit w małym pływającym oknie, gdy korzystasz z innych aplikacji.'
         }
@@ -1156,8 +1134,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '„Jiggler myszy” — Uniemożliwia uśpienie zdalnego hosta',
           keyboard: '„Klawiatura” — klawisze na ekranie, skróty i wklejanie jako pisanie.',
-          mouse: '„Mysz” — przełącza tryby wskaźnika i wykonuje jego kalibrację.',
-          preview: '„Podgląd” — pokazuje obraz bez wysyłania jakichkolwiek danych wejściowych.'
+          mouse: '„Mysz” — przełącza tryby wskaźnika i wykonuje jego kalibrację.'
         }
       },
       tools: {
@@ -1244,7 +1221,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Экран',
         items: {
           screen: '«Экран» — настраивает разрешение, качество и частоту кадров.',
-          portal: '«Удаление чёрных полос» — обрезает изображение до нужной области.',
           pictureInPicture:
             '«Картинка в картинке» — держит удалённый рабочий стол в небольшом плавающем окне, пока вы пользуетесь другими приложениями.'
         }
@@ -1261,8 +1237,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '«Дрожалка для мыши» — Включите данную опцию, если хост засыпает',
           keyboard: '«Клавиатура» — экранные клавиши, сочетания клавиш и ввод вставкой.',
-          mouse: '«Мышь» — переключает режимы указателя и калибрует его.',
-          preview: '«Предпросмотр» — показывает экран, не отправляя никакого ввода.'
+          mouse: '«Мышь» — переключает режимы указателя и калибрует его.'
         }
       },
       tools: {
@@ -1349,7 +1324,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Екран',
         items: {
           screen: '«Екран» — налаштовує роздільну здатність, якість і частоту кадрів.',
-          portal: '«Видалення чорних смуг» — обрізає зображення до потрібної області.',
           pictureInPicture:
             '«Картинка в картинці» — тримає віддалений робочий стіл у маленькому плаваючому вікні, поки ви користуєтесь іншими програмами.'
         }
@@ -1366,8 +1340,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '«Налаштування пацюка» — Не дозволяйте віддаленому хосту спати',
           keyboard: '«Клавіатура» — екранні клавіші, сполучення клавіш і ввід вставленням.',
-          mouse: '«Миша» — перемикає режими вказівника та калібрує його.',
-          preview: '«Попередній перегляд» — показує екран без надсилання будь-якого вводу.'
+          mouse: '«Миша» — перемикає режими вказівника та калібрує його.'
         }
       },
       tools: {
@@ -1455,7 +1428,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Obrazovka',
         items: {
           screen: '„Obrazovka“ — nastavuje rozlišení, kvalitu a snímkovou frekvenci.',
-          portal: '„Oříznout černé okraje“ — ořezává zobrazení na důležitou oblast.',
           pictureInPicture:
             '„Obraz v obraze“ — drží vzdálenou plochu v malém plovoucím okně, zatímco používáte jiné aplikace.'
         }
@@ -1472,8 +1444,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '„Pohyb myši (Jiggler)“ — Zabraňte spánku vzdáleného hostitele',
           keyboard: '„Klávesnice“ — klávesy na obrazovce, zkratky a vkládání textu jako psaní.',
-          mouse: '„Myš“ — přepíná režimy ukazatele a provádí jeho kalibraci.',
-          preview: '„Náhled“ — ukazuje obraz bez odesílání jakéhokoli vstupu.'
+          mouse: '„Myš“ — přepíná režimy ukazatele a provádí jeho kalibraci.'
         }
       },
       tools: {
@@ -1560,7 +1531,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Skærm',
         items: {
           screen: '"Skærm" — juster opløsning, kvalitet og billedhastighed.',
-          portal: '"Fjern sorte kanter" — beskær visningen til det relevante område.',
           pictureInPicture:
             '"Billede-i-billede" — hold fjernskrivebordet i et lille flydende vindue, mens du bruger andre apps.'
         }
@@ -1577,8 +1547,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '"Mus Jiggler" — Forhindrer fjernværten i at sove',
           keyboard: '"Tastatur" — skærmtaster, genveje og indsæt som tastning.',
-          mouse: '"Mus" — skift mellem markørtilstande og kalibrer.',
-          preview: '"Forhåndsvisning" — se skærmen uden at sende input.'
+          mouse: '"Mus" — skift mellem markørtilstande og kalibrer.'
         }
       },
       tools: {
@@ -1665,7 +1634,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Képernyő',
         items: {
           screen: '„Képernyő” — beállítja a felbontást, a minőséget és a képkockasebességet.',
-          portal: '„Fekete sávok levágása” — a képet a lényeges területre vágja.',
           pictureInPicture:
             '„Kép a képben” — egy kis lebegő ablakban tartja a távoli asztalt, miközben más alkalmazásokat használ.'
         }
@@ -1683,8 +1651,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
           mouseJiggler: '„Egér mozgató” — A távoli gazdagép alvó állapotának megakadályozása',
           keyboard:
             '„Billentyűzet” — képernyőn megjelenő billentyűk, gyorsbillentyűk és beillesztés gépelésként.',
-          mouse: '„Egér” — váltja a mutató módjait és elvégzi a kalibrációt.',
-          preview: '„Előnézet” — bemenet küldése nélkül mutatja a képet.'
+          mouse: '„Egér” — váltja a mutató módjait és elvégzi a kalibrációt.'
         }
       },
       tools: {
@@ -1771,7 +1738,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Layar',
         items: {
           screen: '"Layar" — mengatur resolusi, kualitas, dan kecepatan bingkai.',
-          portal: '"Hapus batas hitam" — memangkas tampilan ke area yang penting.',
           pictureInPicture:
             '"Gambar dalam gambar" — menjaga desktop jarak jauh tetap mengambang di jendela kecil saat Anda memakai aplikasi lain.'
         }
@@ -1788,8 +1754,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '"Tikus Jiggler" — Mencegah host jarak jauh tertidur',
           keyboard: '"Papan ketik" — tombol di layar, pintasan, dan tempel-sebagai-ketikan.',
-          mouse: '"Mouse" — mengganti mode penunjuk dan mengalibrasi.',
-          preview: '"Pratinjau" — menampilkan layar tanpa mengirim input apa pun.'
+          mouse: '"Mouse" — mengganti mode penunjuk dan mengalibrasi.'
         }
       },
       tools: {
@@ -1876,7 +1841,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Skjerm',
         items: {
           screen: '«Skjerm» — juster oppløsning, kvalitet og bildefrekvens.',
-          portal: '«Fjern svarte kanter» — beskjær visningen til området som betyr noe.',
           pictureInPicture:
             '«Bilde i bilde» — hold fjernskrivebordet i et lite flytende vindu mens du bruker andre apper.'
         }
@@ -1893,8 +1857,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '«Mus Jiggler» — Hindre den eksterne verten fra å sove',
           keyboard: '«Åpne tastatur» — skjermtaster, snarveier og innliming som tasting.',
-          mouse: '«Mus» — bytt mellom pekermoduser og kalibrer.',
-          preview: '«Forhåndsvisning» — se skjermen uten å sende inndata.'
+          mouse: '«Mus» — bytt mellom pekermoduser og kalibrer.'
         }
       },
       tools: {
@@ -1981,7 +1944,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'หน้าจอ',
         items: {
           screen: '"หน้าจอ" — ปรับความละเอียด คุณภาพ และอัตราเฟรม',
-          portal: '"ตัดขอบดำ" — ครอบตัดมุมมองให้เหลือเฉพาะพื้นที่ที่สำคัญ',
           pictureInPicture:
             '"ภาพซ้อนภาพ" — เก็บเดสก์ท็อประยะไกลไว้ในหน้าต่างลอยขนาดเล็กขณะใช้งานแอปอื่น'
         }
@@ -1998,8 +1960,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '"เมาส์กระตุก" — ป้องกันไม่ให้โฮสต์ระยะไกลเข้าสู่โหมดสลีป',
           keyboard: '"คีบอร์ด" — แป้นพิมพ์บนหน้าจอ คีย์ลัด และการวางแบบพิมพ์',
-          mouse: '"เมาส์" — สลับโหมดตัวชี้และปรับเทียบ',
-          preview: '"ตัวอย่าง" — แสดงหน้าจอโดยไม่ส่งอินพุตใด ๆ'
+          mouse: '"เมาส์" — สลับโหมดตัวชี้และปรับเทียบ'
         }
       },
       tools: {
@@ -2085,7 +2046,6 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         title: 'Màn hình',
         items: {
           screen: '"Màn hình" — chỉnh độ phân giải, chất lượng và tốc độ khung hình.',
-          portal: '"Cắt viền đen" — cắt khung hình về vùng bạn quan tâm.',
           pictureInPicture:
             '"Ảnh trong ảnh" — giữ màn hình từ xa trong một cửa sổ nhỏ nổi trong khi bạn dùng ứng dụng khác.'
         }
@@ -2102,8 +2062,7 @@ const messages: Record<SupportedLanguage, OnboardingMessages> = {
         items: {
           mouseJiggler: '"Máy lắc lư chuột" — Ngăn máy chủ từ xa ngủ',
           keyboard: '"Bàn phím" — phím trên màn hình, phím tắt và dán dưới dạng gõ phím.',
-          mouse: '"Chuột" — đổi chế độ con trỏ và hiệu chỉnh.',
-          preview: '"Xem trước" — chỉ xem màn hình mà không gửi bất kỳ đầu vào nào.'
+          mouse: '"Chuột" — đổi chế độ con trỏ và hiệu chỉnh.'
         }
       },
       tools: {

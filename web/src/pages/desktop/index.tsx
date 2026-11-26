@@ -10,6 +10,7 @@ import { client } from '@/lib/websocket.ts';
 import { videoBandwidthWarningAtom, videoModeAtom, videoParametersAtom } from '@/jotai/screen.ts';
 import { Head } from '@/components/head.tsx';
 
+import { ConnectFeatures } from './connect-features.tsx';
 import { Keyboard } from './keyboard';
 import { Menu } from './menu';
 import { Message } from './message.tsx';
@@ -95,7 +96,9 @@ export const Desktop = () => {
 
       {videoMode && (
         <>
-          <Menu />
+          <ConnectFeatures>
+            <Menu />
+          </ConnectFeatures>
           <EdidController />
           <Screen />
           <PortalController />

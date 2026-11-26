@@ -975,6 +975,15 @@ func writePointerModeVerifierFixture(t *testing.T, mode PointerMode) string {
 		t.Fatalf("missing report length for %s", mode)
 	}
 	writePointerModeTestFile(t, filepath.Join(root, "UDC"), []byte("dummy_udc.0\n"))
+	config := filepath.Join(root, "configs", "c.1")
+	if err := os.MkdirAll(config, 0755); err != nil {
+		t.Fatal(err)
+	}
+	for _, link := range []string{"hid.GS1", "hid.GS2"} {
+		if err := os.Symlink(filepath.Join(root, "functions", link), filepath.Join(config, link)); err != nil {
+			t.Fatal(err)
+		}
+	}
 	writePointerModeTestFile(t, filepath.Join(function, "report_length"), []byte(fmt.Sprintf("%d\n", reportLength)))
 	return root
 }
@@ -983,5 +992,32 @@ func writePointerModeTestFile(t *testing.T, path string, data []byte) {
 	t.Helper()
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		t.Fatalf("write %s: %v", path, err)
+	}
+}
+
+func TestRestoreBothPointersRequiresAnAvailableEndpoint(t *testing.T) {
+	marker := "single-absolute\n"
+	h := newPointerModeTransactionHarness(t, PointerModeSingleAbsolute, &marker, ModeNormal)
+	root := t.TempDir()
+	h.transaction.opts.gadgetRoot = root
+	config := filepath.Join(root, "configs", "c.1")
+	if err := os.MkdirAll(config, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, link := range []string{"hid.GS0", "hid.GS2", "uac2.usb0", "uvc.nomad", "ncm.usb0"} {
+		if err := os.Symlink("../../functions/"+link, filepath.Join(config, link)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	status, err := h.transaction.run(context.Background(), PointerModeAbsolute)
+	if !errors.Is(err, ErrPointerEndpointCapacity) || status.Mode != PointerModeSingleAbsolute || status.Switching {
+		t.Fatalf("full USB configuration: %+v, %v", status, err)
+	}
+	if err := os.Remove(filepath.Join(config, "ncm.usb0")); err != nil {
+		t.Fatal(err)
+	}
+	status, err = h.transaction.run(context.Background(), PointerModeAbsolute)
+	if err != nil || status.Mode != PointerModeAbsolute {
+		t.Fatalf("restore both: %+v, %v", status, err)
 	}
 }

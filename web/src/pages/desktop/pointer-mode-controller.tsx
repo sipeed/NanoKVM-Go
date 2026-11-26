@@ -5,7 +5,6 @@ import { setBaseInputEnabled } from '@/lib/input-suspension.ts';
 import * as ls from '@/lib/localstorage.ts';
 import {
   fetchPointerModeStatus,
-  isPointerMode,
   POINTER_MODE_SYNC_EVENT,
   pointerModeStatusFromError,
   resolveAuthoritativeMouseMode
@@ -50,9 +49,8 @@ export const PointerModeController = () => {
       deviceStatusRef.current = status;
       setDeviceStatus(status);
 
-      // Relative remains browser-local. Every HID2 mode is corrected to the
-      // backend-authoritative profile without posting a browser preference.
-      if (nextLocalMode !== activeLocalMode && isPointerMode(nextLocalMode)) {
+      // With a single endpoint, every viewer must follow the device profile.
+      if (profileChanged) {
         mouseModeRef.current = nextLocalMode;
         setMouseMode(nextLocalMode);
         ls.setMouseMode(nextLocalMode);
@@ -99,16 +97,13 @@ export const PointerModeController = () => {
   }, [setMouseMode]);
 
   useEffect(() => {
+    // A remote layout change can replace the local pointer while the device
+    // stays ready and keeps reporting the same HID2 mode.
     setBaseInputEnabled(
-      deviceStatus.ready && !deviceStatus.switching && !deviceStatus.degraded && !localOperation
+      deviceStatus.ready && !deviceStatus.switching && !deviceStatus.degraded && !localOperation &&
+      mouseMode === resolveAuthoritativeMouseMode(mouseMode, deviceStatus)
     );
-  }, [
-    deviceStatus.degraded,
-    deviceStatus.mode,
-    deviceStatus.ready,
-    deviceStatus.switching,
-    localOperation
-  ]);
+  }, [deviceStatus, localOperation, mouseMode]);
 
   useEffect(() => {
     disposedRef.current = false;
@@ -122,7 +117,7 @@ export const PointerModeController = () => {
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== ls.MOUSE_MODE_KEY) return;
       const localMode = normalizeMouseMode(event.newValue);
-      if (localMode === 'relative') {
+      if (localMode === 'relative' && !deviceStatusRef.current.singleEndpoint) {
         mouseModeRef.current = localMode;
         setMouseMode(localMode);
         return;

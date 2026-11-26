@@ -1,45 +1,38 @@
 # NanoKVM-Go Nomad
 
-A NanoKVM Go+ fork for digital nomads. Use your laptop’s webcam in a call on the remote computer you control through the Go+.
+NanoKVM Go+ presents your browser’s camera to the remote computer as a 720p USB webcam. Build #2 targets firmware v1.0.10. [中文](README.zh.md) · [Build #2 changelog](CHANGELOG.md)
 
-[How Nomad’s controller works](docs/remote-webcam.md) · [Install build](#install-build) · [Official Sipeed project](https://github.com/sipeed/NanoKVM-Go)
+## Build #2 dashboard changes
 
-## Nomad features
+### Screen, Preview and EDID
 
-- **Webcam as a USB device**
-  - **600p (1024 × 600), targeting 15–30 fps and 2–8 Mbps.** Nomad measures delivery during startup, then lowers quality when uploads fall behind and raises it as the link recovers. [Google Congestion Control background](https://datatracker.ietf.org/doc/html/draft-ietf-rmcat-gcc-02)
-  - **Motion JPEG (MJPEG).** Your browser compresses each camera frame as a JPEG. The Go+ sends those frames to the remote computer as a standard USB webcam stream.
-  - **Start a call.** Open the dashboard over HTTPS. Enable **Settings → Device → Webcam**, then choose your camera in the **Webcam** menu and click **Start**. Microphone sharing has its own control.
-  - **Webcam name.** Change **Settings → Device → Advanced → USB Webcam Name** to set the name reported to the host.
-- **Mouse Jiggler in the menu bar.** Hidden by default. Enable the shortcut under **Settings → Appearance**, then click it to toggle movement using your last mode.
-- **Activity indicators.** The menu bar shows when the microphone, webcam or jiggler is active.
+- **Preview is now part of Screen.** Click the **Screen** icon to watch without sending keyboard or mouse input. A red eye marks view-only mode. Click it again to regain control. Hover over the icon or tap its menu arrow to open display settings.
+- **Screen → Cropping** can remove black borders automatically. For a fixed crop, select an area manually and reuse the saved region.
+- **Screen → EDID** sets the monitor name, resolution and refresh rate the remote computer sees. For example, the 1080p60 preset identifies as a Dell U2414H. The five built-in profiles replace the separate **Monitor Name** field, and Build #2 ignores names saved in that field. For a custom name, upload and select an EDID `.bin` containing it. You can also switch profiles under **Settings → Screen → EDID**.
 
-**Defaults**
+### Mouse Jiggler
 
-- A stock Go+ starts with keyboard, mouse, absolute pointer and USB networking enabled. Webcam, Virtual Disk and USB audio are optional.
-- Upgrades preserve your monitor EDID, timezone, USB identity, Webcam setting and saved toolbar layout.
+Click **Mouse Jiggler** to start or stop it. If the shortcut is hidden, enable **Show icon** under **Settings → Appearance**. Choose relative or absolute movement under **Settings → Device → Mouse Jiggler**.
 
-## USB limits
+The toolbar menu shows the time remaining and lets you set a limit in whole hours. The default is **8 hours**. Set **0** for unlimited. Changing the limit during a run restarts the countdown. Closing the dashboard leaves it running, and rebooting the Go+ preserves the original deadline.
 
-The Go+ has **7 USB IN endpoints**. The keyboard and two pointer interfaces use **1 each**, leaving **4** for optional devices.
+| Desktop viewers | What the pointer does while the jiggler is on |
+| --- | --- |
+| At least one connected | After 30–60 seconds without KVM input, the pointer makes a short nudge. New input restarts the idle wait. |
+| Last viewer disconnected | Short nudges continue for the first five minutes. After that, idle movements follow smooth curves lasting 5–8 seconds. Reconnecting stops a curve in progress and restores short nudges. |
 
-| Feature | IN endpoints |
-| --- | ---: |
-| Webcam | 2 |
-| Virtual Audio (mic only or mic + speakers) | 1 |
-| Virtual Network (NCM or RNDIS) | 2 per interface |
-| Virtual Disk or mounted image | 1 per USB drive |
-| USB serial (ACM) | 2 |
+### Webcam, toolbar and USB
 
-- **Webcam + Network** fills all 7. Adding Audio or Disk exceeds the limit.
-- **Webcam + Audio** uses 6. One disk fits the software check. Using all three together still needs a host test.
-- **Switching devices.** Eject and detach mounted media before changing Webcam. Turn **Settings → Device → Webcam** off to free its endpoints. **Stop** in the menu bar only stops sharing.
+- **Webcam.** Open the dashboard over HTTPS and enable **Settings → Device → Webcam**. Click **Webcam** to start or stop sharing. Its menu lets you choose the camera and check upload stats. The remote computer now receives 720p video, and the browser adjusts bitrate and frame rate together as the connection changes. [Webcam setup and upload stats](docs/remote-webcam.md)
+- **Toolbar shortcuts.** Click **Volume** to mute or restore the previous level, **Microphone** to toggle sharing, or **Terminal** to open a new tab. After you close Settings with the mouse, the bar hides again after five seconds with the pointer outside it. Keyboard focus keeps the bar visible.
+- **Activate on Connect.** Under **Settings → Appearance**, each browser can start audio playback, microphone sharing, webcam sharing and Mouse Jiggler independently. **Show icon** only controls visibility. Hidden shortcuts can still activate on connect, and toggling one during a session leaves its startup preference intact.
+- **USB devices.** **Settings → Device** shows used and free USB IN endpoints out of seven. Webcam needs two. If you are short by one, **Mouse → Mouse mode → Use one USB pointer endpoint** frees one by exposing only the selected pointer. Switching layouts briefly reconnects USB. The jiggler needs a mouse endpoint, so choose a mouse mode to use it in this layout.
+- **USB identity.** **Settings → Device → Advanced → USB Device Identity** now includes the configuration name alongside the device IDs and strings. The webcam has its own **USB Webcam Name** setting.
 
-## Install build
+## Install
 
-1. Download the offline update bundle (`.tar.gz`) from the [latest Nomad release](https://github.com/maxhabra/NanoKVM-go-Nomad/releases/latest). Leave it compressed.
-2. Check the firmware requirement in the release notes. If your Go+ needs a firmware update, install the specified Sipeed version first. [Official firmware](https://github.com/sipeed/NanoKVM-Go/releases) · [Flashing guide](https://en.wiki.sipeed.com/hardware/en/kvm/NanoKVM_Go/system/flashing.html)
-3. Open **Settings → Check for Updates**. For an unsigned release, temporarily turn off **Update signature verification**. Choose **Offline update → Select bundle → Upload and install**.
-4. Once installation finishes, reboot the Go+, re-enable signature verification if needed, and confirm the installed build on the update page.
+1. Download the matching offline update and leave the `.tar.gz` compressed. [Published releases](https://github.com/maxhabra/NanoKVM-go-Nomad/releases/latest)
+2. Upload it under **Settings → Check for Updates → Offline update**. For unsigned bundles, temporarily disable **Update signature verification**.
+3. Reboot the Go+ and restore signature verification if disabled.
 
-[Build from source](docs/build-packaging.md) · [License](LICENSE)
+[Build the Nomad bundle](docs/build-packaging.md#nomad-go-offline-bundle) · [Sipeed user guide](https://wiki.sipeed.com/hardware/en/kvm/NanoKVM_Go/user_guide.html) · [License](LICENSE)

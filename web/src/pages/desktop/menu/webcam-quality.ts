@@ -1,8 +1,9 @@
 const minMbps = 2;
-const maxMbps = 8;
+const maxMbps = 10;
 const minFps = 15;
 const maxFps = 30;
-const startMbps = 5;
+const startMbps = 8;
+const startFps = 25;
 const warmupSeconds = 1;
 const evidenceSeconds = 2;
 export const startupSeconds = warmupSeconds + 5 * evidenceSeconds;
@@ -44,18 +45,15 @@ function delivery(samples: DeliverySample[]) {
 }
 
 export class WebcamQuality {
-  target: Target = { mbps: startMbps, fps: maxFps };
+  target: Target = { mbps: startMbps, fps: startFps };
   private hostFps = maxFps;
   private samples: DeliverySample[] = [];
   private startupSamples: DeliverySample[] = [];
   private lastStartupSecond = 0;
   private good?: Target;
   private badMbps?: number;
-  private beforeCut?: ReturnType<typeof delivery>;
   private beforeProbe?: Target;
-  private cleanMs = 0;
   private nextProbeAt = 0;
-  private probeFpsNext = true;
 
   private change(mbps: number, fps: number) {
     const next = {
@@ -64,7 +62,6 @@ export class WebcamQuality {
     };
     if (next.mbps === this.target.mbps && next.fps === this.target.fps) return false;
     this.target = next;
-    this.cleanMs = 0;
     this.samples = [];
     return true;
   }
@@ -80,9 +77,7 @@ export class WebcamQuality {
   resumeAfterIdle() {
     this.startupSamples = [];
     this.samples = [];
-    this.beforeCut = undefined;
     this.beforeProbe = undefined;
-    this.cleanMs = 0;
   }
 
   observeStartup(s: DeliverySample, second: number) {
@@ -141,10 +136,10 @@ export class WebcamQuality {
     }
     // Keep JPEGs larger on constrained links by lowering cadence more gently than bitrate.
     const fps =
-      next === minMbps && ((congested && mbps === minMbps) || this.target.fps === minFps)
-        ? minFps
-        : Math.round(maxFps * Math.sqrt(next / startMbps));
-    this.change(next, Math.min(fps, maxFps));
+      next <= startMbps
+        ? startFps * Math.sqrt(next / startMbps)
+        : startFps + ((maxFps - startFps) * (next - startMbps)) / (maxMbps - startMbps);
+    this.change(next, Math.round(fps));
   }
 
   finishStartup() {
@@ -159,83 +154,45 @@ export class WebcamQuality {
 
   observe(s: DeliverySample, now: number) {
     if (s.elapsedMs > 1500 || s.elapsedMs < 900 || s.eligible === 0) {
-      this.cleanMs = 0;
       this.samples = [];
-      this.beforeCut = undefined;
       this.beforeProbe = undefined;
       return;
     }
-    this.cleanMs =
-      s.missed === 0 && s.received > 0 && !s.queueGrew ? this.cleanMs + s.elapsedMs : 0;
     this.samples.push(s);
-    if (this.samples.length > 10) this.samples.shift();
-    if (this.samples.length >= 3) this.evaluate(this.samples, now);
-  }
+    if (this.samples.length > 5) this.samples.shift();
+    if (this.samples.length < 3) return;
 
-  private evaluate(samples: DeliverySample[], now: number) {
-    const recent = delivery(samples.slice(-3));
+    const recent = delivery(this.samples.slice(-3));
     const severe = recent.loss > 0.25;
-    if (!severe && samples.length < 10) return;
-    const window = delivery(samples);
-    const evidence = severe ? recent : window;
+    if (!severe && this.samples.length < 5) return;
+    const window = severe ? recent : delivery(this.samples);
     const { mbps, fps } = this.target;
-
-    if (evidence.loss > 0.1) {
-      this.nextProbeAt = Math.max(this.nextProbeAt, now + (this.beforeProbe ? 20000 : 10000));
-      if (this.beforeProbe) {
-        const previous = this.beforeProbe;
-        this.beforeProbe = undefined;
-        this.beforeCut = undefined;
+    if (window.loss > 0.1) {
+      const previous = this.beforeProbe;
+      this.beforeProbe = undefined;
+      this.nextProbeAt = Math.max(this.nextProbeAt, now + (previous ? 20000 : 10000));
+      if (previous) {
         this.change(previous.mbps, previous.fps);
-        return;
-      }
-      const prior = this.beforeCut;
-      // If smaller JPEGs still take just as long and deliver no more fps,
-      // match capture pacing to the observed delivery ceiling.
-      const flatCadence =
-        prior &&
-        prior.received >= 3 &&
-        evidence.received >= 3 &&
-        evidence.frameBytes <= prior.frameBytes * 0.95 &&
-        // A bandwidth-limited transfer speeds up with smaller JPEGs. A
-        // grant-limited one recovers little of that relative size reduction.
-        evidence.grantMs >=
-          prior.grantMs * Math.max(0.9, 1 - 0.4 * (1 - evidence.frameBytes / prior.frameBytes)) &&
-        evidence.fps <= prior.fps * 1.1;
-      const sustainableFps = Math.max(minFps, Math.floor(evidence.fps));
-      if (evidence.received >= 3 && (flatCadence || mbps === minMbps) && sustainableFps < fps) {
-        // Preserve the per-frame JPEG budget while changing motion cadence.
-        this.change((mbps * sustainableFps) / fps, sustainableFps);
-        this.beforeCut = undefined;
       } else {
-        // Estimate what this JPEG size would cost at the requested cadence.
-        // This also acts when simple scenes already undershoot the bitrate target.
-        const used = (evidence.frameBytes * 8 * fps) / 1e6;
-        const effective = used > 0 ? Math.min(mbps, used) : mbps;
-        if (this.change(effective * (severe ? 0.8 : 0.9), fps)) this.beforeCut = evidence;
+        // Base the cut on the JPEG budget actually used at the requested cadence.
+        const usedMbps = (window.frameBytes * 8 * fps) / 1e6;
+        const effective = usedMbps > 0 ? Math.min(mbps, usedMbps) : mbps;
+        const factor = severe ? 0.8 : 0.9;
+        this.change(effective * factor, Math.round(fps * factor));
       }
       return;
     }
-    if (samples.length < 10) return;
-    this.beforeCut = undefined;
-    this.beforeProbe = undefined;
-    if (window.loss >= 0.03 || now < this.nextProbeAt || samples.some((s) => s.queueGrew)) return;
-    const split = Math.floor(samples.length / 2);
-    const early = delivery(samples.slice(0, split));
-    const late = delivery(samples.slice(split));
-    if (!early.received || !late.received || late.grantMs > early.grantMs * 1.15 + 3) return;
 
-    const canRaiseRate = mbps < maxMbps && this.cleanMs >= 10000;
-    const canRaiseFps = fps < this.hostFps && window.fps >= fps * 0.9;
+    if (window.loss >= 0.03 || this.samples.some((sample) => sample.queueGrew)) return;
+    const early = delivery(this.samples.slice(0, 2));
+    const late = delivery(this.samples.slice(2));
+    if (!early.received || !late.received || late.grantMs > early.grantMs * 1.15 + 3) return;
+    this.beforeProbe = undefined;
+    if (now < this.nextProbeAt) return;
+
     const previous = this.target;
-    if (canRaiseFps && ((fps < 25 && this.probeFpsNext) || !canRaiseRate)) {
-      this.change(mbps, fps + Math.max(1, Math.round(fps * 0.1)));
-      this.probeFpsNext = false;
-    } else if (canRaiseRate) {
-      this.change(mbps * 1.1, fps);
-      this.probeFpsNext = true;
-    }
-    if (previous !== this.target) this.beforeProbe = previous;
+    const nextFps = window.fps >= fps * 0.9 ? Math.round(fps * 1.1) : fps;
+    if (this.change(mbps * 1.15, nextFps)) this.beforeProbe = previous;
   }
 }
 
