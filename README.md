@@ -2,14 +2,32 @@
 
 NanoKVM Go+ presents your browser’s camera to the remote computer as a 720p USB webcam. Build #2 targets firmware v1.0.10. [中文](README.zh.md) · [Build #2 changelog](CHANGELOG.md)
 
-## Dashboard controls
+## Build #2 dashboard changes
 
-- **Webcam.** Open the dashboard over HTTPS. Enable **Settings → Device → Webcam**, then click **Webcam** to share or stop. Hover or tap its arrow to choose a camera. [Setup and upload stats](docs/remote-webcam.md)
-- **Screen.** Click to toggle view-only mode. **Screen → Cropping** removes black borders automatically or lets you select an area. **Settings → Screen → EDID** sets the monitor name and display modes from one profile.
-- **Toolbar.** **Volume** mutes or restores the previous level. **Microphone** toggles sharing. **Terminal** opens a tab. Closing Settings with the mouse resumes the five-second auto-hide timer once the pointer leaves the bar.
-- **On connect.** Under **Settings → Appearance**, set **Show icon** and **Activate on Connect** separately for Volume, Microphone, Webcam and Mouse Jiggler.
-- **Mouse Jiggler.** Enable it under **Settings → Device**. Set hours in its toolbar menu (**8** by default, **0** for unlimited). The timer continues after disconnect.
-- **USB.** **Settings → Device** shows free IN endpoints. Webcam needs two. **Mouse → Mouse mode → Use one USB pointer endpoint** frees one. Under **Device → Advanced → USB Device Identity**, edit the IDs, device strings and configuration name.
+### Screen, Preview and EDID
+
+- **Preview is now part of Screen.** Click the **Screen** icon to watch without sending keyboard or mouse input. A red eye marks view-only mode. Click it again to regain control. Hover over the icon or tap its menu arrow to open display settings.
+- **Screen → Cropping** can remove black borders automatically. For a fixed crop, select an area manually and reuse the saved region.
+- **Screen → EDID** sets the monitor name, resolution and refresh rate the remote computer sees. For example, the 1080p60 preset identifies as a Dell U2414H. The five built-in profiles replace the separate **Monitor Name** field, and Build #2 ignores names saved in that field. For a custom name, upload and select an EDID `.bin` containing it. You can also switch profiles under **Settings → Screen → EDID**.
+
+### Mouse Jiggler
+
+Click **Mouse Jiggler** to start or stop it. If the shortcut is hidden, enable **Show icon** under **Settings → Appearance**. Choose relative or absolute movement under **Settings → Device → Mouse Jiggler**.
+
+The toolbar menu shows the time remaining and lets you set a limit in whole hours. The default is **8 hours**. Set **0** for unlimited. Changing the limit during a run restarts the countdown. Closing the dashboard leaves it running, and rebooting the Go+ preserves the original deadline.
+
+| Desktop viewers | What the pointer does while the jiggler is on |
+| --- | --- |
+| At least one connected | After 30–60 seconds without KVM input, the pointer makes a short nudge. New input restarts the idle wait. |
+| Last viewer disconnected | Short nudges continue for the first five minutes. After that, idle movements follow smooth curves lasting 5–8 seconds. Reconnecting stops a curve in progress and restores short nudges. |
+
+### Webcam, toolbar and USB
+
+- **Webcam.** Open the dashboard over HTTPS and enable **Settings → Device → Webcam**. Click **Webcam** to start or stop sharing. Its menu lets you choose the camera and check upload stats. The remote computer now receives 720p video, and the browser adjusts bitrate and frame rate together as the connection changes. [Webcam setup and upload stats](docs/remote-webcam.md)
+- **Toolbar shortcuts.** Click **Volume** to mute or restore the previous level, **Microphone** to toggle sharing, or **Terminal** to open a new tab. After you close Settings with the mouse, the bar hides again after five seconds with the pointer outside it. Keyboard focus keeps the bar visible.
+- **Activate on Connect.** Under **Settings → Appearance**, each browser can start audio playback, microphone sharing, webcam sharing and Mouse Jiggler independently. **Show icon** only controls visibility. Hidden shortcuts can still activate on connect, and toggling one during a session leaves its startup preference intact.
+- **USB devices.** **Settings → Device** shows used and free USB IN endpoints out of seven. Webcam needs two. If you are short by one, **Mouse → Mouse mode → Use one USB pointer endpoint** frees one by exposing only the selected pointer. Switching layouts briefly reconnects USB. The jiggler needs a mouse endpoint, so choose a mouse mode to use it in this layout.
+- **USB identity.** **Settings → Device → Advanced → USB Device Identity** now includes the configuration name alongside the device IDs and strings. The webcam has its own **USB Webcam Name** setting.
 
 ## Install
 
