@@ -48,6 +48,16 @@ test('ignores unavailable or invalid session storage', () => {
   assert.equal(getOrCreatePageZoomBaseline(Number.NaN, { width: 1920, height: 1080 }), 1);
 });
 
+test('uses DPR across Chrome sidebar resizes and real page zoom changes', () => {
+  const chrome = 'Mozilla/5.0 AppleWebKit/537.36 Chrome/145.0.0.0 Safari/537.36';
+  const baseline = { outerWidth: 1920, innerWidth: 1700 };
+  for (const innerWidth of [1750, 1650, 1600, 1400, 1700]) {
+    const viewport = { outerWidth: 1920, innerWidth };
+    assert.equal(getPageZoomScale(2, 2, viewport, baseline, chrome), 1);
+    assert.equal(getPageZoomScale(2.5, 2, viewport, baseline, chrome), 1.25);
+  }
+});
+
 test('uses window geometry when DPR does not expose Safari page zoom', () => {
   const storage = new MemoryStorage();
   const screen = { width: 2560, height: 1440 };

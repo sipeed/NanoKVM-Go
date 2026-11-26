@@ -74,12 +74,17 @@ export function getPageZoomScale(
   currentDevicePixelRatio: number,
   baselineDevicePixelRatio: number,
   currentViewport?: PageZoomViewport | null,
-  baselineViewport?: PageZoomViewport | null
+  baselineViewport?: PageZoomViewport | null,
+  userAgent = globalThis.navigator?.userAgent ?? ''
 ) {
   const deviceScale =
     normalizeDevicePixelRatio(currentDevicePixelRatio) /
     normalizeDevicePixelRatio(baselineDevicePixelRatio);
-  if (Math.abs(deviceScale - 1) > PAGE_ZOOM_SIGNAL_EPSILON) {
+  // Chromium reports page zoom through DPR. Docked panels also change innerWidth.
+  if (
+    /\b(?:Chrome|Chromium)\//.test(userAgent) ||
+    Math.abs(deviceScale - 1) > PAGE_ZOOM_SIGNAL_EPSILON
+  ) {
     return clampPageZoom(deviceScale);
   }
 
