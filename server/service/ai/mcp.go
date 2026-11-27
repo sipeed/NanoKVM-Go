@@ -143,7 +143,7 @@ func NewMCPHandler() http.Handler {
 
 func registerTools(server *mcp.Server, remote *Remote, limiter *toolRateLimiter) map[string]struct{} {
 	names := make(map[string]struct{})
-	registerControlTool(names, server, &mcp.Tool{Name: "type_text", Description: "Type short text into the remote host"}, typeTextHandler(remote, limiter))
+	registerControlTool(names, server, &mcp.Tool{Name: "type_text", Description: "Type literal text using the target keyboard layout selected on the NanoKVM. Send punctuation and supported accents directly. Unsupported characters fail before typing."}, typeTextHandler(remote, limiter))
 	registerControlTool(names, server, &mcp.Tool{Name: "press_keys", Description: "Press one keyboard shortcut on the remote host"}, pressKeysHandler(remote, limiter))
 	registerControlTool(names, server, &mcp.Tool{Name: "move_mouse", Description: "Move the remote mouse pointer. Absolute x/y are normalized coordinates (0.0-1.0, never pixels) inside the screenshot content area, which is the de-letterboxed frame the screenshot tool returns."}, moveMouseHandler(remote, limiter))
 	registerControlTool(names, server, &mcp.Tool{Name: "click_mouse", Description: "Click a remote mouse button. Absolute x/y are normalized coordinates (0.0-1.0, never pixels) in the same content area as move_mouse and screenshot. If the target is an iPhone, must right-click once before the first click."}, clickMouseHandler(remote, limiter))
@@ -175,15 +175,13 @@ func typeTextHandler(remote *Remote, limiter *toolRateLimiter) mcp.ToolHandlerFo
 			return nil, TypeTextResult{}, fmt.Errorf("text exceeds maximum length of %d runes", maxTypeTextRunes)
 		}
 
-		skipped, err := remote.TypeText(input.Text, time.Duration(clampDelayMS(input.DelayMS, defaultTypeDelayMS))*time.Millisecond)
+		err := remote.TypeText(input.Text, time.Duration(clampDelayMS(input.DelayMS, defaultTypeDelayMS))*time.Millisecond)
 		if err != nil {
 			return nil, TypeTextResult{}, err
 		}
 
 		return nil, TypeTextResult{
-			Typed:        len(textRunes) - len(skipped),
-			Skipped:      string(skipped),
-			SkippedCount: len(skipped),
+			Typed: len(textRunes),
 		}, nil
 	}
 }

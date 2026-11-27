@@ -130,7 +130,21 @@ memory/OCR calls keep their existing JSON text content and structured-result con
 
 ### `type_text`
 
-Types short ASCII text into the remote host.
+Types literal text using the target keyboard layout saved on the NanoKVM. Select
+**Keyboard → Keyboards → language → layout** to match the target's active PC
+layout. English (US) is the default. Web Paste uses the same setting. Keep Caps Lock off.
+A newline sends Enter and a tab sends Tab.
+
+Russian uses the standard Windows ЙЦУКЕН keyboard. Persian and Persian (Standard,
+ISIRI 9147) are separate Windows layouts. These profiles reject characters unavailable
+on that layout, including Latin letters.
+
+For Mandarin, select **Chinese → Simplified Chinese · Microsoft Pinyin**. On the
+target, activate Microsoft Pinyin in Chinese mode with Full Pinyin and V-mode
+enabled. The KVM enters each printable Basic Multilingual Plane character by its
+Unicode code point, including Latin letters and punctuation in mixed text.
+This takes eight key strokes per character. Supplementary characters are rejected
+before typing. [Microsoft Pinyin V-mode](https://support.microsoft.com/en-us/windows/hardware/input-devices/microsoft-simplified-chinese-ime)
 
 Arguments:
 
@@ -145,7 +159,7 @@ Fields:
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `text` | string | yes | Text to type. Unsupported characters are skipped. |
+| `text` | string | yes | Up to 1,024 Unicode code points. An unsupported character returns an error before any keys are sent. |
 | `delayMs` | integer | no | Delay between HID reports. Defaults to `30`. Clamped to `0..1000`. |
 
 Result:

@@ -6,11 +6,11 @@ import { useTranslation } from 'react-i18next';
 import { isPreviewModeAtom } from '@/jotai/preview.ts';
 import { MenuItem } from '@/components/menu-item.tsx';
 
+import { KeyboardLayouts } from './layouts.tsx';
 import { LeaderKey } from './leader-key.tsx';
 import { Paste } from './paste.tsx';
 import { Shortcuts } from './shortcuts';
 import { SwapCommandCtrl } from './swap-command-ctrl.tsx';
-import { VirtualKeyboard } from './virtual-keyboard.tsx';
 
 export const Keyboard = () => {
   const { t } = useTranslation();
@@ -19,7 +19,7 @@ export const Keyboard = () => {
   const content = (
     <div className="flex flex-col space-y-1">
       <Paste />
-      <VirtualKeyboard />
+      <KeyboardLayouts />
       <SwapCommandCtrl />
       <Shortcuts />
 

@@ -1,4 +1,5 @@
 import { http } from '@/lib/http.ts';
+import type { KeyboardLayout } from '@/lib/keyboard-layouts.ts';
 import type { MouseMode } from '@/jotai/mouse.ts';
 
 export const POINTER_MODES = ['absolute', 'digitizer-stylus', 'touch-screen'] as const;
@@ -17,9 +18,20 @@ export type HidApiResponse<T> = {
   data: T;
 };
 
+type KeyboardLayoutResponse = HidApiResponse<{ layout: KeyboardLayout }>;
+
+export function getKeyboardLayout() {
+  return http.get('/api/hid/keyboard-layout') as Promise<KeyboardLayoutResponse>;
+}
+
+export function setKeyboardLayout(layout: KeyboardLayout) {
+  return http.post('/api/hid/keyboard-layout', { layout }) as Promise<KeyboardLayoutResponse>;
+}
+
 // paste
 export function paste(content: string) {
-  return http.post('/api/hid/paste', { content });
+  // Microsoft Pinyin V-mode needs eight 35 ms strokes per printable BMP character.
+  return http.post('/api/hid/paste', { content }, { timeout: 360_000 });
 }
 
 // reset hid

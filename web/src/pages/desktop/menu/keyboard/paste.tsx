@@ -16,33 +16,30 @@ export const Paste = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [status, setStatus] = useState<'' | 'error'>('');
   const [isLoading, setIsLoading] = useState(false);
   const [errMsg, setErrMsg] = useState('');
 
   const inputRef = useRef<InputRef>(null);
-  const hasInvalidInput = status === 'error';
 
   function onChange(e: ChangeEvent<HTMLTextAreaElement>) {
     const value = e.target.value;
-    setStatus(isASCII(value) ? '' : 'error');
+    setErrMsg('');
     setInputValue(value);
   }
 
   function submit() {
-    if (isLoading || !isASCII(inputValue)) return;
+    if (isLoading || !inputValue) return;
     setIsLoading(true);
 
     paste(inputValue)
       .then((rsp) => {
         if (rsp.code !== 0) {
           console.log(rsp.msg);
-          setErrMsg(t('keyboard.errors.paste'));
+          setErrMsg(rsp.code === -5 ? rsp.msg : t('keyboard.errors.paste'));
           return;
         }
 
         setInputValue('');
-        setStatus('');
         setErrMsg('');
         setIsModalOpen(false);
       })
@@ -61,15 +58,6 @@ export const Paste = () => {
     }
 
     setIsKeyboardEnable(!open);
-  }
-
-  function isASCII(value: string) {
-    for (let i = 0; i < value.length; i++) {
-      if (value.charCodeAt(i) > 127) {
-        return false;
-      }
-    }
-    return true;
   }
 
   return (
@@ -92,16 +80,12 @@ export const Paste = () => {
         onCancel={() => setIsModalOpen(false)}
         afterOpenChange={afterOpenChange}
       >
-        <div
-          className={clsx('pb-3 text-xs', hasInvalidInput ? 'text-red-500' : 'text-neutral-500')}
-        >
-          {t('keyboard.tips')}
-        </div>
+        <div className="pb-3 text-xs text-neutral-500">{t('keyboard.tips')}</div>
 
         <TextArea
           ref={inputRef}
           value={inputValue}
-          status={status}
+          status={errMsg ? 'error' : undefined}
           showCount
           maxLength={1024}
           autoSize={{ minRows: 5, maxRows: 12 }}
@@ -115,7 +99,7 @@ export const Paste = () => {
           <Button
             type="primary"
             loading={isLoading}
-            disabled={hasInvalidInput}
+            disabled={!inputValue}
             htmlType="submit"
             onClick={submit}
           >

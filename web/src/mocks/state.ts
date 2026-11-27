@@ -246,6 +246,7 @@ export type MockState = {
       degraded: boolean;
       error: string;
     };
+    keyboardLayout: string;
     leaderKey: string;
     shortcuts: Array<{ id: string; keys: string[] }>;
   };
@@ -578,6 +579,7 @@ export function createMockState(): MockState {
         degraded: false,
         error: ''
       },
+      keyboardLayout: 'en-US',
       leaderKey: 'MetaLeft',
       shortcuts: []
     },

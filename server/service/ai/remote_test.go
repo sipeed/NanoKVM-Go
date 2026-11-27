@@ -2,6 +2,11 @@ package ai
 
 import (
 	"bytes"
+	"context"
+	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
 	"NanoKVM-Server/service/hid"
@@ -53,5 +58,28 @@ func TestNewRemoteUsesInputRouterForRelativePointer(t *testing.T) {
 	records := router.Traces().Snapshot(2)
 	if len(records) != 2 || records[0].Source != "virtual-pointer" || records[1].Stage != "release" {
 		t.Fatalf("remote route traces = %+v", records)
+	}
+}
+
+func TestMCPTypeTextUsesSavedLayoutWithoutPartialCommands(t *testing.T) {
+	output := &remoteRouteOutput{}
+	remote := newRemoteWithHID(output)
+	remote.keyboardLayoutPath = filepath.Join(t.TempDir(), "keyboard-layout")
+	typeText := typeTextHandler(remote, newToolRateLimiter(0))
+	if err := os.WriteFile(remote.keyboardLayoutPath, []byte("fr-CA"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	_, result, err := typeText(context.Background(), nil, TypeTextParams{Text: "#|é", DelayMS: 1})
+	if err != nil || result.Typed != 3 || result.SkippedCount != 0 {
+		t.Fatalf("type_text result: %+v, %v", result, err)
+	}
+	want := [][]byte{{0, 0, 53, 0, 0, 0, 0, 0}, keyUpReport, {2, 0, 53, 0, 0, 0, 0, 0}, keyUpReport, {0, 0, 56, 0, 0, 0, 0, 0}, keyUpReport}
+	if !reflect.DeepEqual(output.writes, want) {
+		t.Fatalf("MCP reports: %v", output.writes)
+	}
+	output.writes = nil
+	_, _, err = typeText(context.Background(), nil, TypeTextParams{Text: "#🙂", DelayMS: 1})
+	if err == nil || !strings.Contains(err.Error(), "U+1F642") || len(output.writes) != 0 {
+		t.Fatalf("unsupported command: writes=%v, error=%v", output.writes, err)
 	}
 }
