@@ -575,6 +575,7 @@ export function createMockState(): MockState {
       mode: 'hid',
       pointerMode: {
         mode: 'absolute',
+        singleEndpoint: true,
         switching: false,
         degraded: false,
         error: ''

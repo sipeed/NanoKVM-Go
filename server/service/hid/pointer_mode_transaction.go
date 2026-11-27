@@ -233,7 +233,7 @@ func syncPointerModeDirectory(path string) error {
 
 func pointerModeFromMarkerSnapshot(snapshot pointerModeMarkerSnapshot) PointerMode {
 	if !snapshot.exists {
-		return PointerModeAbsolute
+		return PointerModeSingleAbsolute
 	}
 	value := strings.TrimRight(string(snapshot.data), "\n")
 	mode, ok := parsePointerMode(value)

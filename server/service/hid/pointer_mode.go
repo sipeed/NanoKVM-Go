@@ -218,7 +218,7 @@ func ValidatePointerModeReportID(mode PointerMode, reportID byte) error {
 func readPointerModeFile(path string) PointerMode {
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
-		return PointerModeAbsolute
+		return PointerModeSingleAbsolute
 	}
 	if err != nil {
 		log.Warnf("failed to read pointer mode from %s; falling back to absolute: %s", path, err)

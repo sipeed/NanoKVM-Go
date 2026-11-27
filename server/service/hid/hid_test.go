@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -750,20 +751,18 @@ func TestHIDOpenAndCloseResetTimeoutStreaks(t *testing.T) {
 	oldRelativeMouse := &fakeHIDFile{}
 	oldAbsolutePointer := &fakeHIDFile{}
 	newKeyboard := &fakeHIDFile{}
-	newRelativeMouse := &fakeHIDFile{}
 	newAbsolutePointer := &fakeHIDFile{}
 	openedPaths := make([]string, 0, 3)
 	h := &Hid{
-		g0: hidEndpoint{file: oldKeyboard, timeoutStreak: hidTimeoutReopenThreshold - 1},
-		g1: hidEndpoint{file: oldRelativeMouse, timeoutStreak: hidTimeoutReopenThreshold - 1},
-		g2: hidEndpoint{file: oldAbsolutePointer, timeoutStreak: hidTimeoutReopenThreshold - 1},
+		pointerModeFile: filepath.Join(t.TempDir(), "usb.hid2_mode"),
+		g0:              hidEndpoint{file: oldKeyboard, timeoutStreak: hidTimeoutReopenThreshold - 1},
+		g1:              hidEndpoint{file: oldRelativeMouse, timeoutStreak: hidTimeoutReopenThreshold - 1},
+		g2:              hidEndpoint{file: oldAbsolutePointer, timeoutStreak: hidTimeoutReopenThreshold - 1},
 		openFileFn: func(path string) (hidFile, error) {
 			openedPaths = append(openedPaths, path)
 			switch path {
 			case HID0:
 				return newKeyboard, nil
-			case HID1:
-				return newRelativeMouse, nil
 			case HID2:
 				return newAbsolutePointer, nil
 			default:
@@ -775,7 +774,7 @@ func TestHIDOpenAndCloseResetTimeoutStreaks(t *testing.T) {
 
 	h.OpenNoLock()
 
-	if h.g0.file != newKeyboard || h.g1.file != newRelativeMouse || h.g2.file != newAbsolutePointer {
+	if h.g0.file != newKeyboard || h.g1.file != nil || h.g2.file != newAbsolutePointer {
 		t.Fatalf("open files = [%T %T %T], want replacement handles", h.g0.file, h.g1.file, h.g2.file)
 	}
 	if h.g0.timeoutStreak != 0 || h.g1.timeoutStreak != 0 || h.g2.timeoutStreak != 0 {
@@ -786,8 +785,8 @@ func TestHIDOpenAndCloseResetTimeoutStreaks(t *testing.T) {
 			h.g2.timeoutStreak,
 		)
 	}
-	if len(openedPaths) != 3 || openedPaths[0] != HID0 || openedPaths[1] != HID1 || openedPaths[2] != HID2 {
-		t.Fatalf("opened paths = %v, want [%s %s %s]", openedPaths, HID0, HID1, HID2)
+	if len(openedPaths) != 2 || openedPaths[0] != HID0 || openedPaths[1] != HID2 {
+		t.Fatalf("opened paths = %v, want [%s %s]", openedPaths, HID0, HID2)
 	}
 	for name, file := range map[string]*fakeHIDFile{
 		HID0: oldKeyboard,
@@ -829,7 +828,7 @@ func TestHIDStrictOpenClosesPartialEndpointSet(t *testing.T) {
 			{file: hid2},
 		},
 	}
-	h := &Hid{openFileFn: opener.open}
+	h := &Hid{pointerModeFile: dualPointerModeFile(t), openFileFn: opener.open}
 
 	if err := h.openNoLockWithError(); !errors.Is(err, openFailure) {
 		t.Fatalf("strict open error = %v, want %v", err, openFailure)
@@ -853,12 +852,21 @@ func TestHIDLegacyOpenKeepsAvailableEndpoints(t *testing.T) {
 			{file: hid2},
 		},
 	}
-	h := &Hid{openFileFn: opener.open}
+	h := &Hid{pointerModeFile: dualPointerModeFile(t), openFileFn: opener.open}
 
 	h.OpenNoLock()
 	if h.g0.file != keyboard || h.g1.file != nil || h.g2.file != hid2 {
 		t.Fatalf("legacy open endpoints = [%T %T %T]", h.g0.file, h.g1.file, h.g2.file)
 	}
+}
+
+func dualPointerModeFile(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "usb.hid2_mode")
+	if err := writePointerModeMarker(path, PointerModeAbsolute); err != nil {
+		t.Fatal(err)
+	}
+	return path
 }
 
 func TestHIDWriteClosedFileRetryUsesFreshDeadline(t *testing.T) {

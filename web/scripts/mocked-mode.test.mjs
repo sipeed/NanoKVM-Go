@@ -301,6 +301,7 @@ test('pointer mode mock exposes an authoritative HID2 profile and strict mutatio
   const initial = await fetchJson(`${origin}/api/hid/pointer-mode`);
   assert.deepEqual(initial.data, {
     mode: 'absolute',
+    singleEndpoint: true,
     switching: false,
     degraded: false,
     error: ''

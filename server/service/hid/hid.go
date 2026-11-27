@@ -24,6 +24,7 @@ type Hid struct {
 	hasAbsolutePointerPosition   bool
 	lastAbsolutePointerState     byte
 	hasAbsolutePointerState      bool
+	pointerModeFile              string
 	pointerModeStatusFn          func() PointerModeStatus
 	openFileFn                   func(string) (hidFile, error)
 	nowFn                        func() time.Time
@@ -63,7 +64,7 @@ var (
 
 func GetHid() *Hid {
 	hidOnce.Do(func() {
-		hid = &Hid{pointerModeStatusFn: GetPointerModeStatus}
+		hid = &Hid{pointerModeFile: PointerModeFile, pointerModeStatusFn: GetPointerModeStatus}
 	})
 	return hid
 }
@@ -107,7 +108,7 @@ func (h *Hid) openEndpointsNoLock() error {
 		{endpoint: &h.g2, path: HID2},
 	}
 	// During a rebuild the new marker is installed before the manager commits.
-	mode := readPointerModeFile(PointerModeFile)
+	mode := readPointerModeFile(h.pointerModeFile)
 	for _, item := range endpoints {
 		if (item.path == HID1 && !mode.SupportsRelative()) || (item.path == HID2 && mode == PointerModeSingleRelative) {
 			continue

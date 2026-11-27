@@ -290,7 +290,7 @@ read_hid2_mode() {
     local mode
 
     if [ ! -e "$mode_file" ]; then
-        echo "absolute"
+        echo "single-absolute"
         return 0
     fi
 

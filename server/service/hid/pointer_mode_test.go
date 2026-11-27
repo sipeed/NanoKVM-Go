@@ -22,7 +22,7 @@ func TestReadPointerModeFile(t *testing.T) {
 		create   bool
 		want     PointerMode
 	}{
-		{name: "missing", want: PointerModeAbsolute},
+		{name: "missing", want: PointerModeSingleAbsolute},
 		{name: "absolute", contents: "absolute\n", create: true, want: PointerModeAbsolute},
 		{name: "digitizer stylus", contents: "digitizer-stylus\n", create: true, want: PointerModeDigitizerStylus},
 		{name: "legacy absolute android", contents: "absolute-android\n", create: true, want: PointerModeDigitizerStylus},

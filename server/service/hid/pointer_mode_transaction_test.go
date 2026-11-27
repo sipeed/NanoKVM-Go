@@ -509,20 +509,20 @@ func TestPointerModeTransactionValidationFailureRollsBack(t *testing.T) {
 }
 
 func TestPointerModeTransactionRestoresMissingMarker(t *testing.T) {
-	harness := newPointerModeTransactionHarness(t, PointerModeAbsolute, nil, ModeNormal)
+	harness := newPointerModeTransactionHarness(t, PointerModeSingleAbsolute, nil, ModeNormal)
 	harness.scriptErrors = []error{errors.New("injected initial rebuild failure"), nil}
 
-	status, err := harness.transaction.run(context.Background(), PointerModeDigitizerStylus)
+	status, err := harness.transaction.run(context.Background(), PointerModeSingleStylus)
 	if !errors.Is(err, ErrPointerModeSwitchScript) {
 		t.Fatalf("transaction error = %v, want script failure", err)
 	}
-	assertRolledBackPointerModeStatus(t, status, PointerModeAbsolute)
+	assertRolledBackPointerModeStatus(t, status, PointerModeSingleAbsolute)
 	if _, statErr := os.Stat(harness.modeFile); !os.IsNotExist(statErr) {
 		t.Fatalf("missing marker rollback stat error = %v, want not exists", statErr)
 	}
 	_, _, _, verifies := harness.callSnapshot()
-	if fmt.Sprint(verifies) != fmt.Sprint([]PointerMode{PointerModeAbsolute}) {
-		t.Fatalf("rollback verifies = %v, want absolute", verifies)
+	if fmt.Sprint(verifies) != fmt.Sprint([]PointerMode{PointerModeSingleAbsolute}) {
+		t.Fatalf("rollback verifies = %v, want single-absolute", verifies)
 	}
 	harness.assertLocksReleased(t)
 }
@@ -788,6 +788,9 @@ func TestPointerModeMarkerMissingSnapshotRestoresAbsence(t *testing.T) {
 	snapshot, err := snapshotPointerModeMarker(modeFile)
 	if err != nil || snapshot.exists {
 		t.Fatalf("missing snapshot = %+v, %v", snapshot, err)
+	}
+	if mode := pointerModeFromMarkerSnapshot(snapshot); mode != PointerModeSingleAbsolute {
+		t.Fatalf("missing snapshot mode = %q, want %q", mode, PointerModeSingleAbsolute)
 	}
 	if err := writePointerModeMarker(modeFile, PointerModeDigitizerStylus); err != nil {
 		t.Fatalf("write marker: %v", err)

@@ -12,7 +12,7 @@ This repository contains the source and offline builds for the **Go+ running fir
 
 - **USB webcam sharing.** Present a browser camera to the workstation as a 720p USB webcam. The stream adapts to the available upload bandwidth and reports live delivery statistics.
 - **Target keyboard layouts.** Choose from 11 layouts for dashboard Paste and MCP text entry, including Canadian French, Canadian Multilingual Standard and Microsoft Pinyin.
-- **USB endpoint management.** See how many of the Go+’s seven USB IN endpoints are available. A single-pointer option frees one for another USB function.
+- **USB endpoint management.** See how many of the Go+’s seven USB IN endpoints are available. The mouse uses one endpoint by default.
 
 ## Improvements
 
@@ -101,7 +101,7 @@ Sipeed provides the optional MCP service for screen capture and input. Enable **
 
 ### USB devices and pointer modes
 
-**Settings → Device** shows used and free USB IN endpoints. The keyboard and two standard pointer interfaces use three of seven. The webcam needs two, virtual audio needs one, and a virtual network interface needs two. For example, the standard pointers, keyboard, webcam and network fill all seven. Enable **Mouse → Mouse mode → Use one USB pointer endpoint** to make room for audio.
+**Settings → Device** shows used and free USB IN endpoints. By default, the keyboard and mouse use one endpoint each, leaving five available. The webcam needs two, virtual audio needs one, and a virtual network interface needs two, so all three fit together. Turning off **Mouse → Mouse mode → Use one USB pointer endpoint** adds a second pointer endpoint.
 
 In single-endpoint mode the Go+ exposes only the selected pointer. Switching layouts affects all viewers. Mouse Jiggler uses the available mouse and is unavailable in stylus-only or touch-only layouts. [USB pointer modes](docs/kvmgo-device-usb-hid.md)
 

@@ -161,6 +161,8 @@ assert_profile digitizer_stylus digitizer-stylus digitizer-stylus no
 assert_profile legacy_absolute_android absolute-android digitizer-stylus no
 assert_profile touch_screen touch-screen touch-screen no
 assert_profile missing_marker __missing__ absolute no
+[[ "$(read_hid2_mode "${TEST_ROOT}/missing_marker/usb.hid2_mode")" == "single-absolute" ]]
+[[ "$(read_hid2_mode "${TEST_ROOT}/absolute/usb.hid2_mode")" == "absolute" ]]
 assert_profile invalid_marker invalid absolute yes
 
 python3 - "$USBDEV_SCRIPT" <<'PY'

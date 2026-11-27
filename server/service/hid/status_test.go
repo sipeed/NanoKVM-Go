@@ -93,12 +93,12 @@ func TestResetRecoversDegradedPointerMode(t *testing.T) {
 			wantMarkerData: "digitizer-stylus\n",
 		},
 		{
-			name:           "missing marker defaults to absolute",
+			name:           "missing marker defaults to single-absolute",
 			marker:         nil,
 			usbMode:        ModeNormal,
-			wantMode:       PointerModeAbsolute,
+			wantMode:       PointerModeSingleAbsolute,
 			wantScriptArg:  "restart",
-			wantMarkerData: "absolute\n",
+			wantMarkerData: "single-absolute\n",
 		},
 	}
 
