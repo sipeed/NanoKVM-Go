@@ -9,6 +9,8 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+
+	"NanoKVM-Server/keyboardlayout"
 )
 
 const (
@@ -168,15 +170,9 @@ func hidKeyboardSpecialLabel(report []byte) string {
 }
 
 func hidKeyboardNormalLabel(code byte, shifted bool) string {
-	modifiers := 0
+	var modifiers byte
 	if shifted {
 		modifiers = 2
 	}
-
-	for char, key := range CharMap {
-		if key.Code == int(code) && key.Modifiers == modifiers {
-			return string(char)
-		}
-	}
-	return ""
+	return keyboardlayout.USLabel(keyboardlayout.Stroke{Modifiers: modifiers, Code: code})
 }

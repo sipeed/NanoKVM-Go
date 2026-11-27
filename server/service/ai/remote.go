@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"NanoKVM-Server/keyboardlayout"
 	"NanoKVM-Server/service/hid"
 )
 
@@ -15,14 +16,16 @@ type HIDWriter interface {
 }
 
 type Remote struct {
-	hid     HIDWriter
-	hidMu   sync.Mutex
-	release func()
+	keyboardLayoutPath string
+	hid                HIDWriter
+	hidMu              sync.Mutex
+	release            func()
 }
 
 func NewRemote() *Remote {
 	return &Remote{
-		hid: &routedHIDWriter{session: hid.InternalInputSessionAI},
+		keyboardLayoutPath: hid.KeyboardLayoutFile,
+		hid:                &routedHIDWriter{session: hid.InternalInputSessionAI},
 		release: func() {
 			_ = hid.ReleaseInputSession(hid.InternalInputSessionAI, "AI action complete")
 		},
@@ -30,7 +33,7 @@ func NewRemote() *Remote {
 }
 
 func newRemoteWithHID(writer HIDWriter) *Remote {
-	return &Remote{hid: writer, release: func() {}}
+	return &Remote{keyboardLayoutPath: hid.KeyboardLayoutFile, hid: writer, release: func() {}}
 }
 
 type routedHIDWriter struct {
@@ -55,21 +58,30 @@ func (r *Remote) releaseInput() {
 	}
 }
 
-func (r *Remote) TypeText(text string, delay time.Duration) ([]rune, error) {
-	reports, skipped := buildTypeReports(text)
+func (r *Remote) TypeText(text string, delay time.Duration) error {
+	layout, err := keyboardlayout.Load(r.keyboardLayoutPath)
+	if err != nil {
+		return fmt.Errorf("load target keyboard layout: %w", err)
+	}
+	strokes, err := layout.Encode(text)
+	if err != nil {
+		return err
+	}
+
 	r.hidMu.Lock()
 	defer r.hidMu.Unlock()
 	defer r.releaseInput()
-
-	for _, report := range reports {
-		if err := r.hid.WriteKeyboardReport(report); err != nil {
-			return skipped, err
-		}
-		if delay > 0 {
-			time.Sleep(delay)
+	for _, stroke := range strokes {
+		for _, report := range [][]byte{stroke.Report(), keyUpReport} {
+			if err := r.hid.WriteKeyboardReport(report); err != nil {
+				return err
+			}
+			if delay > 0 {
+				time.Sleep(delay)
+			}
 		}
 	}
-	return skipped, nil
+	return nil
 }
 
 func (r *Remote) PressKeys(keys []string, hold time.Duration) error {

@@ -147,7 +147,7 @@ func writePointerModeMarker(path string, mode PointerMode) error {
 	if !isKnownPointerMode(mode) {
 		return fmt.Errorf("%w: %q", ErrPointerModeSwitchInvalidMode, mode)
 	}
-	return atomicWritePointerModeFile(path, []byte(string(mode)+"\n"), pointerModeMarkerPermission)
+	return writeAtomicSetting(path, []byte(string(mode)+"\n"), pointerModeMarkerPermission)
 }
 
 func restorePointerModeMarker(path string, snapshot pointerModeMarkerSnapshot) error {
@@ -169,12 +169,12 @@ func restorePointerModeMarker(path string, snapshot pointerModeMarkerSnapshot) e
 	if perm == 0 {
 		perm = pointerModeMarkerPermission
 	}
-	return atomicWritePointerModeFile(path, snapshot.data, perm)
+	return writeAtomicSetting(path, snapshot.data, perm)
 }
 
-func atomicWritePointerModeFile(path string, data []byte, perm fs.FileMode) error {
+func writeAtomicSetting(path string, data []byte, perm fs.FileMode) error {
 	if path == "" {
-		return errors.New("pointer mode marker path is empty")
+		return errors.New("setting path is empty")
 	}
 	directory := filepath.Dir(path)
 	base := filepath.Base(path)

@@ -7,6 +7,7 @@ import (
 )
 
 type Service struct {
+	keyboardLayoutPath string
 	hid                *Hid
 	pointerModeManager *pointerModeManager
 	pointerModeSwitch  *pointerModeTransaction

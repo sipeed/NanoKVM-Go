@@ -16,6 +16,9 @@ func hidRouter(r *gin.Engine) {
 	api.POST("/hid/reset", service.Reset) // reset hid
 	api.POST("/hid/paste", service.Paste) // paste
 
+	api.GET("/hid/keyboard-layout", service.GetKeyboardLayout)
+	api.POST("/hid/keyboard-layout", service.SetKeyboardLayout)
+
 	api.GET("/hid/shortcuts", service.GetShortcuts)     // get shortcuts
 	api.POST("/hid/shortcut", service.AddShortcut)      // add shortcut
 	api.DELETE("/hid/shortcut", service.DeleteShortcut) // delete shortcut

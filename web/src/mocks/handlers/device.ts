@@ -1,5 +1,7 @@
 import { http } from 'msw';
 
+import { keyboardLayoutGroups } from '../../lib/keyboard-layouts.ts';
+
 import {
   fail,
   isRecord,
@@ -776,6 +778,15 @@ export function createDeviceHandlers(origin: string, state: MockState) {
       return ok({ gop: state.stream.gop });
     }),
 
+    http.get(`${origin}/api/hid/keyboard-layout`, () => ok({ layout: state.hid.keyboardLayout })),
+    http.post(`${origin}/api/hid/keyboard-layout`, async ({ request }) => {
+      const layout = readString(await readJsonObject(request), 'layout');
+      if (!layout || !Object.values(keyboardLayoutGroups).flat().some((id) => layout === id)) {
+        return fail(-1, 'unknown target keyboard layout', { layout: state.hid.keyboardLayout });
+      }
+      state.hid.keyboardLayout = layout;
+      return ok({ layout });
+    }),
     http.get(`${origin}/api/hid/mode`, () => ok({ mode: state.hid.mode })),
     http.post(`${origin}/api/hid/mode`, async ({ request }) => {
       const mode = readString(await readJsonObject(request), 'mode');

@@ -2,9 +2,12 @@ package hid
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -166,7 +169,7 @@ func TestPasteWritesShiftedNumberRowReportsWithConfiguredPacing(t *testing.T) {
 	assertPasteEvents(t, events.snapshot(), pasteEventsForReports(wantReports))
 }
 
-func TestPasteSkipsUnmappedRunesWithoutPacing(t *testing.T) {
+func TestPasteRejectsUnmappedRuneBeforeSendingKeys(t *testing.T) {
 	events := &pasteEventRecorder{}
 	keyboard := &pasteEventFile{recorder: events}
 	service := &Service{
@@ -189,9 +192,32 @@ func TestPasteSkipsUnmappedRunesWithoutPacing(t *testing.T) {
 		t.Fatalf("Paste HTTP status = %d, want %d", recorder.Code, http.StatusOK)
 	}
 
+	if !strings.Contains(recorder.Body.String(), "U+20AC") || len(events.snapshot()) != 0 {
+		t.Fatalf("expected rejection without keyboard events: %s", recorder.Body)
+	}
+}
+
+func TestSavedKeyboardLayoutUsedByPaste(t *testing.T) {
+	events := &pasteEventRecorder{}
+	path := filepath.Join(t.TempDir(), "keyboard-layout")
+	service := &Service{keyboardLayoutPath: path}
+	call := func(method, body string, handler func(*gin.Context)) {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(recorder)
+		ctx.Request = httptest.NewRequest(method, "/", strings.NewReader(body))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		handler(ctx)
+		var reply struct{ Code int }
+		if err := json.Unmarshal(recorder.Body.Bytes(), &reply); err != nil || reply.Code != 0 {
+			t.Fatalf("handler failed: %s", recorder.Body)
+		}
+	}
+	call("POST", `{"layout":"fr-CA"}`, service.SetKeyboardLayout)
+	afterRestart := &Service{keyboardLayoutPath: path, hid: &Hid{g0: hidEndpoint{file: &pasteEventFile{recorder: events}}}, pasteSleep: events.recordSleep}
+	call("POST", `{"content":"#é"}`, afterRestart.Paste)
 	assertPasteEvents(t, events.snapshot(), pasteEventsForReports([][]byte{
-		{0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00},
+		{0, 0, 53, 0, 0, 0, 0, 0}, {0, 0, 56, 0, 0, 0, 0, 0},
 	}))
 }
 
